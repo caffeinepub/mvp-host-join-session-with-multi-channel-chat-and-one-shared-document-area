@@ -1,0 +1,138 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Fix reactive preferences (dark mode/settings) and add profile pictures to Settings and chat",
+  "requirements": [
+    {
+      "id": "REQ-18",
+      "summary": "Make Dark Mode toggle apply instantly, persist across reloads, and remain consistent across all screens.",
+      "acceptanceCriteria": [
+        "When the user toggles Dark Mode in Settings, the UI switches theme immediately while staying on the same page",
+        "After reloading the app, the previously selected theme is restored and applied before the main UI is shown",
+        "Dark Mode affects all screens (unauthenticated login screen, LobbyPage, PreLobbySettingsView, SessionPage) consistently"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/index.html",
+          "operation": "modify",
+          "description": "Add an early theme initialization step that reads the stored preference and sets the document theme class before the React app renders, so the correct theme is applied before the main UI is shown."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Refactor app root to consume a single shared preferences source (provider) and apply theme/background consistently for loading, login prompt, lobby, settings, and session without requiring refresh."
+        },
+        {
+          "path": "frontend/src/hooks/usePreferences.ts",
+          "operation": "modify",
+          "description": "Update the preferences hook to be backed by a shared reactive source (context/provider) so theme changes propagate immediately to the whole app."
+        }
+      ]
+    },
+    {
+      "id": "REQ-19",
+      "summary": "Ensure Pre‑Lobby Settings changes (theme, background, nickname, template) are driven by one reactive preferences source with no stale copies.",
+      "acceptanceCriteria": [
+        "Changing background image in Settings updates the background immediately on the Settings screen and when navigating back to the lobby without requiring a reload",
+        "Changing default nickname in Settings updates the Lobby host/join nickname prefill behavior within the same app session",
+        "Changes made in Settings are reflected in App.tsx theme/background application logic immediately (no refresh required)"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/context/PreferencesContext.tsx",
+          "operation": "create",
+          "description": "Create a PreferencesProvider/PreferencesContext that loads preferences from storage once, exposes reactive state + update/reset actions, and keeps localStorage in sync (single source of truth shared across the app)."
+        },
+        {
+          "path": "frontend/src/hooks/usePreferences.ts",
+          "operation": "modify",
+          "description": "Rewrite usePreferences to read/write through PreferencesContext (instead of creating per-component state), ensuring updates are reactive across screens."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wrap the application UI in PreferencesProvider and ensure App.tsx uses the provider-backed preferences for theme/background application logic immediately."
+        },
+        {
+          "path": "frontend/src/components/settings/PreLobbySettingsView.tsx",
+          "operation": "modify",
+          "description": "Update Settings view to use the provider-backed preferences and verify that theme/background/nickname changes propagate immediately without navigation or refresh."
+        },
+        {
+          "path": "frontend/src/pages/LobbyPage.tsx",
+          "operation": "modify",
+          "description": "Ensure lobby nickname prefill behavior reacts to defaultNickname updates during the same session (using the provider-backed preferences), without relying on stale local state."
+        }
+      ]
+    },
+    {
+      "id": "REQ-20",
+      "summary": "Add Settings UI to upload/update/remove the authenticated user’s profile picture with preview and validation, persisting via backend user profile APIs.",
+      "acceptanceCriteria": [
+        "Settings page includes a \"Profile Picture\" section with current avatar preview, an upload control, and a remove/clear action",
+        "Uploading a valid image updates the preview and persists so it is still present after reload and re-login",
+        "Uploading a non-image file shows an English error message and does not change the saved profile picture",
+        "Removing the profile picture clears the preview and persists after reload"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useUserProfile.ts",
+          "operation": "create",
+          "description": "Add React Query hooks for fetching/updating the caller user profile (including profilePicture), calling backend functions already exposed in the typed interface. Use the selected blob-storage component’s ExternalBlob for image upload/URL handling; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/profile/ProfilePictureSection.tsx",
+          "operation": "create",
+          "description": "Create a Settings subcomponent that renders current avatar preview, validates uploads (image-only + reasonable size limit), supports update via saving the caller profile, and supports remove via backend removeProfilePicture. Use the selected blob-storage component’s ExternalBlob to create upload blobs and display via direct URL; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/settings/PreLobbySettingsView.tsx",
+          "operation": "modify",
+          "description": "Integrate the new ProfilePictureSection into the Settings screen under a \"Profile Picture\" area and wire success/error messaging and preview updates."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "On logout, clear cached user data in the frontend (e.g., React Query cache) so profile picture/profile state does not persist across sessions, aligning with the selected authorization component guidance; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-22",
+      "summary": "Render profile pictures (avatars) next to chat messages with fallbacks and cached fetching.",
+      "acceptanceCriteria": [
+        "Each chat message shows an avatar next to the author name",
+        "If the author has no profile picture, a placeholder avatar is rendered (e.g., initials)",
+        "Avatar display does not break message rendering for roll messages or long content",
+        "Avatar fetching is performant (uses caching and does not refetch for every render)"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/profile/Avatar.tsx",
+          "operation": "create",
+          "description": "Create a reusable Avatar component that can render an image (from a direct URL) or a fallback (initials placeholder) and gracefully handles image load errors."
+        },
+        {
+          "path": "frontend/src/hooks/useUserProfile.ts",
+          "operation": "modify",
+          "description": "Extend user-profile hooks to support fetching other users’ profiles (by principal) with React Query caching (stable query keys, sensible staleTime) to prevent refetching on every render."
+        },
+        {
+          "path": "frontend/src/pages/SessionPage.tsx",
+          "operation": "modify",
+          "description": "Pass session member information into the chat view so message authors can be mapped to principals for avatar lookup when possible (while keeping rendering robust if mapping fails)."
+        },
+        {
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "operation": "modify",
+          "description": "Thread through the session members (or an author->principal resolver) to each rendered ChatMessageItem so it can request the correct user profile for avatars with caching."
+        },
+        {
+          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
+          "operation": "modify",
+          "description": "Update message rendering layout to include an Avatar next to the author name and keep roll highlighting/long content rendering intact. Use cached user profile lookups and fall back to initials when no profile picture exists or cannot be loaded."
+        }
+      ]
+    }
+  ]
+}

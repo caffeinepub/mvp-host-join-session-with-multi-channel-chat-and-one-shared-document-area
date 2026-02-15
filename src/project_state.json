@@ -1,0 +1,290 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 7,
+  "summary": "Expand the LAN-only chat + RPG collaboration app with a pre-lobby Settings screen (local preferences), in-room document image embedding with host-side persistence, full session save/load + export/import, and a new Players’ Documents area supporting player-controlled docs with optional privacy (hidden contents from others/host).",
+  "architectural_notes": [
+    "LAN-only; no internet/cloud servers; host runs local server, clients connect over local network.",
+    "Real-time sync via WebSockets/Socket.IO (or equivalent lightweight websockets protocol).",
+    "Cross-platform desktop focus (Windows/macOS/Linux); potential later mobile support.",
+    "No accounts/registration; users join with nickname and optional session password.",
+    "Consider UDP broadcast or mDNS for host discovery; keep manual IP:port join as fallback.",
+    "Add local preferences storage per client (theme/dark mode, background image path, saved profile/nickname).",
+    "Add host-side filesystem persistence for sessions (e.g., sessions/ folder) and export/import packaging (e.g., ZIP containing JSON + images).",
+    "Document system must support inline images (embedded references) and LAN transfer strategy (base64 for small assets or separate binary transfer over sockets).",
+    "Introduce a Players’ Documents domain with per-document visibility/ACL; for hidden docs, do not distribute content to unauthorized clients (optionally client-side encryption later).",
+    "Add UI entry point for Settings on the initial lobby/connect screen; apply settings app-wide before joining/hosting."
+  ],
+  "known_issues": [
+    "Dark mode toggle does not currently work.",
+    "Settings changes do not appear to apply after being changed (missing apply/save propagation)."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-create-a-frontend-lobby-flow-with-two-modes-host-session-and-join-session-host-provides-session-name-optional-password-and-nickname-join-provides-session-identifier-password-if-required-and-nickname-after-success-navigate-to-the-session-screen",
+      "title": "Create a frontend Lobby flow with two modes: Host Session and Join Session. Host provides session name, optional password, and nickname; Join provides session identifier, password if required, and nickname. After success, navigate to the Session screen.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-the-main-session-screen-layout-left-sidebar-containing-a-channels-list-with-host-only-management-controls-create-rename-delete-and-b-documents-list-with-host-only-management-controls-create-rename-lock-delete-the-main-panel-switches-between-the-selected-channel-chat-view-and-selected-document-editor-view",
+      "title": "Create the main Session screen layout: left sidebar containing (a) Channels list with host-only management controls (create/rename/delete) and (b) Documents list with host-only management controls (create/rename/lock/delete). The main panel switches between the selected channel chat view and selected document editor view.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-the-channel-chat-ui-message-list-compose-box-and-support-for-roll-command-in-the-compose-box-when-roll-is-submitted-call-the-dice-roll-api-and-post-the-result-to-the-channel-as-a-roll-message-visible-to-everyone",
+      "title": "Implement the channel chat UI: message list, compose box, and support for “/roll …” command in the compose box. When “/roll” is submitted, call the dice roll API and post the result to the channel as a roll message visible to everyone.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-the-shared-document-editor-ui-for-one-or-more-documents-show-title-lock-status-content-editor-textarea-or-simple-rich-less-editor-save-update-actions-and-read-only-mode-when-locked-or-when-user-is-not-allowed-to-edit-use-revision-numbers-to-prevent-overwriting-newer-content",
+      "title": "Implement the shared document editor UI for one or more documents: show title, lock status, content editor (textarea or simple rich-less editor), save/update actions, and read-only mode when locked or when user is not allowed to edit. Use revision numbers to prevent overwriting newer content.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-near-real-time-sync-suitable-for-this-platform-by-using-periodic-polling-and-or-manual-refresh-for-channel-messages-channel-list-documents-list-and-document-content-updates-polling-intervals-should-be-configurable-and-conservative-to-remain-responsive-while-minimizing-load",
+      "title": "Implement near-real-time sync suitable for this platform by using periodic polling (and/or manual refresh) for channel messages, channel list, documents list, and document content updates. Polling intervals should be configurable and conservative to remain responsive while minimizing load.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-coherent-minimal-visual-theme-for-the-whole-app-lobby-session-with-consistent-typography-spacing-and-component-styling-optimized-for-long-chat-reading-and-note-editing-avoid-blue-purple-as-the-primary-palette",
+      "title": "Add a coherent, minimal visual theme for the whole app (lobby + session) with consistent typography, spacing, and component styling, optimized for long chat reading and note editing. Avoid blue/purple as the primary palette.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-pre-lobby-settings-screen-that-is-accessible-from-the-initial-lobby-page-via-a-prominent-settings-button-next-to-the-main-host-join-controls-and-allow-returning-back-to-the-lobby-without-losing-current-form-inputs",
+      "title": "Add a pre-lobby Settings screen that is accessible from the initial Lobby page via a prominent \"Settings\" button next to the main Host/Join controls, and allow returning back to the Lobby without losing current form inputs.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-locally-persisted-user-preferences-used-app-wide-1-dark-mode-toggle-2-custom-background-image-selected-from-the-user-device-and-3-a-saved-nickname-profile-value-that-can-be-edited-in-settings-and-used-as-the-default-nickname-on-the-lobby-host-join-forms",
+      "title": "Implement locally persisted user preferences used app-wide: (1) dark mode toggle, (2) custom background image selected from the user device, and (3) a saved nickname/profile value that can be edited in Settings and used as the default nickname on the Lobby Host/Join forms.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-support-for-inserting-and-rendering-inline-images-inside-shared-documents-allow-selecting-an-image-file-and-optionally-drag-and-drop-to-create-an-embedded-image-reference-inside-the-document-content-render-those-embedded-images-inline-with-optional-caption-when-viewing-editing-the-document",
+      "title": "Add support for inserting and rendering inline images inside shared documents: allow selecting an image file (and optionally drag-and-drop) to create an embedded image reference inside the document content; render those embedded images inline with optional caption when viewing/editing the document.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-session-export-import-for-the-host-add-save-session-export-and-load-session-import-controls-in-the-in-room-host-menu-controls-export-must-include-channels-all-chat-logs-for-all-channels-shared-documents-content-embedded-images-and-session-metadata-into-a-single-downloadable-file-import-must-restore-the-session-state-into-the-currently-hosted-session",
+      "title": "Implement session export/import for the host: add \"Save Session\" (export) and \"Load Session\" (import) controls in the in-room host menu/controls. Export must include channels, all chat logs for all channels, shared documents content, embedded images, and session metadata into a single downloadable file; import must restore the session state into the currently hosted session.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-new-sidebar-category-called-players-documents-that-supports-player-created-documents-separate-from-host-managed-shared-documents-players-can-create-rename-delete-their-own-player-documents-player-documents-can-be-marked-hidden-so-that-other-users-including-host-cannot-access-their-contents-while-still-allowing-host-to-see-metadata-in-the-list",
+      "title": "Add a new sidebar category called \"Players' Documents\" that supports player-created documents separate from host-managed shared documents. Players can create/rename/delete their own player documents; player documents can be marked \"Hidden\" so that other users (including host) cannot access their contents, while still allowing host to see metadata in the list.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-settings-support-for-loading-a-template-history-file-before-hosting-or-joining-provide-a-load-template-history-file-picker-in-settings-that-stores-the-selected-template-locally-and-applies-it-when-the-user-creates-a-new-session-as-host-and-optionally-when-joining-if-applicable",
+      "title": "Add Settings support for loading a template/history file before hosting or joining: provide a \"Load Template/History\" file picker in Settings that stores the selected template locally and applies it when the user creates a new session as host (and optionally when joining, if applicable).",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-dark-mode-so-that-toggling-the-dark-mode-setting-reliably-updates-the-app-ui-immediately-without-requiring-refresh-persists-across-reloads-and-is-applied-consistently-on-all-screens-login-prompt-lobby-settings-session",
+      "title": "Fix Dark Mode so that toggling the Dark Mode setting reliably updates the app UI immediately (without requiring refresh), persists across reloads, and is applied consistently on all screens (login prompt, lobby, settings, session).",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-preference-changes-in-the-pre-lobby-settings-screen-actually-apply-to-the-running-app-theme-background-image-nickname-template-by-ensuring-there-is-a-single-reactive-preferences-source-shared-across-the-app-no-stale-per-component-copies",
+      "title": "Make preference changes in the Pre‑Lobby Settings screen actually apply to the running app (theme, background image, nickname, template) by ensuring there is a single reactive preferences source shared across the app (no stale per-component copies).",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-profile-picture-support-to-user-profiles-allow-the-authenticated-user-to-upload-update-and-remove-a-profile-picture-from-the-settings-screen-with-a-preview-and-validation-image-only-reasonable-size-constraints",
+      "title": "Add profile picture support to user profiles: allow the authenticated user to upload, update, and remove a profile picture from the Settings screen, with a preview and validation (image-only, reasonable size constraints).",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-display-user-profile-pictures-in-session-show-avatars-alongside-chat-messages-and-at-minimum-for-the-message-author-with-sensible-fallbacks-e-g-initials-placeholder-when-a-user-has-no-profile-picture-or-it-cannot-be-loaded",
+      "title": "Display user profile pictures in-session: show avatars alongside chat messages (and at minimum for the message author) with sensible fallbacks (e.g., initials placeholder) when a user has no profile picture or it cannot be loaded.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Host/Join LAN session with nickname and optional password protection",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Lobby UI (host/join) and main session UI with sidebar navigation",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Real-time text chat with multiple channels/rooms managed by host",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Shared collaborative document areas (create/name/lock/delete) with real-time sync",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "LAN host discovery via UDP broadcast or mDNS with manual IP:port fallback",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Basic RPG tools: dice roller commands and turn/order tracker",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Optional basic shared image/map upload and viewing (host-provided)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Future stretch: local LLM-based AI assistance for NPC dialogue/descriptions/events",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Implement backend data model and APIs for creating and joining a session with a host-defined optional password and a user-provided nickname (no accounts/registration). A session must have: host identity, session name, optional password (stored as a salted hash), a member list (nickname + principal), and an initial default channel (e.g., “Main”).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Implement backend APIs for multi-channel chat within a session. The host can create, rename, and delete channels; all members can post messages to channels; messages include timestamp, author nickname, and channel id; and the backend returns messages per channel in chronological order.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Implement backend APIs for a basic shared document area within a session: host can create, rename, lock/unlock, and delete documents; members can read documents; members can edit documents only when unlocked; document updates are stored and versioned with a monotonic revision number for conflict avoidance.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Add backend RPG utilities for the MVP: (1) a dice roll parser and roller supporting patterns like “/roll d20+5” and “/roll 2d6+1”, producing a structured result (individual rolls, total, modifier); (2) a simple turn/order tracker per session that the host can set/reorder and everyone can view.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Add pre-lobby Settings screen with locally saved preferences (dark mode, custom background image, profile/nickname)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Support image upload and inline embedding in shared documents, with persistent host-side session storage and LAN sync",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Implement session persistence: host Save/Load current session state and export/import full session history (chat, docs, images) to/from a single file (e.g., ZIP/JSON)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Add “Players’ Documents” category: player-created docs with optional privacy (hidden contents), host sees metadata list but cannot view/edit hidden docs",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Support loading templates/history files to pre-populate channels/docs when hosting/joining (via Settings: Load Template/History)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Update backend types and APIs to support (a) persistent storage and retrieval of images associated with a session, (b) document content referencing images, (c) exporting/importing full session state, and (d) player document access control that enforces Hidden/private content rules.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-25",
+      "summary": "Add user profile pictures (set in Settings; displayed for users in-session and in chat/member UI)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-29",
+      "summary": "Extend the backend user profile model and APIs to store and serve an optional profile picture reference for each principal, using the existing backend storage approach (single-actor, existing blob storage mixin). Add APIs needed by the frontend to set/get the caller’s profile picture and to fetch other users’ profile picture metadata needed for display.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "MVP: Host/Join session with multi-channel chat and one shared document area",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

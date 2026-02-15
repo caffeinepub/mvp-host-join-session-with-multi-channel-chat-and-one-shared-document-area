@@ -1,0 +1,113 @@
+{
+  "kind": "build_request",
+  "title": "Fix dark mode + settings application flow; add user profile pictures in Settings and display in chat",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-18",
+      "text": "Fix Dark Mode so that toggling the Dark Mode setting reliably updates the app UI immediately (without requiring refresh), persists across reloads, and is applied consistently on all screens (login prompt, lobby, settings, session).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "- The dark mode doesn't work"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When the user toggles Dark Mode in Settings, the UI switches theme immediately while staying on the same page",
+        "After reloading the app, the previously selected theme is restored and applied before the main UI is shown",
+        "Dark Mode affects all screens (unauthenticated login screen, LobbyPage, PreLobbySettingsView, SessionPage) consistently"
+      ]
+    },
+    {
+      "id": "REQ-19",
+      "text": "Make preference changes in the Pre‑Lobby Settings screen actually apply to the running app (theme, background image, nickname, template) by ensuring there is a single reactive preferences source shared across the app (no stale per-component copies).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "- it seems there's no way to apply settings you changed"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Changing background image in Settings updates the background immediately on the Settings screen and when navigating back to the lobby without requiring a reload",
+        "Changing default nickname in Settings updates the Lobby host/join nickname prefill behavior within the same app session",
+        "Changes made in Settings are reflected in App.tsx theme/background application logic immediately (no refresh required)"
+      ]
+    },
+    {
+      "id": "REQ-20",
+      "text": "Add profile picture support to user profiles: allow the authenticated user to upload, update, and remove a profile picture from the Settings screen, with a preview and validation (image-only, reasonable size constraints).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "- add profile pictures for users and implement it on the settings"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Settings page includes a \"Profile Picture\" section with current avatar preview, an upload control, and a remove/clear action",
+        "Uploading a valid image updates the preview and persists so it is still present after reload and re-login",
+        "Uploading a non-image file shows an English error message and does not change the saved profile picture",
+        "Removing the profile picture clears the preview and persists after reload"
+      ]
+    },
+    {
+      "id": "REQ-21",
+      "text": "Extend the backend user profile model and APIs to store and serve an optional profile picture reference for each principal, using the existing backend storage approach (single-actor, existing blob storage mixin). Add APIs needed by the frontend to set/get the caller’s profile picture and to fetch other users’ profile picture metadata needed for display.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "- add profile pictures for users and implement it on the settings"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes an API to set/update the caller’s profile picture and an API to clear it",
+        "Backend exposes an API to retrieve a user’s profile picture (at least for the caller; and for other users where needed for in-session display)",
+        "Existing user profiles without a picture continue to work (picture is optional)",
+        "If existing stable state requires upgrade due to type changes, provide a conditional migration in backend/migration.mo that preserves existing data"
+      ]
+    },
+    {
+      "id": "REQ-22",
+      "text": "Display user profile pictures in-session: show avatars alongside chat messages (and at minimum for the message author) with sensible fallbacks (e.g., initials placeholder) when a user has no profile picture or it cannot be loaded.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "- add profile pictures for users and implement it on the settings"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each chat message shows an avatar next to the author name",
+        "If the author has no profile picture, a placeholder avatar is rendered (e.g., initials)",
+        "Avatar display does not break message rendering for roll messages or long content",
+        "Avatar fetching is performant (uses caching and does not refetch for every render)"
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or any files under frontend/src/components/ui (compose instead).",
+    "Backend must remain a single Motoko actor with all logic in backend/main.mo; only add/modify backend/migration.mo if required for stable state upgrades."
+  ],
+  "nonGoals": [
+    "Adding third-party authentication providers (only Internet Identity is supported).",
+    "Adding external databases or external file/image hosting services.",
+    "Implementing real-time presence or live member list syncing beyond existing polling mechanisms."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
