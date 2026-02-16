@@ -7,9 +7,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Settings } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
-const MIN_SCALE = 10;
-const MAX_SCALE = 200;
-const PRESET_SCALES = [50, 75, 100, 125, 150];
+const MIN_SCALE = 70;
+const MAX_SCALE = 130;
+const PRESET_SCALES = [70, 85, 100, 115, 130];
 
 export default function UiScaleControl() {
   const { preferences, updatePreferences } = usePreferences();

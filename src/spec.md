@@ -1,11 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Expand the UI scale setting to support a wider range from 10% to 200% while keeping all UI scale values safely within that range.
+**Goal:** Add a mobile-friendly Settings control in the Session sidebar header to adjust overall UI scale by percentage, persist the preference, and apply it across the entire Session page layout.
 
 **Planned changes:**
-- Update the UI scale slider to use a 10% minimum and 200% maximum, and clamp slider-driven updates to 10–200.
-- Update UI scale preset buttons so all preset values fall within 10–200 and cover small/normal/large options; selecting a preset updates both the stored value and the slider position.
-- Clamp persisted `uiScale` on preference load and on save/update so out-of-range values from localStorage cannot be applied to `--ui-scale`.
+- Add a Settings button in the Session sidebar header row (same area as the existing collapse/expand control) that opens a popover/dialog with a percentage-based UI scale control.
+- Persist the selected UI scale percentage in localStorage (preferences) and restore/apply it automatically on app load (default 100% when unset).
+- Apply the chosen scale across the whole Session UI (sidebar, header, chat, inputs) with immediate feedback, bounded min/max values, and without breaking scrolling/overflow or access to key controls on mobile.
 
-**User-visible outcome:** The UI scale settings popover allows scaling the UI from 10% up to 200% (via slider or presets), and the app will never apply a UI scale outside that range—even if an invalid value was previously stored.
+**User-visible outcome:** Users can open Settings from the Session sidebar header on mobile, adjust the app’s UI size by percentage, and have that preference remembered and applied automatically on future visits.

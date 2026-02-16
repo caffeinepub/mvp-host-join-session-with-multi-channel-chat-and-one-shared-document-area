@@ -1,72 +1,89 @@
 {
   "kind": "build_request",
-  "title": "Expand UI scale range to 10%–200%",
+  "title": "Add sidebar settings control to adjust UI scale by percentage (mobile)",
   "projectName": "Session Chat",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the UI scale control so the slider range is 10% minimum to 200% maximum (instead of 70%–130%), and ensure any slider-driven changes are clamped to 10–200.",
+      "text": "Add a Settings control (button with popover/dialog) inside the Session sidebar header area at XPath /html[1]/body[1]/div[1]/div[1]/div[3]/div[1]/div[1]/aside[1]/div[1] that lets the user adjust overall UI size by percentage.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "I need to make it from 10% to 200% instead of 70% to 130%"
+          "Add settings button here to adjust the ui size by Percentage because this is how the app looks like for mobile"
         ]
       },
       "acceptanceCriteria": [
-        "In the UI scale settings popover, the slider minimum is 10 and maximum is 200.",
-        "Dragging the slider cannot set uiScale below 10 or above 200 (value is clamped).",
-        "The displayed label reflects the current uiScale value in percent."
+        "A settings button is visible in the sidebar header row (same area as the existing collapse/expand button).",
+        "Activating the button opens a UI scale control expressed as a percentage (e.g., slider and/or preset buttons).",
+        "The scale control is usable on mobile (touch-friendly hit targets, readable labels)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Update the UI scale preset buttons to align with the new 10%–200% range (add/adjust presets so they cover small, normal, and large values within 10–200).",
+      "text": "Persist the selected UI scale percentage as a user preference in localStorage and restore it on app load.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "I need to make it from 10% to 200% instead of 70% to 130%"
+          "adjust the ui size by Percentage"
         ]
       },
       "acceptanceCriteria": [
-        "The preset buttons only contain values between 10 and 200 inclusive.",
-        "Clicking a preset sets the uiScale preference to that preset value and the slider updates accordingly."
+        "UI scale preference is stored in the existing preferences storage (localStorage-backed) and survives page refresh.",
+        "On reload, the previously selected percentage is applied automatically without requiring user action.",
+        "A reasonable default is used when no preference exists (e.g., 100%)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Harden preference loading/updating so a previously stored uiScale outside the 10%–200% range is automatically clamped into the valid range on load and when saving updates.",
+      "text": "Apply the chosen UI scale percentage to the app UI so that the interface becomes smaller/larger consistently (not just the sidebar), without breaking scrolling/overflow in the Session page layout.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "I need to make it from 10% to 200% instead of 70% to 130%"
+          "adjust the ui size by Percentage"
         ]
       },
       "acceptanceCriteria": [
-        "If localStorage contains an out-of-range uiScale value (e.g., 0 or 999), the app clamps it to the nearest valid value (10 or 200) and applies that clamped value to the UI scale CSS variable.",
-        "No part of the app applies a --ui-scale value corresponding to less than 10% or greater than 200%."
+        "Changing the percentage immediately updates the perceived UI size across the Session page (sidebar, header, chat area, inputs).",
+        "The Session page remains usable after scaling: content remains reachable via scrolling and key controls (message input, send button, sidebar toggle) stay accessible.",
+        "The scale range is bounded to prevent unusable extremes (e.g., min/max limits)."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui (shadcn components are read-only).",
-    "Do not change backend canister logic; UI scale remains a purely frontend/localStorage preference."
+    "Do not edit files under frontend/src/components/ui (read-only UI component sources).",
+    "Do not modify immutable paths listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx).",
+    "Keep backend unchanged; UI scaling must be implemented entirely in the frontend.",
+    "Place the new Settings button only within the selected sidebar header element at XPath /html[1]/body[1]/div[1]/div[1]/div[3]/div[1]/div[1]/aside[1]/div[1] (i.e., the top sidebar header row area)."
   ],
   "nonGoals": [
-    "Adding new settings unrelated to UI scaling.",
-    "Changing the overall UI scaling mechanism (keep using the existing --ui-scale and app-scale-wrapper approach)."
+    "Adding new authentication methods or third-party settings sync.",
+    "Changing server-side/session data models for UI scale.",
+    "Redesigning the entire Session page layout beyond what is necessary to support scaling."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [
+      "Add a persisted UI scale percentage setting for better mobile readability/fit."
+    ],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

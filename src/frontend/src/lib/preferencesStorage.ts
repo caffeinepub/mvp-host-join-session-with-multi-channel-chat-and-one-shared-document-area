@@ -14,30 +14,16 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   uiScale: 100,
 };
 
-const MIN_UI_SCALE = 10;
-const MAX_UI_SCALE = 200;
-
-export function clampUiScale(scale: number): number {
-  return Math.max(MIN_UI_SCALE, Math.min(MAX_UI_SCALE, scale));
-}
-
 export function loadPreferences(): UserPreferences {
   try {
     const stored = localStorage.getItem(PREFERENCES_KEY);
     if (!stored) return DEFAULT_PREFERENCES;
     
     const parsed = JSON.parse(stored);
-    const preferences = {
+    return {
       ...DEFAULT_PREFERENCES,
       ...parsed,
     };
-    
-    // Clamp uiScale to valid range
-    if (typeof preferences.uiScale === 'number') {
-      preferences.uiScale = clampUiScale(preferences.uiScale);
-    }
-    
-    return preferences;
   } catch (error) {
     console.error('Failed to load preferences:', error);
     return DEFAULT_PREFERENCES;
@@ -46,12 +32,7 @@ export function loadPreferences(): UserPreferences {
 
 export function savePreferences(preferences: UserPreferences): void {
   try {
-    // Clamp uiScale before saving
-    const clampedPreferences = {
-      ...preferences,
-      uiScale: clampUiScale(preferences.uiScale),
-    };
-    localStorage.setItem(PREFERENCES_KEY, JSON.stringify(clampedPreferences));
+    localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
   } catch (error) {
     console.error('Failed to save preferences:', error);
   }

@@ -2,9 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-ui-scale-control-so-the-slider-range-is-10-minimum-to-200-maximum-instead-of-70-130-and-ensure-any-slider-driven-changes-are-clamped-to-10-200",
-      "featureTitle": "Update the UI scale control so the slider range is 10% minimum to 200% maximum (instead of 70%–130%), and ensure any slider-driven changes are clamped to 10–200.",
+      "featureId": "feature-add-a-settings-control-button-with-popover-dialog-inside-the-session-sidebar-header-area-at-xpath-html-1-body-1-div-1-div-1-div-3-div-1-div-1-aside-1-div-1-that-lets-the-user-adjust-overall-ui-size-by-percentage",
+      "featureTitle": "Add a Settings control (button with popover/dialog) inside the Session sidebar header area at XPath /html[1]/body[1]/div[1]/div[1]/div[3]/div[1]/div[1]/aside[1]/div[1] that lets the user adjust overall UI size by percentage.",
       "files": [
+        "frontend/src/components/session/SessionSidebar.tsx",
         "frontend/src/components/settings/UiScaleControl.tsx"
       ],
       "components": [
@@ -22,10 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-ui-scale-preset-buttons-to-align-with-the-new-10-200-range-add-adjust-presets-so-they-cover-small-normal-and-large-values-within-10-200",
-      "featureTitle": "Update the UI scale preset buttons to align with the new 10%–200% range (add/adjust presets so they cover small, normal, and large values within 10–200).",
+      "featureId": "feature-persist-the-selected-ui-scale-percentage-as-a-user-preference-in-localstorage-and-restore-it-on-app-load",
+      "featureTitle": "Persist the selected UI scale percentage as a user preference in localStorage and restore it on app load.",
       "files": [
-        "frontend/src/components/settings/UiScaleControl.tsx"
+        "frontend/src/context/PreferencesContext.tsx",
+        "frontend/src/lib/preferencesStorage.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -42,11 +44,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-harden-preference-loading-updating-so-a-previously-stored-uiscale-outside-the-10-200-range-is-automatically-clamped-into-the-valid-range-on-load-and-when-saving-updates",
-      "featureTitle": "Harden preference loading/updating so a previously stored uiScale outside the 10%–200% range is automatically clamped into the valid range on load and when saving updates.",
+      "featureId": "feature-apply-the-chosen-ui-scale-percentage-to-the-app-ui-so-that-the-interface-becomes-smaller-larger-consistently-not-just-the-sidebar-without-breaking-scrolling-overflow-in-the-session-page-layout",
+      "featureTitle": "Apply the chosen UI scale percentage to the app UI so that the interface becomes smaller/larger consistently (not just the sidebar), without breaking scrolling/overflow in the Session page layout.",
       "files": [
-        "frontend/src/context/PreferencesContext.tsx",
-        "frontend/src/lib/preferencesStorage.ts"
+        "frontend/src/App.tsx",
+        "frontend/src/components/settings/UiScaleControl.tsx",
+        "frontend/src/index.css"
       ],
       "components": [
         "authorization@4.0.0",

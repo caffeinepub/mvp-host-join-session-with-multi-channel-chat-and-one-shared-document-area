@@ -1,30 +1,30 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "Project now includes a mobile UI scaling control via a settings button to adjust UI size by percentage.",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-update-the-ui-scale-control-so-the-slider-range-is-10-minimum-to-200-maximum-instead-of-70-130-and-ensure-any-slider-driven-changes-are-clamped-to-10-200",
-      "title": "Update the UI scale control so the slider range is 10% minimum to 200% maximum (instead of 70%–130%), and ensure any slider-driven changes are clamped to 10–200.",
+      "id": "feature-add-a-settings-control-button-with-popover-dialog-inside-the-session-sidebar-header-area-at-xpath-html-1-body-1-div-1-div-1-div-3-div-1-div-1-aside-1-div-1-that-lets-the-user-adjust-overall-ui-size-by-percentage",
+      "title": "Add a Settings control (button with popover/dialog) inside the Session sidebar header area at XPath /html[1]/body[1]/div[1]/div[1]/div[3]/div[1]/div[1]/aside[1]/div[1] that lets the user adjust overall UI size by percentage.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-ui-scale-preset-buttons-to-align-with-the-new-10-200-range-add-adjust-presets-so-they-cover-small-normal-and-large-values-within-10-200",
-      "title": "Update the UI scale preset buttons to align with the new 10%–200% range (add/adjust presets so they cover small, normal, and large values within 10–200).",
+      "id": "feature-persist-the-selected-ui-scale-percentage-as-a-user-preference-in-localstorage-and-restore-it-on-app-load",
+      "title": "Persist the selected UI scale percentage as a user preference in localStorage and restore it on app load.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-harden-preference-loading-updating-so-a-previously-stored-uiscale-outside-the-10-200-range-is-automatically-clamped-into-the-valid-range-on-load-and-when-saving-updates",
-      "title": "Harden preference loading/updating so a previously stored uiScale outside the 10%–200% range is automatically clamped into the valid range on load and when saving updates.",
+      "id": "feature-apply-the-chosen-ui-scale-percentage-to-the-app-ui-so-that-the-interface-becomes-smaller-larger-consistently-not-just-the-sidebar-without-breaking-scrolling-overflow-in-the-session-page-layout",
+      "title": "Apply the chosen UI scale percentage to the app UI so that the interface becomes smaller/larger consistently (not just the sidebar), without breaking scrolling/overflow in the Session page layout.",
       "reqIds": [
         "REQ-3"
       ],
@@ -34,11 +34,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Expand UI size/scale setting range to 10%–200% (instead of 70%–130%)",
+      "summary": "Add a settings button that lets users adjust UI size by percentage (for better mobile layout).",
       "reqIds": [],
       "status": "pending"
     }
   ],
+  "gameProjectType": "none",
   "projectName": "Session Chat",
   "clarification_mode": "instant",
   "clarification_rounds": 0

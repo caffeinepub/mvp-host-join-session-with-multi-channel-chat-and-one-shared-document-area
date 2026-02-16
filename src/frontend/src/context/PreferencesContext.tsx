@@ -3,7 +3,6 @@ import {
   loadPreferences,
   savePreferences,
   resetPreferences,
-  clampUiScale,
   type UserPreferences,
 } from '../lib/preferencesStorage';
 
@@ -31,19 +30,12 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
   // Apply UI scale changes immediately to document
   useEffect(() => {
-    const clampedScale = clampUiScale(preferences.uiScale);
-    const scale = clampedScale / 100;
+    const scale = preferences.uiScale / 100;
     document.documentElement.style.setProperty('--ui-scale', scale.toString());
   }, [preferences.uiScale]);
 
   const updatePreferences = (updates: Partial<UserPreferences>) => {
     const newPreferences = { ...preferences, ...updates };
-    
-    // Clamp uiScale if it's being updated
-    if (updates.uiScale !== undefined) {
-      newPreferences.uiScale = clampUiScale(updates.uiScale);
-    }
-    
     savePreferences(newPreferences);
     setPreferences(newPreferences);
   };

@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T22:23:53.227Z",
+  "generatedAt": "2026-02-16T22:18:38.115Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,37 +12,43 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the UI scale control so the slider range is 10% minimum to 200% maximum (instead of 70%–130%), and ensure any slider-driven changes are clamped to 10–200.",
+        "summary": "Add a Settings control (button with popover/dialog) inside the Session sidebar header area at XPath /html[1]/body[1]/div[1]/div[1]/div[3]/div[1]/div[1]/aside[1]/div[1] that lets the user adjust overall UI size by percentage.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/components/session/SessionSidebar.tsx",
           "frontend/src/components/settings/UiScaleControl.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/components/session/SessionSidebar.tsx",
           "frontend/src/components/settings/UiScaleControl.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Update the UI scale preset buttons to align with the new 10%–200% range (add/adjust presets so they cover small, normal, and large values within 10–200).",
+        "summary": "Persist the selected UI scale percentage as a user preference in localStorage and restore it on app load.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/settings/UiScaleControl.tsx"
+          "frontend/src/lib/preferencesStorage.ts",
+          "frontend/src/context/PreferencesContext.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/settings/UiScaleControl.tsx"
+          "frontend/src/lib/preferencesStorage.ts",
+          "frontend/src/context/PreferencesContext.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Harden preference loading/updating so a previously stored uiScale outside the 10%–200% range is automatically clamped into the valid range on load and when saving updates.",
+        "summary": "Apply the chosen UI scale percentage to the app UI so that the interface becomes smaller/larger consistently (not just the sidebar), without breaking scrolling/overflow in the Session page layout.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/preferencesStorage.ts",
-          "frontend/src/context/PreferencesContext.tsx"
+          "frontend/src/components/settings/UiScaleControl.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/lib/preferencesStorage.ts",
-          "frontend/src/context/PreferencesContext.tsx"
+          "frontend/src/components/settings/UiScaleControl.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/index.css"
         ]
       }
     ]
@@ -52,8 +58,11 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
+    "frontend/src/components/session/SessionSidebar.tsx",
     "frontend/src/components/settings/UiScaleControl.tsx",
     "frontend/src/context/PreferencesContext.tsx",
+    "frontend/src/index.css",
     "frontend/src/lib/preferencesStorage.ts",
     "project_state.json",
     "scratch/component-selection.json",

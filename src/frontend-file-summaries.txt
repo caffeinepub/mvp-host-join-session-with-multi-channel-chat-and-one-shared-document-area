@@ -16,7 +16,7 @@
   "frontend/src/lib/time.ts": "Timestamp formatting utility converting bigint nanoseconds to human-readable time strings.",
   "frontend/src/index.css": "Global styles with OKLCH color system using warm green accent palette, UI scale CSS variable (--ui-scale) with transform-based scaling applied to app wrapper, and chat-specific utility classes for reply indicators and text clamping.",
   "frontend/src/hooks/usePreferences.ts": "Re-exports usePreferences hook from PreferencesContext for backwards compatibility.",
-  "frontend/src/lib/preferencesStorage.ts": "LocalStorage-backed persistence layer for user preferences including theme mode, background image, default nickname, and UI scale percentage (default 100%, clamped to 10-200% range on load and save).",
+  "frontend/src/lib/preferencesStorage.ts": "LocalStorage-backed persistence layer for user preferences including theme mode, background image, default nickname, and UI scale percentage (default 100%).",
   "frontend/src/lib/templateHistoryStorage.ts": "LocalStorage helpers for saving, loading, clearing, and validating session template/history files for pre-lobby import.",
   "frontend/src/lib/sessionExportFile.ts": "Utilities for creating versioned session export files, downloading them, and parsing imported files with validation and error handling.",
   "frontend/src/lib/documentImageMarkers.ts": "Plain-text image embed marker utilities for creating, parsing, inserting, and removing image references in document content.",
@@ -26,7 +26,7 @@
   "frontend/src/components/docs/PlayerDocumentEditorView.tsx": "Player document editor with owner-only editing, file/image upload (properly guarded to prevent uploads until document is loaded), privacy toggle, Preview/Edit mode toggle, inline preview rendering, and embedded comments section with owner delete privileges passed via isHost prop.",
   "frontend/src/components/session/HostSessionSaveLoad.tsx": "Host-only dropdown menu for exporting session to file and importing session from file with confirmation dialog and error handling.",
   "frontend/index.html": "HTML entry point with early theme initialization script that reads preferences from localStorage and applies dark mode class before React renders to prevent flash.",
-  "frontend/src/context/PreferencesContext.tsx": "React context provider for user preferences with reactive state management, automatic theme and UI scale application to document element via CSS variables with clamping to 10-200% range, and exported storage key constant for diagnostics.",
+  "frontend/src/context/PreferencesContext.tsx": "React context provider for user preferences with reactive state management, automatic theme and UI scale application to document element via CSS variables, and exported storage key constant for diagnostics.",
   "frontend/src/hooks/useUserProfile.ts": "React Query hooks for fetching and updating user profiles including profile pictures, with caching and proper invalidation.",
   "frontend/src/components/profile/Avatar.tsx": "Reusable avatar component that displays profile pictures with fallback to initials, handles image load errors gracefully.",
   "frontend/src/components/profile/ProfilePictureSection.tsx": "Profile picture management component with upload, preview, remove functionality, progress tracking, and validation for image files up to 5MB.",
@@ -46,5 +46,5 @@
   "frontend/src/components/session/SessionDocumentsDialog.tsx": "Modal dialog for managing session documents with list view, create/rename/delete actions, and document selection for editing.",
   "frontend/src/components/docs/DocumentContentPreview.tsx": "Read-only preview component that parses document content, splits it into text and file segments, and renders text with preserved line breaks and inline images/files at their marker positions.",
   "frontend/docs/regression-test-plan-player-document-uploads.md": "Focused manual test plan covering player document uploads (private and shared), file/image upload validation, upload button disabled states, error handling, and regression checks for session document uploads.",
-  "frontend/src/components/settings/UiScaleControl.tsx": "Popover component with slider (10-200%) and preset buttons (50%, 75%, 100%, 125%, 150%) for adjusting UI scale percentage, with touch-friendly controls and immediate preference updates."
+  "frontend/src/components/settings/UiScaleControl.tsx": "Popover component with slider (70-130%) and preset buttons for adjusting UI scale percentage, with touch-friendly controls and immediate preference updates."
 }

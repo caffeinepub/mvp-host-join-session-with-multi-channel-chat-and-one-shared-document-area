@@ -1,56 +1,73 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Expand UI scale range to 10%–200%",
+  "title": "Sidebar Settings UI scale control (mobile) with localStorage persistence",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Expand the UI scale slider range to 10%–200% and clamp slider-driven updates to that range.",
+      "summary": "Add a touch-friendly Settings button in the Session sidebar header that opens a popover/dialog to adjust UI scale percentage.",
       "acceptanceCriteria": [
-        "In the UI scale settings popover, the slider minimum is 10 and maximum is 200.",
-        "Dragging the slider cannot set uiScale below 10 or above 200 (value is clamped).",
-        "The displayed label reflects the current uiScale value in percent."
+        "A settings button is visible in the sidebar header row (same area as the existing collapse/expand button).",
+        "Activating the button opens a UI scale control expressed as a percentage (e.g., slider and/or preset buttons).",
+        "The scale control is usable on mobile (touch-friendly hit targets, readable labels)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/settings/UiScaleControl.tsx",
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
           "operation": "modify",
-          "description": "Update MIN_SCALE/MAX_SCALE to 10/200, ensure Slider min/max match, and keep onValueChange clamping so slider interactions cannot push uiScale outside 10–200 while preserving the percent label display."
+          "description": "Add a Settings button within the existing sidebar header row container (same area as the collapse/expand button) and wire it to open a scale control UI. Use shadcn-ui components already used in this file (e.g., Button/Tooltip/DropdownMenu-style popover) to ensure consistent styling and mobile-friendly hit targets. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/settings/UiScaleControl.tsx",
+          "operation": "create",
+          "description": "Create a small Settings popover/dialog content component that renders a UI scale control in percentage (e.g., slider and/or preset percentage buttons), calling preferences update on change. Prefer shadcn-ui primitives for popover/dialog, slider, buttons, and labels to ensure accessible/touch-friendly interaction. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Adjust UI scale preset buttons to provide small/normal/large choices within the new 10%–200% range and keep slider in sync.",
+      "summary": "Persist UI scale percentage in the existing localStorage-backed preferences and restore on app load.",
       "acceptanceCriteria": [
-        "The preset buttons only contain values between 10 and 200 inclusive.",
-        "Clicking a preset sets the uiScale preference to that preset value and the slider updates accordingly."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/settings/UiScaleControl.tsx",
-          "operation": "modify",
-          "description": "Replace PRESET_SCALES with a set of values spanning small/normal/large within 10–200 (inclusive), and ensure preset clicks route through the same clamping rules so state + slider value remain consistent."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Clamp persisted uiScale on load and on updates so out-of-range stored values never apply to the --ui-scale CSS variable.",
-      "acceptanceCriteria": [
-        "If localStorage contains an out-of-range uiScale value (e.g., 0 or 999), the app clamps it to the nearest valid value (10 or 200) and applies that clamped value to the UI scale CSS variable.",
-        "No part of the app applies a --ui-scale value corresponding to less than 10% or greater than 200%."
+        "UI scale preference is stored in the existing preferences storage (localStorage-backed) and survives page refresh.",
+        "On reload, the previously selected percentage is applied automatically without requiring user action.",
+        "A reasonable default is used when no preference exists (e.g., 100%)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/lib/preferencesStorage.ts",
           "operation": "modify",
-          "description": "Introduce a shared UI scale clamp helper and apply it when loading preferences from localStorage and when saving preferences, ensuring stored uiScale is normalized into the 10–200 range."
+          "description": "Extend the existing UserPreferences type and DEFAULT_PREFERENCES to include a UI scale percentage preference (default 100). Ensure loadPreferences merges stored values safely and savePreferences persists the new field."
         },
         {
           "path": "frontend/src/context/PreferencesContext.tsx",
           "operation": "modify",
-          "description": "Harden preference application by clamping uiScale before (a) saving updates and (b) applying the --ui-scale CSS variable, guaranteeing the DOM never receives a scale outside 10%–200% even if state is somehow corrupted."
+          "description": "Ensure the preferences provider applies/restores the stored UI scale preference on load by propagating it into a global CSS variable (or equivalent mechanism) alongside the existing theme application logic."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Apply the selected UI scale across the entire Session app UI without breaking scrolling/overflow, with bounded min/max limits.",
+      "acceptanceCriteria": [
+        "Changing the percentage immediately updates the perceived UI size across the Session page (sidebar, header, chat area, inputs).",
+        "The Session page remains usable after scaling: content remains reachable via scrolling and key controls (message input, send button, sidebar toggle) stay accessible.",
+        "The scale range is bounded to prevent unusable extremes (e.g., min/max limits)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/settings/UiScaleControl.tsx",
+          "operation": "modify",
+          "description": "Enforce bounded min/max scale values (e.g., 70–130%) and clamp any direct input/preset selection accordingly; update the preference immediately so the UI updates live. Prefer shadcn-ui controls for a consistent mobile UX. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wrap the rendered application content in a single scaling container (e.g., a root wrapper div) that reads the global CSS scale variable so scaling applies consistently across Session layout (sidebar/header/chat/doc editors). Keep structure compatible with existing layout and error boundary/provider setup."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add global styles to support whole-app scaling using a CSS variable (e.g., --ui-scale) with a safe default (1). Implement scaling in a way that preserves scroll/overflow usability (e.g., scale via transform/zoom plus compensating width/height rules on the app wrapper and appropriate transform-origin)."
         }
       ]
     }
