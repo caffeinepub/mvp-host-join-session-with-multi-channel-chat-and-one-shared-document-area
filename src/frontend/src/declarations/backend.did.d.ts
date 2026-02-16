@@ -10,11 +10,17 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export type AddImageToDocumentResponse = { 'ok' : bigint } |
+  { 'error' : string };
 export interface Channel {
   'id' : bigint,
   'name' : string,
   'createdBy' : Principal,
 }
+export type CreateDocumentResponse = { 'ok' : bigint } |
+  { 'error' : string };
+export type CreatePlayerDocumentResponse = { 'ok' : bigint } |
+  { 'error' : string };
 export interface DiceRollResult {
   'pattern' : string,
   'total' : bigint,
@@ -68,12 +74,18 @@ export interface JoinSessionRequest {
   'password' : [] | [string],
   'sessionId' : bigint,
 }
+export interface MembersChannel {
+  'id' : bigint,
+  'name' : string,
+  'createdBy' : Principal,
+}
 export interface Message {
   'id' : bigint,
   'content' : string,
   'channelId' : bigint,
   'author' : string,
   'timestamp' : bigint,
+  'image' : [] | [ExternalBlob],
 }
 export interface PlayerDocument {
   'id' : bigint,
@@ -102,6 +114,7 @@ export interface Session {
   'name' : string,
   'createdAt' : bigint,
   'channels' : Array<Channel>,
+  'membersChannels' : Array<MembersChannel>,
   'passwordHash' : [] | [Uint8Array],
   'lastActive' : bigint,
 }
@@ -132,6 +145,8 @@ export interface TurnOrder {
   'order' : Array<string>,
   'sessionId' : bigint,
 }
+export type UploadDocumentFileResponse = { 'ok' : bigint } |
+  { 'error' : string };
 export interface UploadFileRequest {
   'file' : ExternalBlob,
   'size' : bigint,
@@ -176,18 +191,27 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addImageToDocument' : ActorMethod<
     [bigint, bigint, string, string, bigint, bigint],
-    StandardResponse
+    AddImageToDocumentResponse
+  >,
+  'addImageToPlayerDocument' : ActorMethod<
+    [bigint, string, string, bigint, bigint],
+    AddImageToDocumentResponse
   >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createChannel' : ActorMethod<[bigint, string], StandardResponse>,
-  'createDocument' : ActorMethod<[bigint, string, string], StandardResponse>,
+  'createDocument' : ActorMethod<
+    [bigint, string, string],
+    CreateDocumentResponse
+  >,
+  'createMembersChannel' : ActorMethod<[bigint, string], StandardResponse>,
   'createPlayerDocument' : ActorMethod<
     [bigint, string, string, boolean],
-    StandardResponse
+    CreatePlayerDocumentResponse
   >,
   'createSession' : ActorMethod<[SessionCreateRequest], Session>,
   'deleteChannel' : ActorMethod<[bigint, bigint], StandardResponse>,
   'deleteDocument' : ActorMethod<[bigint], StandardResponse>,
+  'deleteMembersChannel' : ActorMethod<[bigint, bigint], StandardResponse>,
   'deletePlayerDocument' : ActorMethod<[bigint], StandardResponse>,
   'editDocument' : ActorMethod<[bigint, string], StandardResponse>,
   'editPlayerDocument' : ActorMethod<[bigint, string], StandardResponse>,
@@ -204,6 +228,7 @@ export interface _SERVICE {
   'getDocumentWithImages' : ActorMethod<[bigint], [] | [DocumentWithImages]>,
   'getImageReferences' : ActorMethod<[bigint], Array<ImageReference>>,
   'getImages' : ActorMethod<[bigint], Array<ImageReference>>,
+  'getMembersChannels' : ActorMethod<[bigint], Array<MembersChannel>>,
   'getMessages' : ActorMethod<[bigint, bigint], Array<Message>>,
   'getPlayerDocument' : ActorMethod<[bigint], [] | [PlayerDocument]>,
   'getSession' : ActorMethod<[bigint], [] | [Session]>,
@@ -222,10 +247,17 @@ export interface _SERVICE {
   'listSessions' : ActorMethod<[], Array<Session>>,
   'lockDocument' : ActorMethod<[bigint], StandardResponse>,
   'nextTurn' : ActorMethod<[bigint], StandardResponse>,
-  'postMessage' : ActorMethod<[bigint, bigint, string], StandardResponse>,
+  'postMessage' : ActorMethod<
+    [bigint, bigint, string, [] | [ExternalBlob]],
+    StandardResponse
+  >,
   'removeProfilePicture' : ActorMethod<[], undefined>,
   'renameChannel' : ActorMethod<[bigint, bigint, string], StandardResponse>,
   'renameDocument' : ActorMethod<[bigint, string], StandardResponse>,
+  'renameMembersChannel' : ActorMethod<
+    [bigint, bigint, string],
+    StandardResponse
+  >,
   'renamePlayerDocument' : ActorMethod<[bigint, string], StandardResponse>,
   'roll' : ActorMethod<[bigint, string], DiceRollResult>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
@@ -235,7 +267,10 @@ export interface _SERVICE {
   >,
   'setTurnOrder' : ActorMethod<[bigint, Array<string>], StandardResponse>,
   'unlockDocument' : ActorMethod<[bigint], StandardResponse>,
-  'uploadDocumentFile' : ActorMethod<[UploadFileRequest], StandardResponse>,
+  'uploadDocumentFile' : ActorMethod<
+    [UploadFileRequest],
+    UploadDocumentFileResponse
+  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

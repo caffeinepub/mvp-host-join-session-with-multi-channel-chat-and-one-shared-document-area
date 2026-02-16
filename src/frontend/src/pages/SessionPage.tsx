@@ -4,13 +4,13 @@ import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useSessionData } from '../hooks/useSessionData';
 import { useListPlayerDocuments } from '../hooks/usePlayerDocuments';
 import type { SessionContext } from '../App';
-import type { Channel, Document, PlayerDocument } from '../backend';
+import type { Channel, MembersChannel, PlayerDocument } from '../backend';
 import SessionSidebar from '../components/session/SessionSidebar';
 import ChannelChatView from '../components/chat/ChannelChatView';
-import DocumentEditorView from '../components/docs/DocumentEditorView';
 import PlayerDocumentEditorView from '../components/docs/PlayerDocumentEditorView';
+import PlayerDocumentsDialog from '../components/session/PlayerDocumentsDialog';
 import { Button } from '../components/ui/button';
-import { LogOut, ArrowLeft, Users } from 'lucide-react';
+import { LogOut, ArrowLeft, Users, FileText } from 'lucide-react';
 import { Separator } from '../components/ui/separator';
 
 type SessionPageProps = {
@@ -19,29 +19,27 @@ type SessionPageProps = {
   onLogout: () => void;
 };
 
-type ViewType = 'channel' | 'document' | 'playerDocument';
+type ViewType = 'channel' | 'playerDocument';
 
 export default function SessionPage({ sessionContext, onLeaveSession, onLogout }: SessionPageProps) {
   const { actor } = useActor();
   const { identity } = useInternetIdentity();
   const [viewType, setViewType] = useState<ViewType>('channel');
   const [selectedChannelId, setSelectedChannelId] = useState<bigint | null>(null);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<bigint | null>(null);
   const [selectedPlayerDocumentId, setSelectedPlayerDocumentId] = useState<bigint | null>(null);
+  const [showPlayerDocuments, setShowPlayerDocuments] = useState(false);
 
   const {
     session,
     channels,
-    documents,
+    membersChannels,
     messages,
-    currentDocument,
     isLoading,
     refetchSession,
     refetchChannels,
-    refetchDocuments,
+    refetchMembersChannels,
     refetchMessages,
-    refetchDocument,
-  } = useSessionData(sessionContext.sessionId, selectedChannelId, selectedDocumentId);
+  } = useSessionData(sessionContext.sessionId, selectedChannelId);
 
   const { data: playerDocuments, refetch: refetchPlayerDocuments } = useListPlayerDocuments(sessionContext.sessionId);
 
@@ -55,22 +53,26 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
 
   const handleSelectChannel = (channel: Channel) => {
     setSelectedChannelId(channel.id);
-    setSelectedDocumentId(null);
     setSelectedPlayerDocumentId(null);
     setViewType('channel');
   };
 
-  const handleSelectDocument = (doc: Document) => {
-    setSelectedDocumentId(doc.id);
-    setSelectedChannelId(null);
+  const handleSelectMembersChannel = (channel: MembersChannel) => {
+    setSelectedChannelId(channel.id);
     setSelectedPlayerDocumentId(null);
-    setViewType('document');
+    setViewType('channel');
   };
 
   const handleSelectPlayerDocument = (doc: PlayerDocument) => {
     setSelectedPlayerDocumentId(doc.id);
     setSelectedChannelId(null);
-    setSelectedDocumentId(null);
+    setViewType('playerDocument');
+    setShowPlayerDocuments(false);
+  };
+
+  const handlePlayerDocumentCreated = (documentId: bigint) => {
+    setSelectedPlayerDocumentId(documentId);
+    setSelectedChannelId(null);
     setViewType('playerDocument');
   };
 
@@ -95,6 +97,11 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowPlayerDocuments(true)}>
+            <FileText className="mr-2 h-4 w-4" />
+            Player Documents
+          </Button>
+          <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users className="h-4 w-4" />
             <span>{session?.members.length || 0} members</span>
@@ -112,18 +119,13 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
         <SessionSidebar
           sessionId={sessionContext.sessionId}
           channels={channels || []}
-          documents={documents || []}
-          playerDocuments={playerDocuments || []}
+          membersChannels={membersChannels || []}
           selectedChannelId={selectedChannelId}
-          selectedDocumentId={selectedDocumentId}
-          selectedPlayerDocumentId={selectedPlayerDocumentId}
           isHost={isHost}
           onSelectChannel={handleSelectChannel}
-          onSelectDocument={handleSelectDocument}
-          onSelectPlayerDocument={handleSelectPlayerDocument}
+          onSelectMembersChannel={handleSelectMembersChannel}
           onChannelsChanged={refetchChannels}
-          onDocumentsChanged={refetchDocuments}
-          onPlayerDocumentsChanged={refetchPlayerDocuments}
+          onMembersChannelsChanged={refetchMembersChannels}
         />
 
         {/* Main Panel */}
@@ -132,18 +134,15 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
             <ChannelChatView
               sessionId={sessionContext.sessionId}
               channelId={selectedChannelId}
-              channelName={channels?.find((c) => c.id === selectedChannelId)?.name || ''}
+              channelName={
+                channels?.find((c) => c.id === selectedChannelId)?.name ||
+                membersChannels?.find((c) => c.id === selectedChannelId)?.name ||
+                ''
+              }
               nickname={sessionContext.nickname}
               messages={messages || []}
               members={session?.members || []}
               onMessagesChanged={refetchMessages}
-            />
-          )}
-          {viewType === 'document' && selectedDocumentId && currentDocument && (
-            <DocumentEditorView
-              document={currentDocument}
-              isHost={isHost}
-              onDocumentChanged={refetchDocument}
             />
           )}
           {viewType === 'playerDocument' && selectedPlayerDocumentId && (
@@ -152,13 +151,22 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
               onDocumentChanged={refetchPlayerDocuments}
             />
           )}
-          {!selectedChannelId && !selectedDocumentId && !selectedPlayerDocumentId && (
+          {!selectedChannelId && !selectedPlayerDocumentId && (
             <div className="h-full flex items-center justify-center text-muted-foreground">
-              <p>Select a channel or document to get started</p>
+              <p>Select a channel to get started</p>
             </div>
           )}
         </main>
       </div>
+
+      {/* Player Documents Dialog */}
+      <PlayerDocumentsDialog
+        sessionId={sessionContext.sessionId}
+        open={showPlayerDocuments}
+        onOpenChange={setShowPlayerDocuments}
+        onSelectDocument={handleSelectPlayerDocument}
+        onDocumentCreated={handlePlayerDocumentCreated}
+      />
     </div>
   );
 }

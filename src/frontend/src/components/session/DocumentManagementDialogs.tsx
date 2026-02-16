@@ -33,6 +33,7 @@ type DocumentManagementDialogsProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onSuccess: () => void;
+  onCreated?: (documentId: bigint) => void;
 };
 
 export default function DocumentManagementDialogs({
@@ -42,6 +43,7 @@ export default function DocumentManagementDialogs({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   onSuccess,
+  onCreated,
 }: DocumentManagementDialogsProps) {
   const { actor } = useActor();
   const [showRename, setShowRename] = useState(false);
@@ -70,10 +72,12 @@ export default function DocumentManagementDialogs({
         return;
       }
 
+      const documentId = result.ok;
       setName('');
       setContent('');
       if (controlledOnOpenChange) controlledOnOpenChange(false);
       onSuccess();
+      if (onCreated) onCreated(documentId);
     } catch (err: any) {
       setError(err.message || 'Failed to create document');
     } finally {

@@ -36,9 +36,11 @@ export function useUploadDocumentFile() {
   return useMutation({
     mutationFn: async (request: UploadFileRequest) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.uploadDocumentFile(request);
+      const result = await actor.uploadDocumentFile(request);
+      return result;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
+      // Invalidate the document files list to refresh the UI
       queryClient.invalidateQueries({
         queryKey: ['documentFiles', variables.documentId.toString()],
       });

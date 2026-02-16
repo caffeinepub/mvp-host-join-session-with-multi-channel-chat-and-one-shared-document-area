@@ -1,12 +1,16 @@
 # Specification
 
 ## Summary
-**Goal:** Add a “PLAYERS' DOCUMENTS” section to the session sidebar, enable opening player-owned documents in the main panel, and add a per-document privacy toggle that hides documents from other session members.
+**Goal:** Replace host Documents and sidebar Player Documents navigation with Members' Channels, enforce player document privacy, and fix the app getting stuck on “Initializing...” after login.
 
 **Planned changes:**
-- Add a new sidebar section labeled “PLAYERS' DOCUMENTS” below the existing “Documents” section, listing player documents for the active session and allowing selection.
-- Update Session page navigation/state to support selecting and rendering a player document in the main panel using the existing `PlayerDocumentEditorView`.
-- Add an owner-only “Private” (or “Hide from others”) toggle for each player document and wire it to a backend update so the UI reflects the current privacy state.
-- Enforce privacy on the backend so private player documents are excluded from non-owner list results and cannot be fetched/edited by non-owners.
+- Remove the host-owned “Documents” feature from the UI (sidebar section, document CRUD/lock controls, and the host document editor route/view).
+- Add “Members' Channels” as a new session feature, separate from host-managed “Channels,” with list + selectable chat behavior.
+- Implement backend APIs/storage for Members' Channels (list/create/rename/delete) independent from existing host Channels.
+- Enforce Members' Channels permissions: any session member can create; creator can rename/delete their own; host can rename/delete any; only session members can access/list them.
+- Remove the “Players' Documents” sidebar section and replace it with “Members' Channels” navigation (no broken imports/references).
+- Add a per-player-document privacy toggle (“Private” or “Hide from others”) in the player document UI; only the document owner can change it; state persists and reflects after refresh/refetch.
+- Enforce player document privacy on the backend so private player docs are not listed/fetchable/editable by non-authorized members (owner, and host only if that policy is chosen).
+- Fix the post-login initialization flow so authenticated users reliably leave “Initializing...”; show a recoverable error state on init failure; ensure normal login lands on Lobby and restored session lands on Session.
 
-**User-visible outcome:** Session members see a new “PLAYERS' DOCUMENTS” sidebar section; selecting an item opens that player document in the main panel. Document owners can toggle a document as Private/Hidden so other members no longer see or can open it; when not private, other members can access it according to existing permissions.
+**User-visible outcome:** The Session UI no longer includes host Documents; members can create and use Members’ Channels chat alongside host Channels; player documents can be marked Private to hide them from other members; and the app no longer hangs on “Initializing...” after login.

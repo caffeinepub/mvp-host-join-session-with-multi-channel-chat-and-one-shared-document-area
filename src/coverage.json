@@ -1,64 +1,111 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T00:46:25.284Z",
+  "generatedAt": "2026-02-16T02:32:15.206Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 3,
+    "total": 7,
+    "implemented": 5,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a new sidebar section directly below the existing \"Documents\" section titled \"PLAYERS' DOCUMENTS\" that lists player-owned documents for the current session and allows selecting a player document to open it in the main panel.",
+        "summary": "Remove the host-owned \"Documents\" feature from the app UI, including sidebar section, creation/rename/delete/lock controls, and the document editor view, so session navigation no longer offers host documents.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx"
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/hooks/useSessionData.ts"
         ],
         "matchedFiles": [
           "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx"
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/hooks/useSessionData.ts"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Update the Session page navigation/state so it supports selecting and rendering a player document in the main panel (in addition to channels and shared documents), using the existing PlayerDocumentEditorView for the selected player document.",
+        "summary": "Add a new session feature called \"Members' Channels\" that behaves like the existing chat channels feature (list + selectable to open chat), but is distinct from the host-managed \"Channels\" list.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/hooks/useSessionData.ts",
+          "frontend/src/components/session/SessionSidebar.tsx",
           "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
           "frontend/src/components/session/SessionSidebar.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/hooks/useSessionData.ts",
+          "frontend/src/components/session/SessionSidebar.tsx",
           "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
           "frontend/src/components/session/SessionSidebar.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Add a simple per-player-document privacy control as a toggle/checkbox labeled \"Private\" (or \"Hide from others\") for the document owner; when enabled, the document is not visible to any other session members; when disabled, the document is visible and behaves like a shared doc for viewing/editing (as allowed by the app’s current permissions model).",
+        "summary": "Define and enforce permissions for Members' Channels: any session member can create a Members' Channel; the channel creator can rename/delete their own Members' Channels; the session host can rename/delete any Members' Channel.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
-          "frontend/src/hooks/usePlayerDocuments.ts",
-          "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx"
+          "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx",
+          "frontend/src/pages/SessionPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
-          "frontend/src/hooks/usePlayerDocuments.ts",
-          "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx"
+          "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx",
+          "frontend/src/pages/SessionPage.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Enforce privacy on the backend so that when a player document is marked Private/hidden, only the document owner can fetch its content (and it is excluded from list responses for non-owners).",
+        "summary": "Remove the \"Players' Documents\" section from the sidebar and replace it with \"Members' Channels\" navigation, while preserving the requested per-player-document privacy control behavior for any remaining player-document access paths in the app.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/session/SessionSidebar.tsx",
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/session/PlayerDocumentsDialog.tsx",
+          "frontend/src/pages/SessionPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/session/SessionSidebar.tsx",
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/session/PlayerDocumentsDialog.tsx",
+          "frontend/src/pages/SessionPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Add a simple privacy toggle control labeled \"Private\" (or \"Hide from others\") on each player document (where player documents are created/managed/edited) and ensure it updates the player document privacy state.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
+          "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
+          "frontend/src/hooks/usePlayerDocuments.ts"
+        ],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Enforce player document privacy on the backend: when a player document is private, only its owner (and optionally the host if you choose that policy) can list, fetch, or edit it; other session members must not see it in lists or be able to open it.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Fix the post-login app state where the UI remains stuck on the \"Initializing...\" screen by identifying and correcting the blocking condition(s) in frontend initialization and/or backend calls so authenticated users reliably reach the Lobby or Session UI.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useActor.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/hooks/useUserProfile.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/App.tsx"
+        ]
       }
     ]
   },
@@ -69,14 +116,15 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
-    "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
+    "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
+    "frontend/src/components/session/PlayerDocumentsDialog.tsx",
     "frontend/src/components/session/SessionSidebar.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/usePlayerDocuments.ts",
+    "frontend/src/hooks/useSessionData.ts",
     "frontend/src/pages/SessionPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",

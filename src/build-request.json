@@ -1,72 +1,109 @@
 {
   "kind": "build_request",
-  "title": "Add Players' Documents sidebar section and per-document privacy toggle",
-  "priority": "normal",
+  "title": "Replace Documents with Members' Channels and enforce Player Document privacy visibility",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a new sidebar section directly below the existing \"Documents\" section titled \"PLAYERS' DOCUMENTS\" that lists player-owned documents for the current session and allows selecting a player document to open it in the main panel.",
+      "text": "Remove the host-owned \"Documents\" feature from the app UI, including sidebar section, creation/rename/delete/lock controls, and the document editor view, so session navigation no longer offers host documents.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-players-docs"
+          "msg-3",
+          "msg-10"
         ],
         "quotes": [
-          "Add a new section below DOCUMENTS called \"PLAYERS' DOCUMENTS\""
+          "Remove documents and players' documents and add something called members' channels",
+          "It's still Initializing"
         ]
       },
       "acceptanceCriteria": [
-        "Session sidebar shows a new header \"PLAYERS' DOCUMENTS\" below \"Documents\".",
-        "The section displays a list of player documents returned for the active session.",
-        "Clicking a player document switches the main panel to that player document view."
+        "The Session sidebar no longer renders a \"Documents\" section.",
+        "The Session main panel no longer routes to or renders the host document editor view.",
+        "No UI entry points remain for create/rename/delete/lock host documents."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Update the Session page navigation/state so it supports selecting and rendering a player document in the main panel (in addition to channels and shared documents), using the existing PlayerDocumentEditorView for the selected player document.",
-      "target": "frontend",
+      "text": "Add a new session feature called \"Members' Channels\" that behaves like the existing chat channels feature (list + selectable to open chat), but is distinct from the host-managed \"Channels\" list.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-user-players-docs"
+          "msg-10"
         ],
         "quotes": [
-          "Add a new section below DOCUMENTS called \"PLAYERS' DOCUMENTS\""
+          "add something called members' channels it's same as channels"
         ]
       },
       "acceptanceCriteria": [
-        "SessionPage supports a third view type for player documents.",
-        "Selecting a player document renders PlayerDocumentEditorView with the selected player document id.",
-        "Switching between channel/shared document/player document updates the main panel accordingly without breaking existing channel/document behavior."
+        "Backend exposes APIs to list Members' Channels for a session and to create/rename/delete a Members' Channel.",
+        "Frontend sidebar displays a \"Members' Channels\" section and selecting an item opens the chat view for that channel.",
+        "Members' Channels are stored and returned independently from the existing host \"Channels\" list (no mixing in the UI)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add a simple per-player-document privacy control as a toggle/checkbox labeled \"Private\" (or \"Hide from others\") for the document owner; when enabled, the document is not visible to any other session members; when disabled, the document is visible and behaves like a shared doc for viewing/editing (as allowed by the app’s current permissions model).",
+      "text": "Define and enforce permissions for Members' Channels: any session member can create a Members' Channel; the channel creator can rename/delete their own Members' Channels; the session host can rename/delete any Members' Channel.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-user-players-docs"
+          "msg-10"
         ],
         "quotes": [
-          "Add a simple toggle/checkbox on each player's document: \"Hide from others\" (or \"Private\")",
-          "If it's checked none of the members can see it",
-          "If unchecked → everyone sees/edits it like shared docs."
+          "members' channels it's same as channels"
         ]
       },
       "acceptanceCriteria": [
-        "For the owner of a player document, the UI shows a clearly labeled checkbox/toggle: \"Private\" (or \"Hide from others\").",
-        "Toggling the control updates the document’s visibility via the backend API and the UI reflects the new state.",
-        "When a player document is Private, other session members cannot open it and do not see it listed in the \"PLAYERS' DOCUMENTS\" section.",
-        "When a player document is not Private, other session members can open it; editing behavior matches the app’s intended permissions for non-owners (if non-owners are allowed to edit, edits persist; otherwise they are read-only)."
+        "A non-host session member can create a Members' Channel successfully.",
+        "A non-host session member cannot rename/delete a Members' Channel they did not create (receives an error).",
+        "The session host can rename/delete any Members' Channel.",
+        "Only session members can list or access Members' Channels for that session."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Enforce privacy on the backend so that when a player document is marked Private/hidden, only the document owner can fetch its content (and it is excluded from list responses for non-owners).",
+      "text": "Remove the \"Players' Documents\" section from the sidebar and replace it with \"Members' Channels\" navigation, while preserving the requested per-player-document privacy control behavior for any remaining player-document access paths in the app.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-10"
+        ],
+        "quotes": [
+          "Remove documents and players' documents and add something called members' channels",
+          "Add a simple toggle/checkbox on each player's document: \"Hide from others\" (or \"Private\")"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The sidebar no longer displays the header text \"Players' Documents\".",
+        "The sidebar instead displays \"Members' Channels\" (user-facing text in English).",
+        "No broken imports or references remain to the removed sidebar Player Documents section UI."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Add a simple privacy toggle control labeled \"Private\" (or \"Hide from others\") on each player document (where player documents are created/managed/edited) and ensure it updates the player document privacy state.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-10"
+        ],
+        "quotes": [
+          "Add a simple toggle/checkbox on each player's document: \"Hide from others\" (or \"Private\")"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Player document UI contains a clearly labeled privacy toggle control in English (\"Private\" or \"Hide from others\").",
+        "Toggling the control updates the document privacy state and the UI reflects the new state after refresh/refetch.",
+        "When the current user is not the document owner, the privacy toggle is not editable."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Enforce player document privacy on the backend: when a player document is private, only its owner (and optionally the host if you choose that policy) can list, fetch, or edit it; other session members must not see it in lists or be able to open it.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-user-players-docs"
+          "msg-10"
         ],
         "quotes": [
           "If it's checked none of the members can see it",
@@ -74,22 +111,40 @@
         ]
       },
       "acceptanceCriteria": [
-        "Backend listPlayerDocuments(sessionId) returns only documents that are visible OR owned by the caller.",
-        "Backend getPlayerDocument(documentId) returns null (or a safe non-revealing response) for non-owners when the document is Private/hidden.",
-        "Backend editPlayerDocument(documentId, ...) continues to restrict edits to the owner when the document is Private/hidden."
+        "When a player document is marked private, it does not appear in any player-document listing returned to non-authorized session members.",
+        "When a non-authorized member attempts to fetch a private player document by id, the backend rejects the request (error or trap) and does not return content/metadata.",
+        "Authorized users (owner, and host only if policy includes host) can still list/fetch/edit the private player document.",
+        "When a player document is not private, all session members can list/fetch/edit it as shared content (current behavior preserved)."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Fix the post-login app state where the UI remains stuck on the \"Initializing...\" screen by identifying and correcting the blocking condition(s) in frontend initialization and/or backend calls so authenticated users reliably reach the Lobby or Session UI.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "It's still Initializing"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After login, the app exits the \"Initializing...\" screen without requiring a hard refresh.",
+        "If initialization fails, the UI surfaces a recoverable error state rather than spinning indefinitely.",
+        "Regression check: a normal login with no session restored lands on the Lobby page; a restored session lands on the Session page."
       ]
     }
   ],
   "constraints": [
-    "Do not edit any files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui; compose existing UI components instead.",
-    "Keep all backend logic in the single Motoko actor (backend/main.mo).",
-    "Only add a state migration (backend/migration.mo) if required by a persisted state schema change; prefer reusing the existing PlayerDocument.visible field for privacy."
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not edit files under frontend/src/components/ui or other frontend immutablePaths; compose existing UI components instead.",
+    "Use English for all user-facing text."
   ],
   "nonGoals": [
-    "Client-side encryption for private documents.",
-    "Partial visibility modes (e.g., host can always view private content) unless already supported; private means hidden from all other members.",
-    "Adding new authentication providers beyond Internet Identity.",
-    "Real-time syncing via websockets; use existing polling/query invalidation patterns."
+    "Adding third-party authentication providers (only Internet Identity is used).",
+    "Introducing external databases or non-Motoko backend services.",
+    "Real-time updates via websockets (keep existing polling/query patterns)."
   ],
   "imageRequirements": {
     "required": [],

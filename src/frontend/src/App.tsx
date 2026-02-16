@@ -31,9 +31,11 @@ function AppInner() {
 
   const isAuthenticated = !!identity;
 
-  // Use the user profile hook
-  const { data: userProfile, isLoading: profileLoading2, isFetched } = useGetCallerUserProfile();
-  const showProfileSetup = isAuthenticated && !profileLoading2 && isFetched && userProfile === null;
+  // Use the user profile hook with proper loading state
+  const { data: userProfile, isLoading: profileQueryLoading, isFetched } = useGetCallerUserProfile();
+  
+  // Determine if we should show profile setup
+  const showProfileSetup = isAuthenticated && !actorFetching && !profileQueryLoading && isFetched && userProfile === null;
 
   // Try to restore session from storage when profile is ready
   useEffect(() => {
@@ -87,21 +89,21 @@ function AppInner() {
     queryClient.clear();
   };
 
-  // Loading state
-  if (isInitializing || actorFetching) {
+  // Loading state - only show while truly initializing
+  if (isInitializing || (isAuthenticated && actorFetching)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         {preferences.backgroundImage && (
-          <div 
-            className="fixed inset-0 z-0 bg-cover bg-center"
-            style={{ 
-              backgroundImage: `url(${preferences.backgroundImage})`,
-              filter: 'blur(8px)',
-            }}
-          />
-        )}
-        {preferences.backgroundImage && (
-          <div className="fixed inset-0 z-0 bg-background/80" />
+          <>
+            <div 
+              className="fixed inset-0 z-0 bg-cover bg-center"
+              style={{ 
+                backgroundImage: `url(${preferences.backgroundImage})`,
+                filter: 'blur(8px)',
+              }}
+            />
+            <div className="fixed inset-0 z-0 bg-background/80" />
+          </>
         )}
         <div className="flex flex-col items-center gap-4 relative z-10">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -116,16 +118,16 @@ function AppInner() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         {preferences.backgroundImage && (
-          <div 
-            className="fixed inset-0 z-0 bg-cover bg-center"
-            style={{ 
-              backgroundImage: `url(${preferences.backgroundImage})`,
-              filter: 'blur(8px)',
-            }}
-          />
-        )}
-        {preferences.backgroundImage && (
-          <div className="fixed inset-0 z-0 bg-background/80" />
+          <>
+            <div 
+              className="fixed inset-0 z-0 bg-cover bg-center"
+              style={{ 
+                backgroundImage: `url(${preferences.backgroundImage})`,
+                filter: 'blur(8px)',
+              }}
+            />
+            <div className="fixed inset-0 z-0 bg-background/80" />
+          </>
         )}
         <div className="w-full max-w-md space-y-6 relative z-10">
           <div className="space-y-2 text-center">
@@ -176,16 +178,16 @@ function AppInner() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         {preferences.backgroundImage && (
-          <div 
-            className="fixed inset-0 z-0 bg-cover bg-center"
-            style={{ 
-              backgroundImage: `url(${preferences.backgroundImage})`,
-              filter: 'blur(8px)',
-            }}
-          />
-        )}
-        {preferences.backgroundImage && (
-          <div className="fixed inset-0 z-0 bg-background/80" />
+          <>
+            <div 
+              className="fixed inset-0 z-0 bg-cover bg-center"
+              style={{ 
+                backgroundImage: `url(${preferences.backgroundImage})`,
+                filter: 'blur(8px)',
+              }}
+            />
+            <div className="fixed inset-0 z-0 bg-background/80" />
+          </>
         )}
         <div className="w-full max-w-md space-y-6 relative z-10">
           <div className="space-y-2 text-center">
@@ -225,16 +227,16 @@ function AppInner() {
   return (
     <div className="min-h-screen bg-background">
       {preferences.backgroundImage && (
-        <div 
-          className="fixed inset-0 z-0 bg-cover bg-center"
-          style={{ 
-            backgroundImage: `url(${preferences.backgroundImage})`,
-            filter: 'blur(8px)',
-          }}
-        />
-      )}
-      {preferences.backgroundImage && (
-        <div className="fixed inset-0 z-0 bg-background/80" />
+        <>
+          <div 
+            className="fixed inset-0 z-0 bg-cover bg-center"
+            style={{ 
+              backgroundImage: `url(${preferences.backgroundImage})`,
+              filter: 'blur(8px)',
+            }}
+          />
+          <div className="fixed inset-0 z-0 bg-background/80" />
+        </>
       )}
       <div className="relative z-10">
         {sessionContext ? (

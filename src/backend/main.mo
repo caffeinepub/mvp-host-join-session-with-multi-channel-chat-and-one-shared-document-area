@@ -2,26 +2,23 @@ import Map "mo:core/Map";
 import List "mo:core/List";
 import Blob "mo:core/Blob";
 import Text "mo:core/Text";
-import Array "mo:core/Array";
-import Nat "mo:core/Nat";
 import Time "mo:core/Time";
+import Nat "mo:core/Nat";
 import Int "mo:core/Int";
+import Array "mo:core/Array";
 import Principal "mo:core/Principal";
 import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
 
+import Migration "migration";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
-
 import AccessControl "authorization/access-control";
-import Migration "migration";
 
 (with migration = Migration.run)
 actor {
   include MixinStorage();
-
-  // ==== Types ====
 
   public type UserProfile = {
     name : Text;
@@ -34,12 +31,19 @@ actor {
     createdBy : Principal;
   };
 
+  public type MembersChannel = {
+    id : Nat;
+    name : Text;
+    createdBy : Principal;
+  };
+
   public type Message = {
     id : Nat;
     channelId : Nat;
     author : Text;
     content : Text;
     timestamp : Int;
+    image : ?Storage.ExternalBlob;
   };
 
   public type SessionMember = {
@@ -55,6 +59,7 @@ actor {
     passwordHash : ?Blob;
     members : [SessionMember];
     channels : [Channel];
+    membersChannels : [MembersChannel];
     createdAt : Int;
     lastActive : Int;
   };
@@ -164,6 +169,31 @@ actor {
     size : Nat;
   };
 
+  public type UploadDocumentFileResponse = {
+    #ok : Nat;
+    #error : Text;
+  };
+
+  public type CreateDocumentResponse = {
+    #ok : Nat;
+    #error : Text;
+  };
+
+  public type CreatePlayerDocumentResponse = {
+    #ok : Nat;
+    #error : Text;
+  };
+
+  public type CreateImageResponse = {
+    #ok : Nat;
+    #error : Text;
+  };
+
+  public type AddImageToDocumentResponse = {
+    #ok : Nat;
+    #error : Text;
+  };
+
   public type SessionExport = {
     session : Session;
     channels : [Channel];
@@ -175,11 +205,9 @@ actor {
     turnOrder : ?TurnOrder;
   };
 
-  // ==== Component Integration ====
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
-  // ==== State Vars ====
   var nextSessionId : Nat = 1;
   var nextChannelId : Nat = 1;
   var nextMessageId : Nat = 1;
@@ -196,7 +224,18 @@ actor {
   let imageReferences = Map.empty<Nat, ImageReference>();
   let documentFileReferences = Map.empty<Nat, DocumentFileReference>();
 
-  // ==== Helper Functions ====
+  func updateSessionActivity(sessionId : Nat) {
+    switch (sessions.get(sessionId)) {
+      case (null) {};
+      case (?session) {
+        let updated = {
+          session with
+          lastActive = Time.now();
+        };
+        sessions.add(sessionId, updated);
+      };
+    };
+  };
 
   func hashPassword(password : Text) : Blob {
     let salt = "rpg_session_salt";
@@ -238,21 +277,6 @@ actor {
     };
   };
 
-  func updateSessionActivity(sessionId : Nat) {
-    switch (sessions.get(sessionId)) {
-      case (null) {};
-      case (?session) {
-        let updated = {
-          session with
-          lastActive = Time.now();
-        };
-        sessions.add(sessionId, updated);
-      };
-    };
-  };
-
-  // ==== User Profile API ====
-
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access profiles");
@@ -288,8 +312,6 @@ actor {
     };
   };
 
-  // ==== Session Management API ====
-
   public shared ({ caller }) func createSession(request : SessionCreateRequest) : async Session {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create sessions");
@@ -320,6 +342,7 @@ actor {
       passwordHash;
       members = [hostMember];
       channels = [defaultChannel];
+      membersChannels = [];
       createdAt = Time.now();
       lastActive = Time.now();
     };
@@ -333,18 +356,16 @@ actor {
 
   public shared ({ caller }) func joinSession(request : JoinSessionRequest) : async StandardResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can join sessions");
+      return #error("Unauthorized: Only users can join sessions");
     };
 
     switch (sessions.get(request.sessionId)) {
       case (null) { #error("Session not found") };
       case (?session) {
-        // Check if already a member
         if (isSessionMember(request.sessionId, caller)) {
           return #error("Already a member of this session");
         };
 
-        // Verify password if required
         switch (session.passwordHash) {
           case (?hash) {
             switch (request.password) {
@@ -359,7 +380,6 @@ actor {
           case (null) {};
         };
 
-        // Add member
         let newMember : SessionMember = {
           id = caller;
           nickname = request.nickname;
@@ -387,7 +407,6 @@ actor {
     if (not isSessionMember(sessionId, caller)) {
       Runtime.trap("Unauthorized: Only session members can view session details");
     };
-
     sessions.get(sessionId);
   };
 
@@ -398,8 +417,6 @@ actor {
 
     sessions.values().toArray();
   };
-
-  // ==== Channel Management API ====
 
   public shared ({ caller }) func createChannel(sessionId : Nat, name : Text) : async StandardResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -514,9 +531,133 @@ actor {
     };
   };
 
-  // ==== Message API ====
+  public shared ({ caller }) func createMembersChannel(sessionId : Nat, name : Text) : async StandardResponse {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can create members` channels");
+    };
 
-  public shared ({ caller }) func postMessage(sessionId : Nat, channelId : Nat, content : Text) : async StandardResponse {
+    if (not isSessionMember(sessionId, caller)) {
+      Runtime.trap("Unauthorized: Only session members can create members` channels");
+    };
+
+    switch (sessions.get(sessionId)) {
+      case (null) { #error("Session not found") };
+      case (?session) {
+        let newChannel : MembersChannel = {
+          id = nextChannelId;
+          name;
+          createdBy = caller;
+        };
+        nextChannelId += 1;
+
+        let updatedChannels = session.membersChannels.concat([newChannel]);
+        let updatedSession = {
+          session with
+          membersChannels = updatedChannels;
+        };
+
+        sessions.add(sessionId, updatedSession);
+        updateSessionActivity(sessionId);
+        #ok("Members` channel created");
+      };
+    };
+  };
+
+  public shared ({ caller }) func renameMembersChannel(sessionId : Nat, channelId : Nat, newName : Text) : async StandardResponse {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can rename members` channels");
+    };
+
+    switch (sessions.get(sessionId)) {
+      case (null) { #error("Session not found") };
+      case (?session) {
+        let channel = session.membersChannels.find(
+          func(ch) { ch.id == channelId }
+        );
+
+        switch (channel) {
+          case (null) { return #error("Channel not found") };
+          case (?ch) {
+            if (not Principal.equal(ch.createdBy, caller) and not isSessionHost(sessionId, caller)) {
+              Runtime.trap("Unauthorized: Only the creator or session host can rename this channel");
+            };
+
+            let updatedChannels = session.membersChannels.map(
+              func(c) {
+                if (c.id == channelId) {
+                  { c with name = newName };
+                } else {
+                  c;
+                };
+              }
+            );
+
+            let updatedSession = {
+              session with
+              membersChannels = updatedChannels;
+            };
+
+            sessions.add(sessionId, updatedSession);
+            updateSessionActivity(sessionId);
+            #ok("Members` channel renamed");
+          };
+        };
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteMembersChannel(sessionId : Nat, channelId : Nat) : async StandardResponse {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete members` channels");
+    };
+
+    switch (sessions.get(sessionId)) {
+      case (null) { #error("Session not found") };
+      case (?session) {
+        let channel = session.membersChannels.find(
+          func(ch) { ch.id == channelId }
+        );
+
+        switch (channel) {
+          case (null) { return #error("Channel not found") };
+          case (?ch) {
+            if (not Principal.equal(ch.createdBy, caller) and not isSessionHost(sessionId, caller)) {
+              Runtime.trap("Unauthorized: Only the creator or session host can delete this channel");
+            };
+
+            let updatedChannels = session.membersChannels.filter(
+              func(c) { c.id != channelId }
+            );
+
+            let updatedSession = {
+              session with
+              membersChannels = updatedChannels;
+            };
+
+            sessions.add(sessionId, updatedSession);
+            updateSessionActivity(sessionId);
+            #ok("Members` channel deleted");
+          };
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func getMembersChannels(sessionId : Nat) : async [MembersChannel] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view members` channels");
+    };
+    if (not isSessionMember(sessionId, caller)) {
+      Runtime.trap("Unauthorized: Only session members can view members` channels");
+    };
+
+    switch (sessions.get(sessionId)) {
+      case (null) { [] };
+      case (?session) { session.membersChannels };
+    };
+  };
+
+  public shared ({ caller }) func postMessage(sessionId : Nat, channelId : Nat, content : Text, image : ?Storage.ExternalBlob) : async StandardResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can post messages");
     };
@@ -534,6 +675,7 @@ actor {
           author = nickname;
           content;
           timestamp = Time.now();
+          image;
         };
         nextMessageId += 1;
 
@@ -572,9 +714,7 @@ actor {
     };
   };
 
-  // ==== Document Management API ====
-
-  public shared ({ caller }) func createDocument(sessionId : Nat, name : Text, content : Text) : async StandardResponse {
+  public shared ({ caller }) func createDocument(sessionId : Nat, name : Text, content : Text) : async CreateDocumentResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create documents");
     };
@@ -593,11 +733,12 @@ actor {
       createdBy = caller;
       lastModified = Time.now();
     };
+    let docId = nextDocumentId;
     nextDocumentId += 1;
 
     documents.add(doc.id, doc);
     updateSessionActivity(sessionId);
-    #ok("Document created with ID: " # doc.id.toText());
+    #ok(docId);
   };
 
   public shared ({ caller }) func renameDocument(documentId : Nat, newName : Text) : async StandardResponse {
@@ -749,13 +890,11 @@ actor {
     filtered.toArray();
   };
 
-  public shared ({ caller }) func uploadDocumentFile(request : UploadFileRequest) : async StandardResponse {
-    // Validate user authorization
+  public shared ({ caller }) func uploadDocumentFile(request : UploadFileRequest) : async UploadDocumentFileResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       return #error("Unauthorized: Only users can upload files");
     };
 
-    // Validate document existence first
     let doc = switch (documents.get(request.documentId)) {
       case (null) {
         return #error("Document not found for file upload");
@@ -763,12 +902,14 @@ actor {
       case (?d) { d };
     };
 
-    // Validate is session host for the specific document's session
-    if (not isSessionHost(doc.sessionId, caller)) {
-      return #error("Unauthorized: Only session hosts can upload files");
+    if (not isSessionMember(doc.sessionId, caller)) {
+      return #error("Unauthorized: Only session members can upload files");
     };
 
-    // File type and size validation (already checked in frontend for <=10MB)
+    if (doc.locked) {
+      return #error("Cannot upload files to a locked document");
+    };
+
     if (request.size > 10_000_000) {
       return #error("File size must not exceed 10MB");
     };
@@ -783,10 +924,11 @@ actor {
       createdBy = caller;
       lastModified = Time.now();
     };
+    let fileId = nextFileId;
     nextFileId += 1;
 
     documentFileReferences.add(newFileReference.id, newFileReference);
-    #ok("File uploaded successfully");
+    #ok(fileId);
   };
 
   public query ({ caller }) func listDocumentFiles(documentId : Nat) : async [DocumentFileReference] {
@@ -839,20 +981,16 @@ actor {
     ?fileRef.file;
   };
 
-  // ==== RPG Utilities: Dice Roller ====
-
   func parseDicePattern(pattern : Text) : ?(Nat, Nat, Int) {
-    // Parse patterns like "d20", "2d6+3", "d20-1"
     let trimmed = pattern.trim(#text " ");
 
     var numDice : Nat = 1;
     var diceSize : Nat = 0;
     var modifier : Int = 0;
 
-    // Simple parser
     let chars = trimmed.chars();
     var buffer = "";
-    var stage = 0; // 0=numDice, 1=diceSize, 2=modifier
+    var stage = 0;
 
     for (c in chars) {
       if (c == 'd' or c == 'D') {
@@ -878,7 +1016,6 @@ actor {
       };
     };
 
-    // Process final buffer
     if (stage == 1 and buffer.size() > 0) {
       switch (Int.fromText(buffer)) {
         case (?n) { diceSize := Int.abs(n) };
@@ -899,7 +1036,6 @@ actor {
   };
 
   func rollDice(numDice : Nat, diceSize : Nat) : [Nat] {
-    // Simple pseudo-random using timestamp
     let seed = Int.abs(Time.now());
     Array.tabulate<Nat>(
       numDice,
@@ -942,8 +1078,6 @@ actor {
       };
     };
   };
-
-  // ==== RPG Utilities: Turn Tracker ====
 
   public shared ({ caller }) func setTurnOrder(sessionId : Nat, order : [Text]) : async StandardResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -1001,23 +1135,24 @@ actor {
     turnOrders.get(sessionId);
   };
 
-  // ==== Inline Images and Document Enhancements ====
-
-  public shared ({ caller }) func addImageToDocument(sessionId : Nat, documentId : Nat, fileId : Text, caption : Text, position : Int, size : Int) : async StandardResponse {
+  public shared ({ caller }) func addImageToDocument(sessionId : Nat, documentId : Nat, fileId : Text, caption : Text, position : Int, size : Int) : async AddImageToDocumentResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can add images");
-    };
-
-    if (not isSessionHost(sessionId, caller)) {
-      Runtime.trap("Unauthorized: Only the session host can add images");
     };
 
     switch (documents.get(documentId)) {
       case (null) { #error("Document not found") };
       case (?doc) {
-        // Verify document belongs to the session
         if (doc.sessionId != sessionId) {
           Runtime.trap("Unauthorized: Document does not belong to this session");
+        };
+
+        if (not isSessionMember(sessionId, caller)) {
+          Runtime.trap("Unauthorized: Only session members can add images");
+        };
+
+        if (doc.locked) {
+          return #error("Cannot add images to a locked document");
         };
 
         let image : ImageReference = {
@@ -1030,10 +1165,11 @@ actor {
           createdBy = caller;
           lastModified = Time.now();
         };
+        let imageId = nextImageId;
         nextImageId += 1;
 
         imageReferences.add(image.id, image);
-        #ok("Image added to document");
+        #ok(imageId);
       };
     };
   };
@@ -1081,9 +1217,7 @@ actor {
     };
   };
 
-  // ==== Player Documents ====
-
-  public shared ({ caller }) func createPlayerDocument(sessionId : Nat, name : Text, content : Text, isPrivate : Bool) : async StandardResponse {
+  public shared ({ caller }) func createPlayerDocument(sessionId : Nat, name : Text, content : Text, isPrivate : Bool) : async CreatePlayerDocumentResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create documents");
     };
@@ -1103,11 +1237,12 @@ actor {
       images = [];
       isPrivate;
     };
+    let docId = nextDocumentId;
     nextDocumentId += 1;
 
     playerDocumentsMap.add(doc.id, doc);
     updateSessionActivity(sessionId);
-    #ok("Player document created with ID: " # doc.id.toText());
+    #ok(docId);
   };
 
   public shared ({ caller }) func renamePlayerDocument(documentId : Nat, newName : Text) : async StandardResponse {
@@ -1200,6 +1335,46 @@ actor {
     };
   };
 
+  public shared ({ caller }) func addImageToPlayerDocument(documentId : Nat, fileId : Text, caption : Text, position : Int, size : Int) : async AddImageToDocumentResponse {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can add images");
+    };
+
+    switch (playerDocumentsMap.get(documentId)) {
+      case (null) { #error("Document not found") };
+      case (?doc) {
+        if (not Principal.equal(doc.owner, caller)) {
+          Runtime.trap("Unauthorized: Only the owner can add images to this document");
+        };
+
+        let image : ImageReference = {
+          id = nextImageId;
+          documentId;
+          fileId;
+          caption;
+          position;
+          size;
+          createdBy = caller;
+          lastModified = Time.now();
+        };
+        let imageId = nextImageId;
+        nextImageId += 1;
+
+        imageReferences.add(image.id, image);
+
+        let updatedImages = doc.images.concat([image]);
+        let updatedDoc = {
+          doc with
+          images = updatedImages;
+          lastModified = Time.now();
+        };
+        playerDocumentsMap.add(documentId, updatedDoc);
+
+        #ok(imageId);
+      };
+    };
+  };
+
   public query ({ caller }) func getPlayerDocument(documentId : Nat) : async ?PlayerDocument {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view player documents");
@@ -1208,17 +1383,17 @@ actor {
     switch (playerDocumentsMap.get(documentId)) {
       case (null) { null };
       case (?doc) {
-        // Owner can always see their document
         if (Principal.equal(doc.owner, caller)) {
           return ?doc;
         };
 
-        // Private documents: no access to content for non-owners
         if (doc.isPrivate) {
+          if (isSessionHost(doc.sessionId, caller)) {
+            return ?doc;
+          };
           return null;
         };
 
-        // Public documents: only session members can see
         if (not isSessionMember(doc.sessionId, caller)) {
           Runtime.trap("Unauthorized: Only session members can view player documents");
         };
@@ -1237,22 +1412,20 @@ actor {
       Runtime.trap("Unauthorized: Only session members can list player documents");
     };
 
-    let filtered = playerDocumentsMap.values().filter(
-      func(doc) {
-        if (doc.sessionId != sessionId) {
-          return false;
-        };
+    let isHost = isSessionHost(sessionId, caller);
 
-        // Owner sees all their documents
-        if (Principal.equal(doc.owner, caller)) {
-          return true;
-        };
-
-        // Others (including host) only see non-private documents
-        not doc.isPrivate;
-      }
-    );
-    filtered.toArray();
+    playerDocumentsMap.values().filter(func(doc) {
+      if (doc.sessionId != sessionId) {
+        return false;
+      };
+      if (Principal.equal(doc.owner, caller)) {
+        return true;
+      };
+      if (doc.isPrivate) {
+        return isHost;
+      };
+      true
+    }).toArray();
   };
 
   public query ({ caller }) func listPlayerDocumentsMetadata(sessionId : Nat) : async [PlayerDocumentMetadata] {
@@ -1282,8 +1455,6 @@ actor {
       }
     ).toArray();
   };
-
-  // ==== Session Export/Import ====
 
   public query ({ caller }) func exportSession(sessionId : Nat) : async ?SessionExport {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -1342,7 +1513,6 @@ actor {
     let newSessionId = nextSessionId;
     nextSessionId += 1;
 
-    // Import session with new ID
     let importedSession = {
       exportData.session with
       id = newSessionId;
@@ -1350,7 +1520,6 @@ actor {
     };
     sessions.add(newSessionId, importedSession);
 
-    // Import messages
     let msgList = List.empty<Message>();
     for (msg in exportData.messages.vals()) {
       let newMsg = {
@@ -1362,7 +1531,6 @@ actor {
     };
     messages.add(newSessionId, msgList);
 
-    // Import documents
     for (doc in exportData.documents.vals()) {
       let newDoc = {
         doc with
@@ -1373,7 +1541,6 @@ actor {
       documents.add(newDoc.id, newDoc);
     };
 
-    // Import player documents
     for (doc in exportData.playerDocuments.vals()) {
       let newDoc = {
         doc with
@@ -1384,7 +1551,6 @@ actor {
       playerDocumentsMap.add(newDoc.id, newDoc);
     };
 
-    // Import images
     for (img in exportData.images.vals()) {
       let newImg = {
         img with
@@ -1394,7 +1560,6 @@ actor {
       imageReferences.add(newImg.id, newImg);
     };
 
-    // Import document files
     for (file in exportData.documentFiles.vals()) {
       let newFile = {
         file with
@@ -1404,7 +1569,6 @@ actor {
       documentFileReferences.add(newFile.id, newFile);
     };
 
-    // Import turn order
     switch (exportData.turnOrder) {
       case (null) {};
       case (?turnOrder) {
@@ -1418,8 +1582,6 @@ actor {
 
     #ok("Session imported with ID: " # newSessionId.toText());
   };
-
-  // ==== Image Retrieval and Management ====
 
   public query ({ caller }) func getImages(sessionId : Nat) : async [ImageReference] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {

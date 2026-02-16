@@ -1,34 +1,53 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Add a new PLAYERS' DOCUMENTS section with per-document privacy controls (hide from others vs shared).",
+  "summary": "Project now includes replacing existing Documents/Players' Documents with Members' Channels, plus per-player document privacy controls; also needs investigation of an initialization hang after login.",
   "architectural_notes": [
-    "Implement per-document visibility rule: when marked Private, only the owner (and optionally the client) can see it; when not private, behaves like shared docs (visible/editable to all members)."
+    "Define access rules for private player documents: when Private, only owner (and possibly client) can view/edit; when not private, all members can view/edit like shared docs.",
+    "Clarify whether 'Members' Channels' is a renamed/parallel entity to existing Channels and how it replaces Documents/Players' Documents in navigation and data model."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "App remains stuck on 'Initializing' after login (user reports it still initializing)."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-add-a-new-sidebar-section-directly-below-the-existing-documents-section-titled-players-documents-that-lists-player-owned-documents-for-the-current-session-and-allows-selecting-a-player-document-to-open-it-in-the-main-panel",
-      "title": "Add a new sidebar section directly below the existing \"Documents\" section titled \"PLAYERS' DOCUMENTS\" that lists player-owned documents for the current session and allows selecting a player document to open it in the main panel.",
+      "id": "feature-remove-the-host-owned-documents-feature-from-the-app-ui-including-sidebar-section-creation-rename-delete-lock-controls-and-the-document-editor-view-so-session-navigation-no-longer-offers-host-documents",
+      "title": "Remove the host-owned \"Documents\" feature from the app UI, including sidebar section, creation/rename/delete/lock controls, and the document editor view, so session navigation no longer offers host documents.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-session-page-navigation-state-so-it-supports-selecting-and-rendering-a-player-document-in-the-main-panel-in-addition-to-channels-and-shared-documents-using-the-existing-playerdocumenteditorview-for-the-selected-player-document",
-      "title": "Update the Session page navigation/state so it supports selecting and rendering a player document in the main panel (in addition to channels and shared documents), using the existing PlayerDocumentEditorView for the selected player document.",
+      "id": "feature-add-a-new-session-feature-called-members-channels-that-behaves-like-the-existing-chat-channels-feature-list-selectable-to-open-chat-but-is-distinct-from-the-host-managed-channels-list",
+      "title": "Add a new session feature called \"Members' Channels\" that behaves like the existing chat channels feature (list + selectable to open chat), but is distinct from the host-managed \"Channels\" list.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-simple-per-player-document-privacy-control-as-a-toggle-checkbox-labeled-private-or-hide-from-others-for-the-document-owner-when-enabled-the-document-is-not-visible-to-any-other-session-members-when-disabled-the-document-is-visible-and-behaves-like-a-shared-doc-for-viewing-editing-as-allowed-by-the-app-s-current-permissions-model",
-      "title": "Add a simple per-player-document privacy control as a toggle/checkbox labeled \"Private\" (or \"Hide from others\") for the document owner; when enabled, the document is not visible to any other session members; when disabled, the document is visible and behaves like a shared doc for viewing/editing (as allowed by the app’s current permissions model).",
+      "id": "feature-define-and-enforce-permissions-for-members-channels-any-session-member-can-create-a-members-channel-the-channel-creator-can-rename-delete-their-own-members-channels-the-session-host-can-rename-delete-any-members-channel",
+      "title": "Define and enforce permissions for Members' Channels: any session member can create a Members' Channel; the channel creator can rename/delete their own Members' Channels; the session host can rename/delete any Members' Channel.",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-the-players-documents-section-from-the-sidebar-and-replace-it-with-members-channels-navigation-while-preserving-the-requested-per-player-document-privacy-control-behavior-for-any-remaining-player-document-access-paths-in-the-app",
+      "title": "Remove the \"Players' Documents\" section from the sidebar and replace it with \"Members' Channels\" navigation, while preserving the requested per-player-document privacy control behavior for any remaining player-document access paths in the app.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-post-login-app-state-where-the-ui-remains-stuck-on-the-initializing-screen-by-identifying-and-correcting-the-blocking-condition-s-in-frontend-initialization-and-or-backend-calls-so-authenticated-users-reliably-reach-the-lobby-or-session-ui",
+      "title": "Fix the post-login app state where the UI remains stuck on the \"Initializing...\" screen by identifying and correcting the blocking condition(s) in frontend initialization and/or backend calls so authenticated users reliably reach the Lobby or Session UI.",
+      "reqIds": [
+        "REQ-7"
       ],
       "version": 1
     }
@@ -36,20 +55,34 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add 'PLAYERS' DOCUMENTS' section below DOCUMENTS with per-player document privacy toggle (Private/Hide from others) that hides docs from other members when enabled; shared docs remain visible/editable by everyone.",
+      "summary": "Remove Documents and Players' Documents and replace with 'Members' Channels' (same as Channels)",
       "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-5",
-      "summary": "Enforce privacy on the backend so that when a player document is marked Private/hidden, only the document owner can fetch its content (and it is excluded from list responses for non-owners).",
+      "id": "AR-2",
+      "summary": "Add per-player document privacy toggle ('Hide from others'/'Private') to control member visibility/editing",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Add a simple privacy toggle control labeled \"Private\" (or \"Hide from others\") on each player document (where player documents are created/managed/edited) and ensure it updates the player document privacy state.",
       "reqIds": [
-        "REQ-4"
+        "REQ-5"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Enforce player document privacy on the backend: when a player document is private, only its owner (and optionally the host if you choose that policy) can list, fetch, or edit it; other session members must not see it in lists or be able to open it.",
+      "reqIds": [
+        "REQ-6"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Add Players' Documents sidebar section and per-document privacy toggle",
+  "projectName": "Replace Documents with Members' Channels and enforce Player Document privacy visibility",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

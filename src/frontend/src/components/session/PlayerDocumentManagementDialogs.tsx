@@ -33,6 +33,7 @@ type CreatePlayerDocumentDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  onCreated?: (documentId: bigint) => void;
 };
 
 export function CreatePlayerDocumentDialog({
@@ -40,6 +41,7 @@ export function CreatePlayerDocumentDialog({
   open,
   onOpenChange,
   onSuccess,
+  onCreated,
 }: CreatePlayerDocumentDialogProps) {
   const [name, setName] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -57,10 +59,12 @@ export function CreatePlayerDocumentDialog({
       });
 
       if (result.__kind__ === 'ok') {
+        const documentId = result.ok;
         setName('');
         setIsPrivate(false);
         onOpenChange(false);
         onSuccess?.();
+        if (onCreated) onCreated(documentId);
       }
     } catch (error) {
       console.error('Error creating player document:', error);

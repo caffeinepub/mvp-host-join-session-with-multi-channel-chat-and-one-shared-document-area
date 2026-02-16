@@ -1,79 +1,177 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Players' Documents sidebar + per-document privacy toggle",
+  "title": "Replace host Documents UI with Members' Channels, preserve Player Document privacy toggle, and fix initializing hang (frontend-only)",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a PLAYERS' DOCUMENTS section to the session sidebar that lists visible player-owned docs for the active session and supports selecting one to open.",
+      "summary": "Remove host-owned Documents from session navigation and UI entry points.",
       "acceptanceCriteria": [
-        "Session sidebar shows a new header \"PLAYERS' DOCUMENTS\" below \"Documents\".",
-        "The section displays a list of player documents returned for the active session.",
-        "Clicking a player document switches the main panel to that player document view."
+        "The Session sidebar no longer renders a \"Documents\" section.",
+        "The Session main panel no longer routes to or renders the host document editor view.",
+        "No UI entry points remain for create/rename/delete/lock host documents."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/session/SessionSidebar.tsx",
           "operation": "modify",
-          "description": "Add a new sidebar section labeled \"PLAYERS' DOCUMENTS\" below the existing \"Documents\" section; render the provided player documents list and invoke a new onSelectPlayerDocument handler when a player document is clicked. Verify the component's usage instructions before implementing."
+          "description": "Remove the host \"Documents\" sidebar section and all related create/rename/delete/lock UI triggers (including DocumentManagementDialogs wiring) so host documents are no longer navigable."
         },
         {
           "path": "frontend/src/pages/SessionPage.tsx",
           "operation": "modify",
-          "description": "Fetch the active session's player documents (via existing React Query hooks) and pass them into SessionSidebar along with selection state and callbacks so selecting a player doc can drive main-panel navigation. Verify the component's usage instructions before implementing."
+          "description": "Remove host-document selection state and rendering of DocumentEditorView so the main panel can no longer open the host document editor view."
+        },
+        {
+          "path": "frontend/src/hooks/useSessionData.ts",
+          "operation": "modify",
+          "description": "Stop querying and exposing host documents/current document data (listDocuments/getDocument) to eliminate frontend-level routing/data dependencies on host documents."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Extend SessionPage selection state/navigation to support rendering player documents in the main panel using PlayerDocumentEditorView.",
+      "summary": "Add Members' Channels sidebar section that opens chat, distinct from host Channels list.",
       "acceptanceCriteria": [
-        "SessionPage supports a third view type for player documents.",
-        "Selecting a player document renders PlayerDocumentEditorView with the selected player document id.",
-        "Switching between channel/shared document/player document updates the main panel accordingly without breaking existing channel/document behavior."
+        "Backend exposes APIs to list Members' Channels for a session and to create/rename/delete a Members' Channel.",
+        "Frontend sidebar displays a \"Members' Channels\" section and selecting an item opens the chat view for that channel.",
+        "Members' Channels are stored and returned independently from the existing host \"Channels\" list (no mixing in the UI)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/SessionPage.tsx",
+          "path": "frontend/src/hooks/useSessionData.ts",
           "operation": "modify",
-          "description": "Add a player-document view type (e.g., 'playerDocument') and selectedPlayerDocumentId state; wire sidebar selection so it updates viewType and selected ids, and render PlayerDocumentEditorView when a player document is selected while preserving existing channel/document behavior. Verify the component's usage instructions before implementing."
+          "description": "Add a membersChannels query (using the existing backend capability to fetch membersChannels) and expose it alongside the existing host channels without mixing the two lists."
         },
         {
           "path": "frontend/src/components/session/SessionSidebar.tsx",
           "operation": "modify",
-          "description": "Extend props to include selectedPlayerDocumentId and onSelectPlayerDocument; ensure the correct button styling reflects player-document selection without affecting existing channel/document selection. Verify the component's usage instructions before implementing."
+          "description": "Add a distinct \"Members' Channels\" section that renders membersChannels and supports selecting one to open chat, without merging it into the existing host \"Channels\" section."
+        },
+        {
+          "path": "frontend/src/pages/SessionPage.tsx",
+          "operation": "modify",
+          "description": "Add selection state and view switching for Members' Channels so selecting one routes to the existing chat view with the selected members channel id."
+        },
+        {
+          "path": "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
+          "operation": "create",
+          "description": "Create Members' Channels management dialogs (create/rename/delete) mirroring the existing ChannelManagementDialogs UX but calling members-channel backend capabilities. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "operation": "modify",
+          "description": "Wire MembersChannelManagementDialogs into the \"Members' Channels\" section (create button and per-item menu) so Members' Channels are fully manageable from the sidebar. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add an owner-only privacy toggle for player documents and ensure UI lists/visibility reflect the private state using existing backend capabilities.",
+      "summary": "Reflect Members' Channels permissions in the UI (create for any member; rename/delete for creator or host).",
       "acceptanceCriteria": [
-        "For the owner of a player document, the UI shows a clearly labeled checkbox/toggle: \"Private\" (or \"Hide from others\").",
-        "Toggling the control updates the document’s visibility via the backend API and the UI reflects the new state.",
-        "When a player document is Private, other session members cannot open it and do not see it listed in the \"PLAYERS' DOCUMENTS\" section.",
-        "When a player document is not Private, other session members can open it; editing behavior matches the app’s intended permissions for non-owners (if non-owners are allowed to edit, edits persist; otherwise they are read-only)."
+        "A non-host session member can create a Members' Channel successfully.",
+        "A non-host session member cannot rename/delete a Members' Channel they did not create (receives an error).",
+        "The session host can rename/delete any Members' Channel.",
+        "Only session members can list or access Members' Channels for that session."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
+          "operation": "modify",
+          "description": "Implement UI-level gating: always show 'create' for session members; show rename/delete only when the current principal is the channel creator or the session host; display backend authorization failures as user-readable errors. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "operation": "modify",
+          "description": "Pass session host identity/current identity context to Members' Channels item menus so rename/delete controls only appear when allowed; ensure unauthorized actions do not have UI entry points."
+        },
+        {
+          "path": "frontend/src/pages/SessionPage.tsx",
+          "operation": "modify",
+          "description": "Ensure the session host detection and current identity checks are available to the sidebar and Members' Channels management wiring for correct permission gating."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Remove Players' Documents sidebar section and replace it with Members' Channels navigation without broken references.",
+      "acceptanceCriteria": [
+        "The sidebar no longer displays the header text \"Players' Documents\".",
+        "The sidebar instead displays \"Members' Channels\" (user-facing text in English).",
+        "No broken imports or references remain to the removed sidebar Player Documents section UI."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "operation": "modify",
+          "description": "Remove the Players' Documents sidebar section header and its list rendering, and ensure the sidebar instead contains a \"Members' Channels\" section with working navigation."
+        },
+        {
+          "path": "frontend/src/pages/SessionPage.tsx",
+          "operation": "modify",
+          "description": "Remove the sidebar props and handlers that were dedicated to Players' Documents list rendering to prevent broken imports/references after sidebar changes."
+        },
+        {
+          "path": "frontend/src/components/session/PlayerDocumentsDialog.tsx",
+          "operation": "create",
+          "description": "Add a non-sidebar access path for player documents (e.g., a modal dialog listing player documents with create/select actions) so player documents remain reachable while meeting the sidebar replacement requirement. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/SessionPage.tsx",
+          "operation": "modify",
+          "description": "Wire PlayerDocumentsDialog into the Session UI (non-sidebar) to preserve player-document access paths while keeping the sidebar free of the removed Players' Documents section. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Ensure each player document has an owner-only privacy toggle that persists and refetches correctly.",
+      "acceptanceCriteria": [
+        "Player document UI contains a clearly labeled privacy toggle control in English (\"Private\" or \"Hide from others\").",
+        "Toggling the control updates the document privacy state and the UI reflects the new state after refresh/refetch.",
+        "When the current user is not the document owner, the privacy toggle is not editable."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
           "operation": "modify",
-          "description": "Add an owner-only \"Private\" (or \"Hide from others\") toggle using existing UI components (e.g., Switch/Checkbox) that calls the existing player-document visibility mutation; update rendering logic to use the correct backend field name (isPrivate) and gracefully handle non-owner access when the backend returns null/denied. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/usePlayerDocuments.ts",
-          "operation": "modify",
-          "description": "Align player-document hooks to the backend interface: use isPrivate naming (not visible) for create/update flows and update the setPlayerDocumentVisibility mutation to accept/send an isPrivate boolean; ensure query invalidation keeps sidebar + editor state consistent after toggling. Verify the component's usage instructions before implementing."
+          "description": "Verify and, if needed, adjust the existing \"Private\" toggle to ensure it is clearly labeled, disabled for non-owners, calls the visibility mutation, and triggers a refetch/update so the new state is reflected after refresh/refetch."
         },
         {
           "path": "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
           "operation": "modify",
-          "description": "Update create/visibility UI to use \"Private\" semantics (backed by isPrivate) rather than \"Visible to Others\"; ensure toggles/menus call the updated hook and reflect private state text/icons appropriately. Verify the component's usage instructions before implementing."
+          "description": "Ensure player-document creation and management surfaces a \"Private\" control where applicable and that toggle actions invalidate/refetch player-document lists so privacy state stays consistent across the UI."
         },
         {
-          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "path": "frontend/src/hooks/usePlayerDocuments.ts",
           "operation": "modify",
-          "description": "Ensure the PLAYERS' DOCUMENTS list only renders documents returned as visible to the caller; optionally add an extra client-side guard to exclude private docs not owned by the current user (defense-in-depth) while relying on backend filtering for correctness. Verify the component's usage instructions before implementing."
+          "description": "Confirm the setPlayerDocumentVisibility mutation invalidates the correct queries (player document + lists/metadata) so toggling privacy is reflected after refresh/refetch."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Prevent the app from getting stuck on \"Initializing...\" and provide a recoverable error state when initialization fails.",
+      "acceptanceCriteria": [
+        "After login, the app exits the \"Initializing...\" screen without requiring a hard refresh.",
+        "If initialization fails, the UI surfaces a recoverable error state rather than spinning indefinitely.",
+        "Regression check: a normal login with no session restored lands on the Lobby page; a restored session lands on the Session page."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useActor.ts",
+          "operation": "modify",
+          "description": "Expose actor creation error/status (and a retry/refetch capability) so the UI can stop indefinite loading and present a recoverable error state when actor initialization fails. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Adjust the initialization gating logic so post-login transitions cannot be blocked indefinitely by actor fetching; add a recoverable error UI when identity/actor/profile initialization fails (e.g., show error message with retry and 'Clear local data' actions). Use the selected 'authorization' component guidance for handling auth-related initialization and caching; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useUserProfile.ts",
+          "operation": "modify",
+          "description": "Ensure current-user profile fetching correctly reflects actor dependency/loading/error states (to avoid UI hangs or indefinite spinners after login). Use the selected 'authorization' component guidance for preventing profile setup modal flash and for handling backend traps gracefully; verify the component's usage instructions before implementing."
         }
       ]
     }

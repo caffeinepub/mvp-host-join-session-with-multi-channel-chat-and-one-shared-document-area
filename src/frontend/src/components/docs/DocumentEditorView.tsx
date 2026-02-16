@@ -48,7 +48,8 @@ export default function DocumentEditorView({ document, isHost, onDocumentChanged
   useEffect(() => {
     setContent(document.content);
     setHasUnsavedChanges(false);
-  }, [document.id, document.content]);
+    setError('');
+  }, [document.id, document.content, document.revision]);
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent);
@@ -83,24 +84,27 @@ export default function DocumentEditorView({ document, isHost, onDocumentChanged
     if (!file) return;
 
     setError('');
-    setUploadProgress(null);
+    setUploadProgress(0);
 
     // Validate file extension
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     if (!fileExtension || !ALLOWED_EXTENSIONS.includes(fileExtension)) {
       setError(`Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`);
+      setUploadProgress(null);
       return;
     }
 
     // Validate MIME type
     if (!ALLOWED_TYPES.includes(file.type)) {
       setError(`Unsupported file type. Allowed: images (jpg, png, gif, webp) and files (pdf, txt, md)`);
+      setUploadProgress(null);
       return;
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       setError('File is too large. Maximum size is 10MB.');
+      setUploadProgress(null);
       return;
     }
 
@@ -129,33 +133,17 @@ export default function DocumentEditorView({ document, isHost, onDocumentChanged
         return;
       }
 
-      // Get the newly uploaded file to get its ID
-      // We need to refetch the file list to get the new file ID
-      // For now, we'll wait a moment and then insert a placeholder
-      // The backend should return the file ID in the response, but it doesn't currently
-      // So we'll need to fetch the list and find the newest one
-      setTimeout(async () => {
-        try {
-          const files = await actor?.listDocumentFiles(document.id);
-          if (files && files.length > 0) {
-            // Find the most recent file (highest ID)
-            const newestFile = files.reduce((prev, current) => 
-              current.id > prev.id ? current : prev
-            );
-
-            // Insert marker at cursor position or end
-            const cursorPosition = textareaRef.current?.selectionStart ?? content.length;
-            const marker = createFileMarker(Number(newestFile.id), file.name);
-            const newContent = insertFileMarker(content, cursorPosition, marker);
-            
-            setContent(newContent);
-            setHasUnsavedChanges(true);
-          }
-        } catch (err) {
-          console.error('Error fetching file list:', err);
-        }
-        setUploadProgress(null);
-      }, 500);
+      // Use the returned file ID from the backend response
+      const fileId = result.ok;
+      
+      // Insert marker at cursor position or end
+      const cursorPosition = textareaRef.current?.selectionStart ?? content.length;
+      const marker = createFileMarker(Number(fileId), file.name);
+      const newContent = insertFileMarker(content, cursorPosition, marker);
+      
+      setContent(newContent);
+      setHasUnsavedChanges(true);
+      setUploadProgress(null);
 
     } catch (err: any) {
       console.error('Upload error:', err);
@@ -177,6 +165,17 @@ export default function DocumentEditorView({ document, isHost, onDocumentChanged
 
   // Create a map of file ID to file reference for quick lookup
   const fileMap = new Map(documentFiles.map(f => [Number(f.id), f]));
+
+  // Separate images from other files
+  const imageMarkers = fileMarkers.filter(marker => {
+    const fileRef = fileMap.get(marker.fileId);
+    return fileRef && fileRef.mimeType.startsWith('image/');
+  });
+
+  const otherFileMarkers = fileMarkers.filter(marker => {
+    const fileRef = fileMap.get(marker.fileId);
+    return fileRef && !fileRef.mimeType.startsWith('image/');
+  });
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -268,12 +267,68 @@ export default function DocumentEditorView({ document, isHost, onDocumentChanged
           placeholder="Start typing..."
         />
 
-        {/* Render Attachments */}
-        {fileMarkers.length > 0 && (
+        {/* Image Gallery */}
+        {imageMarkers.length > 0 && (
           <div className="space-y-3 border-t border-border pt-4">
-            <h3 className="text-sm font-semibold">Attachments</h3>
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <ImageIcon className="h-4 w-4" />
+              Images
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {imageMarkers.map((marker) => {
+                const fileRef = fileMap.get(marker.fileId);
+                
+                if (!fileRef) {
+                  return (
+                    <div key={marker.fileId} className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/50">
+                      <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm text-muted-foreground">
+                          Image not found: {marker.filename}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                const imageUrl = fileRef.file.getDirectURL();
+
+                return (
+                  <div key={marker.fileId} className="border border-border rounded-lg overflow-hidden">
+                    <img
+                      src={imageUrl}
+                      alt={fileRef.filename}
+                      className="w-full h-48 object-cover bg-muted"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    <div className="p-2 bg-muted/50 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground truncate">{fileRef.filename}</span>
+                      <a
+                        href={imageUrl}
+                        download={fileRef.filename}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* File Attachments */}
+        {otherFileMarkers.length > 0 && (
+          <div className="space-y-3 border-t border-border pt-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Attachments
+            </h3>
             <div className="space-y-2">
-              {fileMarkers.map((marker) => {
+              {otherFileMarkers.map((marker) => {
                 const fileRef = fileMap.get(marker.fileId);
                 
                 if (!fileRef) {
@@ -289,33 +344,7 @@ export default function DocumentEditorView({ document, isHost, onDocumentChanged
                   );
                 }
 
-                const isImage = fileRef.mimeType.startsWith('image/');
                 const fileUrl = fileRef.file.getDirectURL();
-
-                if (isImage) {
-                  return (
-                    <div key={marker.fileId} className="border border-border rounded-lg overflow-hidden">
-                      <img
-                        src={fileUrl}
-                        alt={fileRef.filename}
-                        className="w-full max-h-96 object-contain bg-muted"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <div className="p-2 bg-muted/50 flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">{fileRef.filename}</span>
-                        <a
-                          href={fileUrl}
-                          download={fileRef.filename}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Download
-                        </a>
-                      </div>
-                    </div>
-                  );
-                }
 
                 return (
                   <div key={marker.fileId} className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors">

@@ -1,68 +1,80 @@
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
-import Principal "mo:core/Principal";
 
 module {
-  type OldPlayerDocument = {
+  public type Channel = {
     id : Nat;
-    sessionId : Nat;
-    owner : Principal;
     name : Text;
-    content : Text;
-    visible : Bool;
     createdBy : Principal;
-    lastModified : Int;
-    images : [ImageReference];
   };
 
-  type ImageReference = {
+  public type MembersChannel = {
     id : Nat;
-    documentId : Nat;
-    fileId : Text;
-    caption : Text;
-    position : Int;
-    size : Int;
-    createdBy : Principal;
-    lastModified : Int;
-  };
-
-  type OldActor = {
-    playerDocumentsMap : Map.Map<Nat, OldPlayerDocument>;
-  };
-
-  type NewPlayerDocument = {
-    id : Nat;
-    sessionId : Nat;
-    owner : Principal;
     name : Text;
-    content : Text;
     createdBy : Principal;
-    lastModified : Int;
-    images : [ImageReference];
-    isPrivate : Bool;
   };
 
-  type NewActor = {
-    playerDocumentsMap : Map.Map<Nat, NewPlayerDocument>;
+  public type SessionMember = {
+    id : Principal;
+    nickname : Text;
+    joinedAt : Int;
+  };
+
+  public type Session = {
+    id : Nat;
+    name : Text;
+    host : Principal;
+    passwordHash : ?Blob;
+    members : [SessionMember];
+    channels : [Channel];
+    membersChannels : [MembersChannel];
+    createdAt : Int;
+    lastActive : Int;
+  };
+
+  public type OldSession = {
+    id : Nat;
+    name : Text;
+    host : Principal;
+    passwordHash : ?Blob;
+    members : [SessionMember];
+    channels : [Channel];
+    createdAt : Int;
+    lastActive : Int;
+  };
+
+  public type OldActor = {
+    nextSessionId : Nat;
+    nextChannelId : Nat;
+    nextMessageId : Nat;
+    nextDocumentId : Nat;
+    nextImageId : Nat;
+    nextFileId : Nat;
+    sessions : Map.Map<Nat, OldSession>;
+  };
+
+  public type NewActor = {
+    nextSessionId : Nat;
+    nextChannelId : Nat;
+    nextMessageId : Nat;
+    nextDocumentId : Nat;
+    nextImageId : Nat;
+    nextFileId : Nat;
+    sessions : Map.Map<Nat, Session>;
   };
 
   public func run(old : OldActor) : NewActor {
-    let newPlayerDocumentsMap = old.playerDocumentsMap.map<Nat, OldPlayerDocument, NewPlayerDocument>(
-      func(_id, oldDoc) {
+    let newSessions = old.sessions.map<Nat, OldSession, Session>(
+      func(_id, oldSession) {
         {
-          id = oldDoc.id;
-          sessionId = oldDoc.sessionId;
-          owner = oldDoc.owner;
-          name = oldDoc.name;
-          content = oldDoc.content;
-          createdBy = oldDoc.createdBy;
-          lastModified = oldDoc.lastModified;
-          images = oldDoc.images;
-          isPrivate = not oldDoc.visible;
+          oldSession with
+          membersChannels = [];
         };
       }
     );
-
-    { playerDocumentsMap = newPlayerDocumentsMap };
+    {
+      old with
+      sessions = newSessions;
+    };
   };
 };
