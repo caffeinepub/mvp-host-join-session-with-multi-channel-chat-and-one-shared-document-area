@@ -14,8 +14,6 @@ import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 import AccessControl "authorization/access-control";
 
-
-
 actor {
   include MixinStorage();
 
@@ -211,6 +209,11 @@ actor {
     images : [ImageReference];
     documentFiles : [DocumentFileReference];
     turnOrder : ?TurnOrder;
+  };
+
+  public type DocumentMetadata = {
+    #session : Document;
+    #player : PlayerDocument;
   };
 
   var nextSessionId : Nat = 1;
@@ -910,28 +913,100 @@ actor {
     filtered.toArray();
   };
 
+  func canAccessDocument(documentId : Nat, caller : Principal) : Bool {
+    switch (documents.get(documentId)) {
+      case (?doc) {
+        return isSessionMember(doc.sessionId, caller);
+      };
+      case (null) {
+        switch (playerDocumentsMap.get(documentId)) {
+          case (?playerDoc) {
+            return canAccessPlayerDocument(playerDoc, caller);
+          };
+          case (null) {
+            return false;
+          };
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func listDocumentFiles(documentId : Nat) : async [DocumentFileReference] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can list files");
+    };
+
+    if (not canAccessDocument(documentId, caller)) {
+      Runtime.trap("Unauthorized: You cannot access files for this document");
+    };
+
+    let filteredFiles = documentFileReferences.values().filter(
+      func(file) { file.documentId == documentId }
+    );
+    filteredFiles.toArray();
+  };
+
+  public query ({ caller }) func getDocumentFileReference(fileId : Nat) : async ?DocumentFileReference {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view file references");
+    };
+
+    let fileRef = switch (documentFileReferences.get(fileId)) {
+      case (null) { return null };
+      case (?ref) { ref };
+    };
+
+    if (not canAccessDocument(fileRef.documentId, caller)) {
+      Runtime.trap("Unauthorized: You cannot access this file");
+    };
+
+    ?fileRef;
+  };
+
+  public query ({ caller }) func getDocumentFileBlob(fileId : Nat) : async ?Storage.ExternalBlob {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view files");
+    };
+
+    let fileRef = switch (documentFileReferences.get(fileId)) {
+      case (null) { return null };
+      case (?ref) { ref };
+    };
+
+    if (not canAccessDocument(fileRef.documentId, caller)) {
+      Runtime.trap("Unauthorized: You cannot access this file");
+    };
+
+    ?fileRef.file;
+  };
+
   public shared ({ caller }) func uploadDocumentFile(request : UploadFileRequest) : async UploadDocumentFileResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       return #error("Unauthorized: Only users can upload files");
     };
 
-    let doc = switch (documents.get(request.documentId)) {
-      case (null) {
-        return #error("Document not found for file upload");
-      };
-      case (?d) { d };
-    };
-
-    if (not isSessionMember(doc.sessionId, caller)) {
-      return #error("Unauthorized: Only session members can upload files");
-    };
-
-    if (doc.locked) {
-      return #error("Cannot upload files to a locked document");
-    };
-
     if (request.size > 10_000_000) {
       return #error("File size must not exceed 10MB");
+    };
+
+    let canUpload = switch (documents.get(request.documentId)) {
+      case (?doc) {
+        isSessionMember(doc.sessionId, caller);
+      };
+      case (null) {
+        switch (playerDocumentsMap.get(request.documentId)) {
+          case (?playerDoc) {
+            Principal.equal(playerDoc.owner, caller);
+          };
+          case (null) {
+            return #error("Document not found for file upload");
+          };
+        };
+      };
+    };
+
+    if (not canUpload) {
+      return #error("Unauthorized: You cannot upload files to this document");
     };
 
     let newFileReference : DocumentFileReference = {
@@ -949,56 +1024,6 @@ actor {
 
     documentFileReferences.add(newFileReference.id, newFileReference);
     #ok(fileId);
-  };
-
-  public query ({ caller }) func listDocumentFiles(documentId : Nat) : async [DocumentFileReference] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      return [];
-    };
-
-    let docSessionId = switch (documents.get(documentId)) {
-      case (null) { return [] };
-      case (?doc) { doc.sessionId };
-    };
-
-    if (not isSessionMember(docSessionId, caller)) {
-      return [];
-    };
-
-    let filteredFiles = documentFileReferences.values().filter(
-      func(file) { file.documentId == documentId }
-    );
-    filteredFiles.toArray();
-  };
-
-  public query ({ caller }) func getDocumentFileReference(fileId : Nat) : async ?DocumentFileReference {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      return null;
-    };
-
-    return documentFileReferences.get(fileId);
-  };
-
-  public query ({ caller }) func getDocumentFileBlob(fileId : Nat) : async ?Storage.ExternalBlob {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      return null;
-    };
-
-    let fileRef = switch (documentFileReferences.get(fileId)) {
-      case (null) { return null };
-      case (?ref) { ref };
-    };
-
-    let docSessionId = switch (documents.get(fileRef.documentId)) {
-      case (null) { return null };
-      case (?doc) { doc.sessionId };
-    };
-
-    if (not isSessionMember(docSessionId, caller)) {
-      return null;
-    };
-
-    ?fileRef.file;
   };
 
   func parseDicePattern(pattern : Text) : ?(Nat, Nat, Int) {
@@ -1762,4 +1787,3 @@ actor {
     imageId;
   };
 };
-

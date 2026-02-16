@@ -1,55 +1,48 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Build a documents/notes editor with a toggleable Preview mode that renders note text and inline file/image placeholders.",
-  "architectural_notes": [
-    "Preview mode should parse noteContent for [FILE:id:filename] tags and render a mixed sequence of <Text> and inline <Image>/<file placeholder> components in a ScrollView, using an existing fileId->URI map."
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [
+    "App remains stuck on \"Initializing..\" screen after deployment (loading hang)."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-add-a-preview-edit-toggle-control-to-the-session-document-editor-screen-documenteditorview-that-switches-between-the-existing-editable-textarea-and-a-read-only-preview-view-user-facing-labels-must-be-in-english-preview-and-edit",
-      "title": "Add a Preview/Edit toggle control to the session document editor screen (DocumentEditorView) that switches between the existing editable textarea and a read-only preview view. User-facing labels must be in English (\"Preview\" and \"Edit\").",
+      "id": "feature-fix-the-initialization-hang-by-making-actor-initialization-timeouts-trigger-reliably-and-transition-the-ui-away-from-the-infinite-initializing-screen",
+      "title": "Fix the initialization hang by making actor initialization timeouts trigger reliably and transition the UI away from the infinite “Initializing…” screen.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-a-minimal-preview-renderer-for-document-content-that-parses-embedded-file-markers-in-the-form-file-id-filename-and-renders-the-document-as-a-scrollable-formatted-read-only-view-with-inline-file-items-at-the-marker-positions",
-      "title": "Implement a minimal preview renderer for document content that parses embedded file markers in the form \"[FILE:<id>:<filename>]\" and renders the document as a scrollable, formatted read-only view with inline file items at the marker positions.",
+      "id": "feature-surface-actor-creation-failures-immediately-not-only-via-timeout-so-the-app-shows-initializationfailurescreen-when-the-actor-query-fails-due-to-exceptions-traps-during-initialization",
+      "title": "Surface actor creation failures immediately (not only via timeout) so the app shows InitializationFailureScreen when the actor query fails due to exceptions/traps during initialization.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-in-preview-mode-resolve-each-file-marker-to-the-corresponding-uploaded-file-using-the-existing-documentfiles-list-via-uselistdocumentfiles-and-the-existing-filemap-lookup-file-id-file-reference-render-images-inline-using-the-file-s-direct-url-render-non-image-files-inline-as-a-small-attachment-row-that-shows-the-filename-and-provides-an-open-file-action",
-      "title": "In preview mode, resolve each file marker to the corresponding uploaded file using the existing documentFiles list (via useListDocumentFiles) and the existing fileMap lookup (file ID -> file reference). Render images inline using the file’s direct URL; render non-image files inline as a small attachment row that shows the filename and provides an \"Open file\" action.",
+      "id": "feature-prevent-access-control-initialization-from-causing-an-indefinite-initialization-state-by-handling-missing-empty-admin-token-initialization-safely-on-the-frontend-and-only-attempting-secret-based-initialization-when-a-token-is-present",
+      "title": "Prevent access-control initialization from causing an indefinite initialization state by handling missing/empty admin token initialization safely on the frontend (and only attempting secret-based initialization when a token is present).",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-keep-the-change-tightly-scoped-to-the-session-documenteditorview-only-do-not-modify-upload-logic-save-logic-player-documents-ui-chat-stickers-or-other-unrelated-screens",
-      "title": "Keep the change tightly scoped to the session DocumentEditorView only; do not modify upload logic, save logic, player documents UI, chat, stickers, or other unrelated screens.",
+      "id": "feature-add-a-minimal-user-visible-recovery-path-for-initialization-issues-ensure-initializationfailurescreen-provides-enough-actionable-detail-to-unblock-users-stuck-at-startup-keep-all-user-facing-text-in-english",
+      "title": "Add a minimal, user-visible recovery path for initialization issues: ensure InitializationFailureScreen provides enough actionable detail to unblock users stuck at startup (keep all user-facing text in English).",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Add Preview/Edit toggle in document editor to render read-only preview with inline images/files parsed from [FILE:id:filename] tags (scrollable, minimal/no new libs).",
-      "reqIds": [],
-      "status": "pending"
-    }
-  ],
-  "projectName": "Session Docs",
+  "new_feature_requests": [],
+  "projectName": "RPG Collaboration",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T19:44:20.699Z",
+  "generatedAt": "2026-02-16T21:22:41.477Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,66 +12,69 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a Preview/Edit toggle control to the session document editor screen (DocumentEditorView) that switches between the existing editable textarea and a read-only preview view. User-facing labels must be in English (\"Preview\" and \"Edit\").",
+        "summary": "Fix the initialization hang by making actor initialization timeouts trigger reliably and transition the UI away from the infinite “Initializing…” screen.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/docs/DocumentEditorView.tsx"
+          "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/docs/DocumentEditorView.tsx"
+          "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Implement a minimal preview renderer for document content that parses embedded file markers in the form \"[FILE:<id>:<filename>]\" and renders the document as a scrollable, formatted read-only view with inline file items at the marker positions.",
+        "summary": "Surface actor creation failures immediately (not only via timeout) so the app shows InitializationFailureScreen when the actor query fails due to exceptions/traps during initialization.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/docs/DocumentContentPreview.tsx",
-          "frontend/src/components/docs/DocumentEditorView.tsx"
+          "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/docs/DocumentContentPreview.tsx",
-          "frontend/src/components/docs/DocumentEditorView.tsx"
+          "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "In preview mode, resolve each file marker to the corresponding uploaded file using the existing documentFiles list (via useListDocumentFiles) and the existing fileMap lookup (file ID -> file reference). Render images inline using the file’s direct URL; render non-image files inline as a small attachment row that shows the filename and provides an \"Open file\" action.",
+        "summary": "Prevent access-control initialization from causing an indefinite initialization state by handling missing/empty admin token initialization safely on the frontend (and only attempting secret-based initialization when a token is present).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/docs/DocumentContentPreview.tsx",
-          "frontend/src/components/docs/DocumentEditorView.tsx"
+          "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/docs/DocumentContentPreview.tsx",
-          "frontend/src/components/docs/DocumentEditorView.tsx"
+          "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Keep the change tightly scoped to the session DocumentEditorView only; do not modify upload logic, save logic, player documents UI, chat, stickers, or other unrelated screens.",
+        "summary": "Add a minimal, user-visible recovery path for initialization issues: ensure InitializationFailureScreen provides enough actionable detail to unblock users stuck at startup (keep all user-facing text in English).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/docs/DocumentEditorView.tsx",
-          "frontend/src/components/docs/DocumentContentPreview.tsx"
+          "frontend/src/components/app/InitializationFailureScreen.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/lib/clearLocalAppData.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/docs/DocumentEditorView.tsx",
-          "frontend/src/components/docs/DocumentContentPreview.tsx"
+          "frontend/src/components/app/InitializationFailureScreen.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/lib/clearLocalAppData.ts"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/docs/DocumentContentPreview.tsx",
-    "frontend/src/components/docs/DocumentEditorView.tsx",
-    "frontend/src/config.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/app/InitializationFailureScreen.tsx",
+    "frontend/src/hooks/useActorWithErrorHandling.ts",
+    "frontend/src/lib/clearLocalAppData.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

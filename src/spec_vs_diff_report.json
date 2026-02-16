@@ -1,42 +1,36 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T19:44:20.696Z",
-  "summary": "Preview rendering and a new DocumentContentPreview component were added, but the change set appears to include backend modifications (violating the “no backend changes / tightly scoped” requirement). From the truncated diffs, some acceptance details (notably scrollability of the preview area and exact toggle labels) cannot be fully verified.",
+  "generatedAt": "2026-02-16T21:22:41.474Z",
+  "summary": "Implemented a new frontend actor initialization wrapper with a non-resetting 30s timeout and added an InitializationFailureScreen recovery UI with Retry and Clear Local Data & Retry actions. However, the diff does not show handling of immediate actor creation failures (non-timeout errors) nor the requested safe handling of missing/empty `caffeineAdminToken` during access-control initialization.",
   "missing_requirements": [
     {
       "id": "REQ-2",
-      "requirement": "Preview area is scrollable within the editor panel.",
-      "reason": "The added preview component renders content in a normal <div className=\"space-y-4\"> with no visible scroll container styling; the DocumentEditorView diff is truncated before showing the preview container layout, so scrollability is not evidenced.",
+      "requirement": "Surface actor creation failures immediately (not only via timeout) so the app shows InitializationFailureScreen when the actor query fails due to exceptions/traps during initialization.",
+      "reason": "The added wrapper hook only synthesizes a timeout error based on `isFetching` and does not capture/propagate underlying actor creation/query errors (e.g., rejected promise, agent error, canister trap). The diff also does not show `useActor` being modified to return an error state that could be surfaced immediately.",
       "evidence": [
-        "frontend/src/components/docs/DocumentContentPreview.tsx",
-        "frontend/src/components/docs/DocumentEditorView.tsx (truncated)"
-      ]
-    }
-  ],
-  "hallucinated_features": [
-    {
-      "description": "Backend Motoko file was modified despite requirement to make no backend changes for this feature.",
-      "reason": "BuildRequest explicitly forbids backend schema/Motoko changes; diff shows modifications to backend/main.mo.",
-      "evidence": [
-        "backend/main.mo"
+        "frontend/src/hooks/useActorWithErrorHandling.ts",
+        "frontend/src/App.tsx"
       ]
     },
     {
-      "description": "Extra project/meta files updated that are outside the requested scoped UI change (e.g., project_state.json and a repository-wide frontend-file-summaries.txt).",
-      "reason": "REQ-4 asks to keep the change tightly scoped to DocumentEditorView only; these files are not part of that screen’s implementation.",
+      "id": "REQ-3",
+      "requirement": "Prevent access-control initialization from causing an indefinite initialization state by handling missing/empty admin token initialization safely on the frontend (and only attempting secret-based initialization when a token is present).",
+      "reason": "No changes shown to the existing actor/access-control initialization path (e.g., `useActor` / secret retrieval / access-control init) to gate secret-based initialization on presence of `caffeineAdminToken`. The new code does not reference `caffeineAdminToken` or `getSecretParameter` flow.",
       "evidence": [
-        "project_state.json",
-        "frontend-file-summaries.txt"
+        "frontend/src/hooks/useActorWithErrorHandling.ts",
+        "frontend/src/App.tsx"
       ]
     }
   ],
-  "confidence": 0.72,
+  "hallucinated_features": [],
+  "confidence": 0.74,
   "changed_files": [
-    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/docs/DocumentContentPreview.tsx",
-    "frontend/src/components/docs/DocumentEditorView.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/components/app/InitializationFailureScreen.tsx",
+    "frontend/src/hooks/useActorWithErrorHandling.ts",
+    "frontend/src/lib/clearLocalAppData.ts",
     "project_state.json"
   ]
 }

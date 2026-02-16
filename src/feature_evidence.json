@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-preview-edit-toggle-control-to-the-session-document-editor-screen-documenteditorview-that-switches-between-the-existing-editable-textarea-and-a-read-only-preview-view-user-facing-labels-must-be-in-english-preview-and-edit",
-      "featureTitle": "Add a Preview/Edit toggle control to the session document editor screen (DocumentEditorView) that switches between the existing editable textarea and a read-only preview view. User-facing labels must be in English (\"Preview\" and \"Edit\").",
+      "featureId": "feature-fix-the-initialization-hang-by-making-actor-initialization-timeouts-trigger-reliably-and-transition-the-ui-away-from-the-infinite-initializing-screen",
+      "featureTitle": "Fix the initialization hang by making actor initialization timeouts trigger reliably and transition the UI away from the infinite “Initializing…” screen.",
       "files": [
-        "frontend/src/components/docs/DocumentEditorView.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useActorWithErrorHandling.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,11 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-a-minimal-preview-renderer-for-document-content-that-parses-embedded-file-markers-in-the-form-file-id-filename-and-renders-the-document-as-a-scrollable-formatted-read-only-view-with-inline-file-items-at-the-marker-positions",
-      "featureTitle": "Implement a minimal preview renderer for document content that parses embedded file markers in the form \"[FILE:<id>:<filename>]\" and renders the document as a scrollable, formatted read-only view with inline file items at the marker positions.",
+      "featureId": "feature-surface-actor-creation-failures-immediately-not-only-via-timeout-so-the-app-shows-initializationfailurescreen-when-the-actor-query-fails-due-to-exceptions-traps-during-initialization",
+      "featureTitle": "Surface actor creation failures immediately (not only via timeout) so the app shows InitializationFailureScreen when the actor query fails due to exceptions/traps during initialization.",
       "files": [
-        "frontend/src/components/docs/DocumentContentPreview.tsx",
-        "frontend/src/components/docs/DocumentEditorView.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useActorWithErrorHandling.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -43,11 +44,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-in-preview-mode-resolve-each-file-marker-to-the-corresponding-uploaded-file-using-the-existing-documentfiles-list-via-uselistdocumentfiles-and-the-existing-filemap-lookup-file-id-file-reference-render-images-inline-using-the-file-s-direct-url-render-non-image-files-inline-as-a-small-attachment-row-that-shows-the-filename-and-provides-an-open-file-action",
-      "featureTitle": "In preview mode, resolve each file marker to the corresponding uploaded file using the existing documentFiles list (via useListDocumentFiles) and the existing fileMap lookup (file ID -> file reference). Render images inline using the file’s direct URL; render non-image files inline as a small attachment row that shows the filename and provides an \"Open file\" action.",
+      "featureId": "feature-prevent-access-control-initialization-from-causing-an-indefinite-initialization-state-by-handling-missing-empty-admin-token-initialization-safely-on-the-frontend-and-only-attempting-secret-based-initialization-when-a-token-is-present",
+      "featureTitle": "Prevent access-control initialization from causing an indefinite initialization state by handling missing/empty admin token initialization safely on the frontend (and only attempting secret-based initialization when a token is present).",
       "files": [
-        "frontend/src/components/docs/DocumentContentPreview.tsx",
-        "frontend/src/components/docs/DocumentEditorView.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useActorWithErrorHandling.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -64,11 +65,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-keep-the-change-tightly-scoped-to-the-session-documenteditorview-only-do-not-modify-upload-logic-save-logic-player-documents-ui-chat-stickers-or-other-unrelated-screens",
-      "featureTitle": "Keep the change tightly scoped to the session DocumentEditorView only; do not modify upload logic, save logic, player documents UI, chat, stickers, or other unrelated screens.",
+      "featureId": "feature-add-a-minimal-user-visible-recovery-path-for-initialization-issues-ensure-initializationfailurescreen-provides-enough-actionable-detail-to-unblock-users-stuck-at-startup-keep-all-user-facing-text-in-english",
+      "featureTitle": "Add a minimal, user-visible recovery path for initialization issues: ensure InitializationFailureScreen provides enough actionable detail to unblock users stuck at startup (keep all user-facing text in English).",
       "files": [
-        "frontend/src/components/docs/DocumentContentPreview.tsx",
-        "frontend/src/components/docs/DocumentEditorView.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/components/app/InitializationFailureScreen.tsx",
+        "frontend/src/lib/clearLocalAppData.ts"
       ],
       "components": [
         "authorization@4.0.0",

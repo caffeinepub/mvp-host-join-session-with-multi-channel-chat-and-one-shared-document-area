@@ -11,11 +11,12 @@ import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
-import { Save, Lock, Loader2, AlertTriangle, Upload, Download, FileText, Image as ImageIcon } from 'lucide-react';
+import { Save, Lock, Loader2, AlertTriangle, Upload, Download, FileText, Image as ImageIcon, Eye, Edit } from 'lucide-react';
 import { formatTimestamp } from '../../lib/time';
 import { parseFileMarkers, createFileMarker, insertFileMarker } from '../../lib/documentFileMarkers';
 import ImageUploadWithTitleDialog from './ImageUploadWithTitleDialog';
 import DocumentCommentsSection from './DocumentCommentsSection';
+import DocumentContentPreview from './DocumentContentPreview';
 
 type PlayerDocumentEditorViewProps = {
   documentId: bigint;
@@ -49,10 +50,15 @@ export default function PlayerDocumentEditorView({ documentId, onDocumentChanged
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [showImageUploadDialog, setShowImageUploadDialog] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { data: documentFiles = [] } = useListDocumentFiles(documentId);
+  // Derive the current document ID - only use it when document is loaded and matches prop
+  const currentDocumentId = document && document.id === documentId ? document.id : null;
+
+  // Only fetch files when we have a valid loaded document ID
+  const { data: documentFiles = [] } = useListDocumentFiles(currentDocumentId);
   const uploadFile = useUploadDocumentFile();
   const addImage = useAddImageToPlayerDocument();
 
@@ -120,7 +126,11 @@ export default function PlayerDocumentEditorView({ documentId, onDocumentChanged
   };
 
   const handleImageUpload = async (file: File, title: string) => {
-    if (!document) return;
+    // Guard: ensure document is loaded before upload
+    if (!document || !currentDocumentId) {
+      setError('Document not loaded. Please wait and try again.');
+      return;
+    }
 
     setError('');
     setUploadProgress(0);
@@ -135,9 +145,9 @@ export default function PlayerDocumentEditorView({ documentId, onDocumentChanged
         setUploadProgress(percentage);
       });
 
-      // Upload file
+      // Upload file using the loaded document ID
       const uploadResult = await uploadFile.mutateAsync({
-        documentId: document.id,
+        documentId: currentDocumentId,
         file: blob,
         filename: file.name,
         mimeType: file.type,
@@ -154,7 +164,7 @@ export default function PlayerDocumentEditorView({ documentId, onDocumentChanged
 
       // Register image reference with title
       const imageResult = await addImage.mutateAsync({
-        documentId: document.id,
+        documentId: currentDocumentId,
         fileId: fileId.toString(),
         title: title || file.name,
         caption: '',
@@ -185,7 +195,14 @@ export default function PlayerDocumentEditorView({ documentId, onDocumentChanged
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !document) return;
+    
+    // Guard: ensure document is loaded before upload
+    if (!file || !document || !currentDocumentId) {
+      if (file && !currentDocumentId) {
+        setError('Document not loaded. Please wait and try again.');
+      }
+      return;
+    }
 
     setError('');
     setUploadProgress(0);
@@ -222,9 +239,9 @@ export default function PlayerDocumentEditorView({ documentId, onDocumentChanged
         setUploadProgress(percentage);
       });
 
-      // Upload file
+      // Upload file using the loaded document ID
       const result = await uploadFile.mutateAsync({
-        documentId: document.id,
+        documentId: currentDocumentId,
         file: blob,
         filename: file.name,
         mimeType: file.type,
@@ -284,6 +301,9 @@ export default function PlayerDocumentEditorView({ documentId, onDocumentChanged
   const isOwner = identity?.getPrincipal().toString() === document.owner.toString();
   const isReadOnly = !isOwner;
   const isUploading = uploadProgress !== null;
+  
+  // Disable upload actions until document is fully loaded and ID matches
+  const canUpload = isOwner && !!currentDocumentId && !isUploading && !saving;
 
   // Parse file markers from content
   const fileMarkers = parseFileMarkers(content);
@@ -321,11 +341,31 @@ export default function PlayerDocumentEditorView({ documentId, onDocumentChanged
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Last modified: {formatTimestamp(document.lastModified)}</span>
-          {hasUnsavedChanges && <span className="text-amber-600 dark:text-amber-400">Unsaved changes</span>}
+          <div className="flex items-center gap-3">
+            {hasUnsavedChanges && <span className="text-amber-600 dark:text-amber-400">Unsaved changes</span>}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPreview(!isPreview)}
+              className="gap-2"
+            >
+              {isPreview ? (
+                <>
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4" />
+                  Preview
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Editor */}
+      {/* Editor or Preview */}
       <div className="flex-1 p-4 overflow-auto flex flex-col gap-4">
         {error && (
           <Alert variant="destructive">
@@ -341,207 +381,219 @@ export default function PlayerDocumentEditorView({ documentId, onDocumentChanged
           </Alert>
         )}
 
-        {/* Visibility Toggle (Owner Only) */}
-        {isOwner && (
-          <div className="flex items-center justify-between p-3 border border-border rounded-lg">
-            <div className="space-y-0.5">
-              <Label htmlFor="visibility-toggle">Private Document</Label>
-              <p className="text-xs text-muted-foreground">
-                {document.isPrivate
-                  ? 'Only you and the host can see this document'
-                  : 'All session members can see this document'}
-              </p>
-            </div>
-            <Switch
-              id="visibility-toggle"
-              checked={document.isPrivate}
-              onCheckedChange={handleVisibilityToggle}
-              disabled={setVisibility.isPending}
+        {isPreview ? (
+          /* Preview Mode */
+          <div className="flex-1">
+            <DocumentContentPreview content={content} documentFiles={documentFiles} />
+          </div>
+        ) : (
+          /* Edit Mode */
+          <>
+            {/* Visibility Toggle (Owner Only) */}
+            {isOwner && (
+              <div className="flex items-center justify-between p-3 border border-border rounded-lg">
+                <div className="space-y-0.5">
+                  <Label htmlFor="visibility-toggle">Private Document</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {document.isPrivate
+                      ? 'Only you and the host can see this document'
+                      : 'All session members can see this document'}
+                  </p>
+                </div>
+                <Switch
+                  id="visibility-toggle"
+                  checked={document.isPrivate}
+                  onCheckedChange={handleVisibilityToggle}
+                  disabled={setVisibility.isPending}
+                />
+              </div>
+            )}
+
+            {/* Upload Buttons (Owner Only) - Disabled until document is loaded */}
+            {isOwner && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!canUpload}
+                  onClick={() => setShowImageUploadDialog(true)}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading {Math.round(uploadProgress || 0)}%
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="mr-2 h-4 w-4" />
+                      Upload image
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!canUpload}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload file
+                </Button>
+                <span className="text-xs text-muted-foreground">Max 10MB • jpg, png, gif, webp, pdf, txt, md</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.txt,.md"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
+            )}
+
+            <Textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => handleContentChange(e.target.value)}
+              disabled={isReadOnly || saving}
+              className="flex-1 resize-none font-mono text-sm min-h-[300px]"
+              placeholder={isReadOnly ? 'This document is read-only' : 'Start typing...'}
             />
-          </div>
-        )}
 
-        {/* Upload Buttons (Owner Only) */}
-        {isOwner && (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isUploading || saving}
-              onClick={() => setShowImageUploadDialog(true)}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading {Math.round(uploadProgress || 0)}%
-                </>
-              ) : (
-                <>
-                  <ImageIcon className="mr-2 h-4 w-4" />
-                  Upload image
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isUploading || saving}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Upload file
-            </Button>
-            <span className="text-xs text-muted-foreground">Max 10MB • jpg, png, gif, webp, pdf, txt, md</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.txt,.md"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-          </div>
-        )}
+            {!isReadOnly && (
+              <div className="flex justify-end">
+                <Button onClick={handleSave} disabled={!hasUnsavedChanges || saving}>
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
 
-        <Textarea
-          ref={textareaRef}
-          value={content}
-          onChange={(e) => handleContentChange(e.target.value)}
-          disabled={isReadOnly || saving}
-          className="flex-1 resize-none font-mono text-sm min-h-[300px]"
-          placeholder={isReadOnly ? 'This document is read-only' : 'Start typing...'}
-        />
+            {/* Image Gallery */}
+            {imageMarkers.length > 0 && (
+              <div className="space-y-3 border-t border-border pt-4">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Images
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {imageMarkers.map((marker) => {
+                    const fileRef = fileMap.get(marker.fileId);
 
-        {!isReadOnly && (
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={!hasUnsavedChanges || saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save
-                </>
-              )}
-            </Button>
-          </div>
-        )}
+                    if (!fileRef) {
+                      return (
+                        <div
+                          key={marker.fileId}
+                          className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/50"
+                        >
+                          <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+                          <div className="flex-1">
+                            <p className="text-sm text-muted-foreground">Image not found: {marker.filename}</p>
+                          </div>
+                        </div>
+                      );
+                    }
 
-        {/* Image Gallery */}
-        {imageMarkers.length > 0 && (
-          <div className="space-y-3 border-t border-border pt-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
-              Images
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {imageMarkers.map((marker) => {
-                const fileRef = fileMap.get(marker.fileId);
+                    const imageUrl = fileRef.file.getDirectURL();
 
-                if (!fileRef) {
-                  return (
-                    <div
-                      key={marker.fileId}
-                      className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/50"
-                    >
-                      <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">Image not found: {marker.filename}</p>
+                    return (
+                      <div key={marker.fileId} className="border border-border rounded-lg overflow-hidden">
+                        <img
+                          src={imageUrl}
+                          alt={fileRef.filename}
+                          className="w-full h-48 object-cover bg-muted"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <div className="p-2 bg-muted/50 flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground truncate">{fileRef.filename}</span>
+                          <a href={imageUrl} download={fileRef.filename} className="text-xs text-primary hover:underline">
+                            Download
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  );
-                }
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-                const imageUrl = fileRef.file.getDirectURL();
+            {/* File Attachments */}
+            {otherFileMarkers.length > 0 && (
+              <div className="space-y-3 border-t border-border pt-4">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  File Attachments
+                </h3>
+                <div className="space-y-2">
+                  {otherFileMarkers.map((marker) => {
+                    const fileRef = fileMap.get(marker.fileId);
 
-                return (
-                  <div key={marker.fileId} className="border border-border rounded-lg overflow-hidden">
-                    <img
-                      src={imageUrl}
-                      alt={fileRef.filename}
-                      className="w-full h-48 object-cover bg-muted"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                    <div className="p-2 bg-muted/50 flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground truncate">{fileRef.filename}</span>
-                      <a href={imageUrl} download={fileRef.filename} className="text-xs text-primary hover:underline">
-                        Download
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                    if (!fileRef) {
+                      return (
+                        <div
+                          key={marker.fileId}
+                          className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/50"
+                        >
+                          <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+                          <div className="flex-1">
+                            <p className="text-sm text-muted-foreground">File not found: {marker.filename}</p>
+                          </div>
+                        </div>
+                      );
+                    }
 
-        {/* File Attachments */}
-        {otherFileMarkers.length > 0 && (
-          <div className="space-y-3 border-t border-border pt-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Attachments
-            </h3>
-            <div className="space-y-2">
-              {otherFileMarkers.map((marker) => {
-                const fileRef = fileMap.get(marker.fileId);
+                    const fileUrl = fileRef.file.getDirectURL();
 
-                if (!fileRef) {
-                  return (
-                    <div
-                      key={marker.fileId}
-                      className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/50"
-                    >
-                      <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">File not found: {marker.filename}</p>
+                    return (
+                      <div
+                        key={marker.fileId}
+                        className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{fileRef.filename}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {fileRef.mimeType} • {(Number(fileRef.size) / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                        <a href={fileUrl} download={fileRef.filename}>
+                          <Button variant="ghost" size="sm">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </a>
                       </div>
-                    </div>
-                  );
-                }
-
-                const fileUrl = fileRef.file.getDirectURL();
-
-                return (
-                  <div
-                    key={marker.fileId}
-                    className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{fileRef.filename}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {fileRef.mimeType} • {(Number(fileRef.size) / 1024).toFixed(1)} KB
-                        </p>
-                      </div>
-                    </div>
-                    <a href={fileUrl} download={fileRef.filename}>
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </a>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
+      </div>
 
-        {/* Comments Section */}
-        <DocumentCommentsSection documentId={document.id} />
+      {/* Comments Section - Pass isOwner as isHost for permission logic */}
+      <div className="border-t border-border">
+        <DocumentCommentsSection documentId={document.id} isHost={isOwner} />
       </div>
 
       {/* Image Upload Dialog */}
-      <ImageUploadWithTitleDialog
-        open={showImageUploadDialog}
-        onOpenChange={setShowImageUploadDialog}
-        onUpload={handleImageUpload}
-      />
+      {showImageUploadDialog && (
+        <ImageUploadWithTitleDialog
+          open={showImageUploadDialog}
+          onOpenChange={setShowImageUploadDialog}
+          onUpload={handleImageUpload}
+        />
+      )}
     </div>
   );
 }

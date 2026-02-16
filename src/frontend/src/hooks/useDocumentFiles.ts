@@ -36,6 +36,12 @@ export function useUploadDocumentFile() {
   return useMutation({
     mutationFn: async (request: UploadFileRequest) => {
       if (!actor) throw new Error('Actor not available');
+      
+      // Validate documentId before making backend call
+      if (!request.documentId || request.documentId === BigInt(0)) {
+        throw new Error('Invalid document ID for file upload');
+      }
+      
       const result = await actor.uploadDocumentFile(request);
       return result;
     },

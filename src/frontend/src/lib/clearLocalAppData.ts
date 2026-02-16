@@ -25,5 +25,6 @@ export function clearLocalAppData(): void {
     console.log('Local app data cleared successfully');
   } catch (error) {
     console.error('Failed to clear local app data:', error);
+    // Don't throw - we want this to be safe to call
   }
 }

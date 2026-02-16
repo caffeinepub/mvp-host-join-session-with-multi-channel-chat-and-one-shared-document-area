@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { Send, Loader2, Image } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
-import { parseRollCommand } from '../../lib/rollCommand';
+import { parseRollCommand, rollDice, formatRollResult } from '../../lib/rollCommand';
 
 type ChannelChatViewProps = {
   sessionId: bigint;
@@ -51,20 +51,23 @@ export default function ChannelChatView({
     try {
       // Check if it's a roll command
       if (content.startsWith('/roll ')) {
-        const pattern = content.substring(6).trim();
-        const validation = parseRollCommand(pattern);
+        const expression = content.slice(6).trim(); // Extract expression after "/roll "
+        const validation = parseRollCommand(expression);
 
         if (!validation.valid) {
-          alert(validation.error);
+          alert(validation.error || 'Invalid dice format. Use e.g. /roll d20+5');
           setIsSending(false);
           return;
         }
 
-        // Execute roll
-        const result = await actor.roll(sessionId, pattern);
+        // Roll dice client-side
+        const { numDice, diceSize, modifier } = validation;
+        const rolls = rollDice(numDice!, diceSize!);
         
-        // Post roll result as message
-        const rollMessage = `🎲 ${nickname} rolled ${result.pattern}: ${result.rolls.map(r => r.toString()).join(', ')}${result.modifier !== 0n ? ` ${result.modifier > 0n ? '+' : ''}${result.modifier}` : ''} = **${result.total}**`;
+        // Format result message
+        const rollMessage = formatRollResult(nickname, expression, rolls, modifier!);
+        
+        // Post roll result as a regular message
         await actor.postMessage(sessionId, channelId, rollMessage, null);
       } else {
         // Regular message
@@ -176,6 +179,12 @@ export default function ChannelChatView({
             className="resize-none"
             rows={2}
             disabled={isSending}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
           />
           <div className="flex flex-col gap-2">
             <Button

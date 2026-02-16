@@ -21,7 +21,7 @@ export default function ChatMessageItem({ message, members }: ChatMessageItemPro
   const messageImageUrl = message.image?.getDirectURL();
 
   return (
-    <div className={`flex gap-3 ${isRoll ? 'bg-accent/30 p-3 rounded-lg border border-accent' : ''}`}>
+    <div className={`flex gap-3 ${isRoll ? 'bg-accent/20 p-3 rounded-lg border border-accent/50' : ''}`}>
       <Avatar
         imageUrl={avatarImageUrl}
         name={message.author}
@@ -34,12 +34,12 @@ export default function ChatMessageItem({ message, members }: ChatMessageItemPro
           <span className="text-xs text-muted-foreground">
             {formatTimestamp(message.timestamp)}
           </span>
-          {isRoll && <Badge variant="secondary" className="text-xs">Roll</Badge>}
+          {isRoll && <Badge variant="secondary" className="text-xs">🎲 Roll</Badge>}
           {hasImage && <Badge variant="outline" className="text-xs">📷 Image</Badge>}
         </div>
         {message.content && (
-          <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-            {message.content.replace(/\*\*(.*?)\*\*/g, (_, text) => text)}
+          <div className={`text-sm leading-relaxed whitespace-pre-wrap break-words ${isRoll ? 'italic text-muted-foreground font-medium' : ''}`}>
+            {message.content}
           </div>
         )}
         {hasImage && messageImageUrl && (

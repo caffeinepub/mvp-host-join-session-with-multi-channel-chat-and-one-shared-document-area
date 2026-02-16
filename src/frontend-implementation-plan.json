@@ -1,86 +1,92 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Preview/Edit mode for session DocumentEditorView with inline file rendering",
+  "title": "RPG Collaboration — Fix initialization hang and improve startup recovery",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add an Edit/Preview toggle in DocumentEditorView to switch between editable textarea and read-only preview UI with English labels.",
+      "summary": "Make actor initialization timeout fire reliably and transition the UI away from the infinite “Initializing…” screen, with a non-reloading retry path.",
       "acceptanceCriteria": [
-        "A control is visible in the document editor UI that toggles between Edit and Preview modes.",
-        "When in Preview mode, the textarea is not shown and content cannot be edited.",
-        "When in Edit mode, the current behavior remains unchanged (textarea editing, upload buttons, save button, etc.)."
+        "If backend actor creation/access-control initialization does not complete within 30 seconds, the app stops showing the infinite loading screen and shows the existing InitializationFailureScreen with a timeout error message.",
+        "The timeout mechanism does not reset continuously during renders while actor initialization is still in progress (i.e., the 30-second timer actually fires).",
+        "Clicking “Retry Initialization” retries actor initialization without requiring a full page reload loop that immediately returns to the same stuck state."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/docs/DocumentEditorView.tsx",
+          "path": "frontend/src/hooks/useActorWithErrorHandling.ts",
           "operation": "modify",
-          "description": "Add local view-mode state and a toggle control labeled \"Preview\" / \"Edit\"; conditionally render the existing textarea + upload/save controls only in Edit mode, and render the new preview panel in Preview mode. Verify the component's usage instructions before implementing."
+          "description": "Refactor the hook to own the actor initialization lifecycle (instead of relying on render-driven timer state), implement a single 30-second timeout that cannot be continuously reset by re-renders, and expose a retry function that re-attempts actor initialization without using window.location.reload()."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Ensure the app switches from the “Initializing…” screen to InitializationFailureScreen when useActorWithErrorHandling reports a timeout error, and wire “Retry Initialization” to the hook’s non-reloading retry function."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Create a minimal, scrollable preview renderer that parses [FILE:<id>:<filename>] markers and renders text + inline file items in reading order with preserved line breaks.",
+      "summary": "Surface actor creation/initialization failures immediately (not only via timeout) by capturing rejected promises and showing InitializationFailureScreen with the underlying error.",
       "acceptanceCriteria": [
-        "Preview mode renders the full content in reading order (text segments interleaved with file elements).",
-        "Multiline text is preserved (line breaks are visible) using standard HTML/text rendering approaches (no new libraries).",
-        "File markers are detected using the existing marker format used by the editor (\"[FILE:id:filename]\") and are not shown verbatim in preview output.",
-        "The preview area is scrollable within the editor panel."
+        "When the actor creation query fails quickly (e.g., rejected promise, agent error, canister trap), the error is captured and InitializationFailureScreen is shown with the error message.",
+        "The app does not remain on “Initializing…” indefinitely when an actor initialization error occurs before the timeout."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/docs/DocumentContentPreview.tsx",
-          "operation": "create",
-          "description": "Implement a read-only preview component that splits document content using the existing marker regex format and renders interleaved text segments and file placeholder slots; ensure the preview container is scrollable and preserves newlines (e.g., whitespace-pre-wrap). Verify the component's usage instructions before implementing."
+          "path": "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "operation": "modify",
+          "description": "Add immediate error capture for actor creation and any access-control initialization step so that failures (rejections/exceptions) set the hook error state and stop the loading UI without waiting for the timeout."
         },
         {
-          "path": "frontend/src/components/docs/DocumentEditorView.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire the new DocumentContentPreview into Preview mode rendering, passing the current content and the already-available document files lookup context. Verify the component's usage instructions before implementing."
+          "description": "Confirm the app’s top-level render path prioritizes showing InitializationFailureScreen when the actor initialization hook reports an error, preventing indefinite “Initializing…” when initialization fails early."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Resolve each file marker in preview via documentFiles/fileMap and render images inline by direct URL or non-images as attachment rows with an Open file action; show placeholders when missing.",
+      "summary": "Avoid indefinite access-control initialization by safely handling missing/empty admin token on the frontend and only attempting secret-based initialization when a token is present.",
       "acceptanceCriteria": [
-        "For markers whose file reference exists and has mimeType starting with \"image/\", an inline <img> is rendered at that location using fileRef.file.getDirectURL(), sized to fit the editor width (contain-style behavior).",
-        "For markers whose file reference exists but mimeType is not an image, an inline element shows the filename and an \"Open file\" action (e.g., link/button) that opens/downloads the file URL.",
-        "For markers whose file reference cannot be found, preview renders a clear inline placeholder (e.g., \"File not found: <filename>\") at that position.",
-        "No backend changes are required; all preview rendering uses already-available frontend data (documentFiles + file.getDirectURL())."
+        "If no `caffeineAdminToken` secret is present (via the existing getSecretParameter flow), actor initialization does not call secret-based access-control initialization with an empty string.",
+        "The app successfully reaches the login screen or main app flow (depending on authentication state) on a fresh load with no admin token present."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/docs/DocumentContentPreview.tsx",
+          "path": "frontend/src/hooks/useActorWithErrorHandling.ts",
           "operation": "modify",
-          "description": "Use the existing documentFiles list (from useListDocumentFiles in the parent) and a fileMap (file ID -> file reference) to resolve markers; use the blob-storage ExternalBlob capability (file.getDirectURL()) to render inline images and to provide URLs for \"Open file\" actions; render a clear inline placeholder when a referenced file cannot be resolved. Verify the component's usage instructions before implementing."
+          "description": "During actor initialization, read `caffeineAdminToken` via the existing getSecretParameter flow and conditionally perform secret-based access-control initialization only when a non-empty token is present, preventing empty-string secret initialization from blocking startup."
         },
         {
-          "path": "frontend/src/components/docs/DocumentEditorView.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Ensure Preview mode passes documentFiles (or a derived fileMap) into DocumentContentPreview and hides the existing gallery/attachments sections (optional) to avoid duplicate rendering while keeping Edit mode unchanged. Verify the component's usage instructions before implementing."
+          "description": "Validate the startup gating conditions so that, when no admin token is present and the user is unauthenticated, the UI can proceed to the existing login prompt (or the main flow when authenticated) rather than remaining stuck on “Initializing…”."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Keep changes tightly scoped to session DocumentEditorView preview behavior without altering upload/save logic or other screens.",
+      "summary": "Provide a minimal, actionable recovery path in InitializationFailureScreen with English-only messaging and a working “Clear Local Data & Retry” flow that re-attempts initialization without leaving an infinite spinner.",
       "acceptanceCriteria": [
-        "No changes are made to backend Motoko canisters.",
-        "No changes are made to PlayerDocumentEditorView or player-document management flows.",
-        "Existing upload and save behaviors in DocumentEditorView continue to work as before in Edit mode."
+        "InitializationFailureScreen continues to display an English error summary plus the underlying error message (e.g., timeout vs. initialization failure).",
+        "“Clear Local Data & Retry” clears local/session storage using the existing clearLocalAppData path and then re-attempts initialization successfully when the underlying issue is stale client state.",
+        "No infinite spinner remains after a failure; the user always ends up on either InitializationFailureScreen, the login prompt, profile setup, lobby, or session UI."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/docs/DocumentEditorView.tsx",
+          "path": "frontend/src/components/app/InitializationFailureScreen.tsx",
           "operation": "modify",
-          "description": "Limit modifications to adding the mode toggle and conditional rendering for preview vs edit; do not change existing upload/save handlers or backend calls, and avoid any edits to PlayerDocumentEditorView or unrelated UI areas. Verify the component's usage instructions before implementing."
+          "description": "Tighten the recovery UX copy (English only) to clearly distinguish timeout vs. initialization failure using the provided error message, and ensure the screen remains the stable post-failure state (no spinner) while offering the two recovery actions."
         },
         {
-          "path": "frontend/src/components/docs/DocumentContentPreview.tsx",
-          "operation": "create",
-          "description": "Keep the preview renderer self-contained and only used by DocumentEditorView so the change remains tightly scoped. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Update “Clear Local Data & Retry” wiring to call the existing clearLocalAppData path and then re-attempt initialization via the hook’s retry function (and react-query cache reset as needed), without using a forced full page reload, so users can recover from stale client state."
+        },
+        {
+          "path": "frontend/src/lib/clearLocalAppData.ts",
+          "operation": "modify",
+          "description": "Confirm local/session storage clearing is robust for startup recovery (no throws, safe in all browsers) and supports the initialization recovery flow used by InitializationFailureScreen and AppErrorBoundary."
         }
       ]
     }

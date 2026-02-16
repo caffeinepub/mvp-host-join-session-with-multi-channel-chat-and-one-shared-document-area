@@ -1,109 +1,92 @@
 {
   "kind": "build_request",
-  "title": "Add Preview/Edit mode to Document editor with inline file rendering",
-  "projectName": "Session Docs",
-  "priority": "normal",
+  "title": "Fix app stuck on “Initializing…” after deployment",
+  "projectName": "RPG Collaboration",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a Preview/Edit toggle control to the session document editor screen (DocumentEditorView) that switches between the existing editable textarea and a read-only preview view. User-facing labels must be in English (\"Preview\" and \"Edit\").",
+      "text": "Fix the initialization hang by making actor initialization timeouts trigger reliably and transition the UI away from the infinite “Initializing…” screen.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "recent-messages-4"
         ],
         "quotes": [
-          "Goal: Add a \"Preview\" button (or toggle switch) in the document editor screen."
+          "It keeps \"Initializing..\" (loading after getting deployed)\nFix it."
         ]
       },
       "acceptanceCriteria": [
-        "A control is visible in the document editor UI that toggles between Edit and Preview modes.",
-        "When in Preview mode, the textarea is not shown and content cannot be edited.",
-        "When in Edit mode, the current behavior remains unchanged (textarea editing, upload buttons, save button, etc.)."
+        "If backend actor creation/access-control initialization does not complete within 30 seconds, the app stops showing the infinite loading screen and shows the existing InitializationFailureScreen with a timeout error message.",
+        "The timeout mechanism does not reset continuously during renders while actor initialization is still in progress (i.e., the 30-second timer actually fires).",
+        "Clicking “Retry Initialization” retries actor initialization without requiring a full page reload loop that immediately returns to the same stuck state."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Implement a minimal preview renderer for document content that parses embedded file markers in the form \"[FILE:<id>:<filename>]\" and renders the document as a scrollable, formatted read-only view with inline file items at the marker positions.",
+      "text": "Surface actor creation failures immediately (not only via timeout) so the app shows InitializationFailureScreen when the actor query fails due to exceptions/traps during initialization.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "recent-messages-4"
         ],
         "quotes": [
-          "For each [FILE:id:filename.ext] tag → display the corresponding image inline at that position in the flow",
-          "In preview: parse noteContent - Split by /\\[FILE:(\\d+):([^\\]]+)\\]/g"
+          "It keeps \"Initializing..\" (loading after getting deployed)\nFix it."
         ]
       },
       "acceptanceCriteria": [
-        "Preview mode renders the full content in reading order (text segments interleaved with file elements).",
-        "Multiline text is preserved (line breaks are visible) using standard HTML/text rendering approaches (no new libraries).",
-        "File markers are detected using the existing marker format used by the editor (\"[FILE:id:filename]\") and are not shown verbatim in preview output.",
-        "The preview area is scrollable within the editor panel."
+        "When the actor creation query fails quickly (e.g., rejected promise, agent error, canister trap), the error is captured and InitializationFailureScreen is shown with the error message.",
+        "The app does not remain on “Initializing…” indefinitely when an actor initialization error occurs before the timeout."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "In preview mode, resolve each file marker to the corresponding uploaded file using the existing documentFiles list (via useListDocumentFiles) and the existing fileMap lookup (file ID -> file reference). Render images inline using the file’s direct URL; render non-image files inline as a small attachment row that shows the filename and provides an \"Open file\" action.",
+      "text": "Prevent access-control initialization from causing an indefinite initialization state by handling missing/empty admin token initialization safely on the frontend (and only attempting secret-based initialization when a token is present).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "recent-messages-4"
         ],
         "quotes": [
-          "Use the uploaded image (assume you have a map like fileIdToUri = { '1': 'file://.../e1eb...jpg' } or base64/data URI)",
-          "If file is not image (pdf/txt), show filename + \"Open file\" button or placeholder"
+          "It keeps \"Initializing..\" (loading after getting deployed)\nFix it."
         ]
       },
       "acceptanceCriteria": [
-        "For markers whose file reference exists and has mimeType starting with \"image/\", an inline <img> is rendered at that location using fileRef.file.getDirectURL(), sized to fit the editor width (contain-style behavior).",
-        "For markers whose file reference exists but mimeType is not an image, an inline element shows the filename and an \"Open file\" action (e.g., link/button) that opens/downloads the file URL.",
-        "For markers whose file reference cannot be found, preview renders a clear inline placeholder (e.g., \"File not found: <filename>\") at that position.",
-        "No backend changes are required; all preview rendering uses already-available frontend data (documentFiles + file.getDirectURL())."
+        "If no `caffeineAdminToken` secret is present (via the existing getSecretParameter flow), actor initialization does not call secret-based access-control initialization with an empty string.",
+        "The app successfully reaches the login screen or main app flow (depending on authentication state) on a fresh load with no admin token present."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Keep the change tightly scoped to the session DocumentEditorView only; do not modify upload logic, save logic, player documents UI, chat, stickers, or other unrelated screens.",
-      "target": "both",
+      "text": "Add a minimal, user-visible recovery path for initialization issues: ensure InitializationFailureScreen provides enough actionable detail to unblock users stuck at startup (keep all user-facing text in English).",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "recent-messages-4"
         ],
         "quotes": [
-          "Keep it minimal: - No new libraries if possible",
-          "Do NOT change upload, save, player docs, chat, stickers, or anything else."
+          "It keeps \"Initializing..\" (loading after getting deployed)\nFix it."
         ]
       },
       "acceptanceCriteria": [
-        "No changes are made to backend Motoko canisters.",
-        "No changes are made to PlayerDocumentEditorView or player-document management flows.",
-        "Existing upload and save behaviors in DocumentEditorView continue to work as before in Edit mode."
+        "InitializationFailureScreen continues to display an English error summary plus the underlying error message (e.g., timeout vs. initialization failure).",
+        "“Clear Local Data & Retry” clears local/session storage using the existing clearLocalAppData path and then re-attempts initialization successfully when the underlying issue is stale client state.",
+        "No infinite spinner remains after a failure; the user always ends up on either InitializationFailureScreen, the login prompt, profile setup, lobby, or session UI."
       ]
     }
   ],
   "constraints": [
-    "Do not add new third-party libraries for parsing/markdown; implement preview with simple string parsing and existing utilities.",
-    "Do not edit files under frontend/src/components/ui or other frontend immutable paths (compose existing UI components only).",
-    "Do not change backend schema or Motoko logic for this feature."
+    "Do not modify files in frontend immutablePaths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and anything under frontend/src/components/ui.",
+    "Backend must remain a single Motoko actor in backend/main.mo; only introduce backend state migration if persistent state schema changes (not expected for this fix).",
+    "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Markdown rendering (beyond basic multiline text preservation) and advanced rich-text formatting (e.g., bold/italics) are out of scope for this change.",
-    "Changing how file markers are created/inserted/saved is out of scope.",
-    "Reworking the existing image gallery and attachments sections beyond optionally hiding them in preview mode is out of scope."
+    "Adding new authentication providers (only Internet Identity is supported).",
+    "Implementing real-time communication (WebSockets) or new backend services.",
+    "Introducing new product features unrelated to initialization reliability."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }
