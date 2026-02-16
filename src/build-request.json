@@ -1,110 +1,95 @@
 {
   "kind": "build_request",
-  "title": "Fix dark mode + settings application flow; add user profile pictures in Settings and display in chat",
+  "title": "Add Players' Documents sidebar section and per-document privacy toggle",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-18",
-      "text": "Fix Dark Mode so that toggling the Dark Mode setting reliably updates the app UI immediately (without requiring refresh), persists across reloads, and is applied consistently on all screens (login prompt, lobby, settings, session).",
+      "id": "REQ-1",
+      "text": "Add a new sidebar section directly below the existing \"Documents\" section titled \"PLAYERS' DOCUMENTS\" that lists player-owned documents for the current session and allows selecting a player document to open it in the main panel.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-user-players-docs"
         ],
         "quotes": [
-          "- The dark mode doesn't work"
+          "Add a new section below DOCUMENTS called \"PLAYERS' DOCUMENTS\""
         ]
       },
       "acceptanceCriteria": [
-        "When the user toggles Dark Mode in Settings, the UI switches theme immediately while staying on the same page",
-        "After reloading the app, the previously selected theme is restored and applied before the main UI is shown",
-        "Dark Mode affects all screens (unauthenticated login screen, LobbyPage, PreLobbySettingsView, SessionPage) consistently"
+        "Session sidebar shows a new header \"PLAYERS' DOCUMENTS\" below \"Documents\".",
+        "The section displays a list of player documents returned for the active session.",
+        "Clicking a player document switches the main panel to that player document view."
       ]
     },
     {
-      "id": "REQ-19",
-      "text": "Make preference changes in the Pre‑Lobby Settings screen actually apply to the running app (theme, background image, nickname, template) by ensuring there is a single reactive preferences source shared across the app (no stale per-component copies).",
+      "id": "REQ-2",
+      "text": "Update the Session page navigation/state so it supports selecting and rendering a player document in the main panel (in addition to channels and shared documents), using the existing PlayerDocumentEditorView for the selected player document.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-user-players-docs"
         ],
         "quotes": [
-          "- it seems there's no way to apply settings you changed"
+          "Add a new section below DOCUMENTS called \"PLAYERS' DOCUMENTS\""
         ]
       },
       "acceptanceCriteria": [
-        "Changing background image in Settings updates the background immediately on the Settings screen and when navigating back to the lobby without requiring a reload",
-        "Changing default nickname in Settings updates the Lobby host/join nickname prefill behavior within the same app session",
-        "Changes made in Settings are reflected in App.tsx theme/background application logic immediately (no refresh required)"
+        "SessionPage supports a third view type for player documents.",
+        "Selecting a player document renders PlayerDocumentEditorView with the selected player document id.",
+        "Switching between channel/shared document/player document updates the main panel accordingly without breaking existing channel/document behavior."
       ]
     },
     {
-      "id": "REQ-20",
-      "text": "Add profile picture support to user profiles: allow the authenticated user to upload, update, and remove a profile picture from the Settings screen, with a preview and validation (image-only, reasonable size constraints).",
+      "id": "REQ-3",
+      "text": "Add a simple per-player-document privacy control as a toggle/checkbox labeled \"Private\" (or \"Hide from others\") for the document owner; when enabled, the document is not visible to any other session members; when disabled, the document is visible and behaves like a shared doc for viewing/editing (as allowed by the app’s current permissions model).",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-user-players-docs"
         ],
         "quotes": [
-          "- add profile pictures for users and implement it on the settings"
+          "Add a simple toggle/checkbox on each player's document: \"Hide from others\" (or \"Private\")",
+          "If it's checked none of the members can see it",
+          "If unchecked → everyone sees/edits it like shared docs."
         ]
       },
       "acceptanceCriteria": [
-        "Settings page includes a \"Profile Picture\" section with current avatar preview, an upload control, and a remove/clear action",
-        "Uploading a valid image updates the preview and persists so it is still present after reload and re-login",
-        "Uploading a non-image file shows an English error message and does not change the saved profile picture",
-        "Removing the profile picture clears the preview and persists after reload"
+        "For the owner of a player document, the UI shows a clearly labeled checkbox/toggle: \"Private\" (or \"Hide from others\").",
+        "Toggling the control updates the document’s visibility via the backend API and the UI reflects the new state.",
+        "When a player document is Private, other session members cannot open it and do not see it listed in the \"PLAYERS' DOCUMENTS\" section.",
+        "When a player document is not Private, other session members can open it; editing behavior matches the app’s intended permissions for non-owners (if non-owners are allowed to edit, edits persist; otherwise they are read-only)."
       ]
     },
     {
-      "id": "REQ-21",
-      "text": "Extend the backend user profile model and APIs to store and serve an optional profile picture reference for each principal, using the existing backend storage approach (single-actor, existing blob storage mixin). Add APIs needed by the frontend to set/get the caller’s profile picture and to fetch other users’ profile picture metadata needed for display.",
+      "id": "REQ-4",
+      "text": "Enforce privacy on the backend so that when a player document is marked Private/hidden, only the document owner can fetch its content (and it is excluded from list responses for non-owners).",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-user-players-docs"
         ],
         "quotes": [
-          "- add profile pictures for users and implement it on the settings"
+          "If it's checked none of the members can see it",
+          "Simplest implementation: when private, client just + owner visible to all (or even hide title if easier — decide what's cleanest)."
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes an API to set/update the caller’s profile picture and an API to clear it",
-        "Backend exposes an API to retrieve a user’s profile picture (at least for the caller; and for other users where needed for in-session display)",
-        "Existing user profiles without a picture continue to work (picture is optional)",
-        "If existing stable state requires upgrade due to type changes, provide a conditional migration in backend/migration.mo that preserves existing data"
-      ]
-    },
-    {
-      "id": "REQ-22",
-      "text": "Display user profile pictures in-session: show avatars alongside chat messages (and at minimum for the message author) with sensible fallbacks (e.g., initials placeholder) when a user has no profile picture or it cannot be loaded.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "- add profile pictures for users and implement it on the settings"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Each chat message shows an avatar next to the author name",
-        "If the author has no profile picture, a placeholder avatar is rendered (e.g., initials)",
-        "Avatar display does not break message rendering for roll messages or long content",
-        "Avatar fetching is performant (uses caching and does not refetch for every render)"
+        "Backend listPlayerDocuments(sessionId) returns only documents that are visible OR owned by the caller.",
+        "Backend getPlayerDocument(documentId) returns null (or a safe non-revealing response) for non-owners when the document is Private/hidden.",
+        "Backend editPlayerDocument(documentId, ...) continues to restrict edits to the owner when the document is Private/hidden."
       ]
     }
   ],
   "constraints": [
-    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or any files under frontend/src/components/ui (compose instead).",
-    "Backend must remain a single Motoko actor with all logic in backend/main.mo; only add/modify backend/migration.mo if required for stable state upgrades."
+    "Do not edit any files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui; compose existing UI components instead.",
+    "Keep all backend logic in the single Motoko actor (backend/main.mo).",
+    "Only add a state migration (backend/migration.mo) if required by a persisted state schema change; prefer reusing the existing PlayerDocument.visible field for privacy."
   ],
   "nonGoals": [
-    "Adding third-party authentication providers (only Internet Identity is supported).",
-    "Adding external databases or external file/image hosting services.",
-    "Implementing real-time presence or live member list syncing beyond existing polling mechanisms."
+    "Client-side encryption for private documents.",
+    "Partial visibility modes (e.g., host can always view private content) unless already supported; private means hidden from all other members.",
+    "Adding new authentication providers beyond Internet Identity.",
+    "Real-time syncing via websockets; use existing polling/query invalidation patterns."
   ],
   "imageRequirements": {
     "required": [],

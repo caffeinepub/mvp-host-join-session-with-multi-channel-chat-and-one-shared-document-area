@@ -14,6 +14,8 @@ type PreferencesContextType = {
 
 const PreferencesContext = createContext<PreferencesContextType | null>(null);
 
+export const PREFERENCES_STORAGE_KEY = 'rpg_user_preferences';
+
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState<UserPreferences>(loadPreferences());
 

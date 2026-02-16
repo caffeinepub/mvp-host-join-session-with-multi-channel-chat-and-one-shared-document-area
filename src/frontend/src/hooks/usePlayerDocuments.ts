@@ -39,15 +39,15 @@ export function useCreatePlayerDocument() {
       sessionId,
       name,
       content,
-      visible,
+      isPrivate,
     }: {
       sessionId: bigint;
       name: string;
       content: string;
-      visible: boolean;
+      isPrivate: boolean;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.createPlayerDocument(sessionId, name, content, visible);
+      return actor.createPlayerDocument(sessionId, name, content, isPrivate);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['playerDocuments', variables.sessionId.toString()] });
@@ -97,6 +97,7 @@ export function useEditPlayerDocument() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['playerDocument', variables.documentId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['playerDocuments'] });
     },
   });
 }
@@ -106,9 +107,9 @@ export function useSetPlayerDocumentVisibility() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ documentId, visible }: { documentId: bigint; visible: boolean }) => {
+    mutationFn: async ({ documentId, isPrivate }: { documentId: bigint; isPrivate: boolean }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.setPlayerDocumentVisibility(documentId, visible);
+      return actor.setPlayerDocumentVisibility(documentId, isPrivate);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['playerDocument', variables.documentId.toString()] });

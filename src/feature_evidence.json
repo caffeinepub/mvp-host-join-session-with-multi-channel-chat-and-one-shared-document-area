@@ -2,81 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-dark-mode-so-that-toggling-the-dark-mode-setting-reliably-updates-the-app-ui-immediately-without-requiring-refresh-persists-across-reloads-and-is-applied-consistently-on-all-screens-login-prompt-lobby-settings-session",
-      "featureTitle": "Fix Dark Mode so that toggling the Dark Mode setting reliably updates the app UI immediately (without requiring refresh), persists across reloads, and is applied consistently on all screens (login prompt, lobby, settings, session).",
+      "featureId": "feature-add-a-new-sidebar-section-directly-below-the-existing-documents-section-titled-players-documents-that-lists-player-owned-documents-for-the-current-session-and-allows-selecting-a-player-document-to-open-it-in-the-main-panel",
+      "featureTitle": "Add a new sidebar section directly below the existing \"Documents\" section titled \"PLAYERS' DOCUMENTS\" that lists player-owned documents for the current session and allows selecting a player document to open it in the main panel.",
       "files": [
-        "frontend/index.html",
-        "frontend/src/App.tsx",
-        "frontend/src/hooks/usePreferences.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-18"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-make-preference-changes-in-the-pre-lobby-settings-screen-actually-apply-to-the-running-app-theme-background-image-nickname-template-by-ensuring-there-is-a-single-reactive-preferences-source-shared-across-the-app-no-stale-per-component-copies",
-      "featureTitle": "Make preference changes in the Pre‑Lobby Settings screen actually apply to the running app (theme, background image, nickname, template) by ensuring there is a single reactive preferences source shared across the app (no stale per-component copies).",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/settings/PreLobbySettingsView.tsx",
-        "frontend/src/context/PreferencesContext.tsx",
-        "frontend/src/hooks/usePreferences.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-19"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-profile-picture-support-to-user-profiles-allow-the-authenticated-user-to-upload-update-and-remove-a-profile-picture-from-the-settings-screen-with-a-preview-and-validation-image-only-reasonable-size-constraints",
-      "featureTitle": "Add profile picture support to user profiles: allow the authenticated user to upload, update, and remove a profile picture from the Settings screen, with a preview and validation (image-only, reasonable size constraints).",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/profile/ProfilePictureSection.tsx",
-        "frontend/src/components/settings/PreLobbySettingsView.tsx",
-        "frontend/src/hooks/useUserProfile.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-20"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-display-user-profile-pictures-in-session-show-avatars-alongside-chat-messages-and-at-minimum-for-the-message-author-with-sensible-fallbacks-e-g-initials-placeholder-when-a-user-has-no-profile-picture-or-it-cannot-be-loaded",
-      "featureTitle": "Display user profile pictures in-session: show avatars alongside chat messages (and at minimum for the message author) with sensible fallbacks (e.g., initials placeholder) when a user has no profile picture or it cannot be loaded.",
-      "files": [
-        "frontend/src/components/chat/ChannelChatView.tsx",
-        "frontend/src/components/chat/ChatMessageItem.tsx",
-        "frontend/src/components/profile/Avatar.tsx",
-        "frontend/src/hooks/useUserProfile.ts",
+        "frontend/src/components/session/SessionSidebar.tsx",
         "frontend/src/pages/SessionPage.tsx"
       ],
       "components": [
@@ -89,7 +18,51 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-22"
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-session-page-navigation-state-so-it-supports-selecting-and-rendering-a-player-document-in-the-main-panel-in-addition-to-channels-and-shared-documents-using-the-existing-playerdocumenteditorview-for-the-selected-player-document",
+      "featureTitle": "Update the Session page navigation/state so it supports selecting and rendering a player document in the main panel (in addition to channels and shared documents), using the existing PlayerDocumentEditorView for the selected player document.",
+      "files": [
+        "frontend/src/components/session/SessionSidebar.tsx",
+        "frontend/src/pages/SessionPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-simple-per-player-document-privacy-control-as-a-toggle-checkbox-labeled-private-or-hide-from-others-for-the-document-owner-when-enabled-the-document-is-not-visible-to-any-other-session-members-when-disabled-the-document-is-visible-and-behaves-like-a-shared-doc-for-viewing-editing-as-allowed-by-the-app-s-current-permissions-model",
+      "featureTitle": "Add a simple per-player-document privacy control as a toggle/checkbox labeled \"Private\" (or \"Hide from others\") for the document owner; when enabled, the document is not visible to any other session members; when disabled, the document is visible and behaves like a shared doc for viewing/editing (as allowed by the app’s current permissions model).",
+      "files": [
+        "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
+        "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
+        "frontend/src/components/session/SessionSidebar.tsx",
+        "frontend/src/hooks/usePlayerDocuments.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

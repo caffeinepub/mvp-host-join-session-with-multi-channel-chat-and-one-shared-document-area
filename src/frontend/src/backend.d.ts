@@ -48,7 +48,7 @@ export interface PlayerDocument {
     name: string;
     createdBy: Principal;
     lastModified: bigint;
-    visible: boolean;
+    isPrivate: boolean;
     sessionId: bigint;
     images: Array<ImageReference>;
 }
@@ -63,6 +63,16 @@ export interface DocumentWithImages {
     revision: bigint;
     images: Array<ImageReference>;
 }
+export interface DocumentFileReference {
+    id: bigint;
+    file: ExternalBlob;
+    createdBy: Principal;
+    size: bigint;
+    mimeType: string;
+    filename: string;
+    lastModified: bigint;
+    documentId: bigint;
+}
 export interface Document {
     id: bigint;
     content: string;
@@ -72,12 +82,6 @@ export interface Document {
     lastModified: bigint;
     sessionId: bigint;
     revision: bigint;
-}
-export interface DiceRollResult {
-    pattern: string;
-    total: bigint;
-    modifier: bigint;
-    rolls: Array<bigint>;
 }
 export interface SessionMember {
     id: Principal;
@@ -94,6 +98,13 @@ export interface Session {
     passwordHash?: Uint8Array;
     lastActive: bigint;
 }
+export interface UploadFileRequest {
+    file: ExternalBlob;
+    size: bigint;
+    mimeType: string;
+    filename: string;
+    documentId: bigint;
+}
 export interface SessionExport {
     playerDocuments: Array<PlayerDocument>;
     turnOrder?: TurnOrder;
@@ -101,12 +112,8 @@ export interface SessionExport {
     messages: Array<Message>;
     channels: Array<Channel>;
     session: Session;
+    documentFiles: Array<DocumentFileReference>;
     images: Array<ImageReference>;
-}
-export interface Channel {
-    id: bigint;
-    name: string;
-    createdBy: Principal;
 }
 export interface SessionCreateRequest {
     password?: string;
@@ -119,8 +126,14 @@ export interface PlayerDocumentMetadata {
     name: string;
     createdBy: Principal;
     lastModified: bigint;
-    visible: boolean;
+    isPrivate: boolean;
     sessionId: bigint;
+}
+export interface DiceRollResult {
+    pattern: string;
+    total: bigint;
+    modifier: bigint;
+    rolls: Array<bigint>;
 }
 export interface Message {
     id: bigint;
@@ -128,6 +141,11 @@ export interface Message {
     channelId: bigint;
     author: string;
     timestamp: bigint;
+}
+export interface Channel {
+    id: bigint;
+    name: string;
+    createdBy: Principal;
 }
 export interface UserProfile {
     name: string;
@@ -143,7 +161,7 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createChannel(sessionId: bigint, name: string): Promise<StandardResponse>;
     createDocument(sessionId: bigint, name: string, content: string): Promise<StandardResponse>;
-    createPlayerDocument(sessionId: bigint, name: string, content: string, visible: boolean): Promise<StandardResponse>;
+    createPlayerDocument(sessionId: bigint, name: string, content: string, isPrivate: boolean): Promise<StandardResponse>;
     createSession(request: SessionCreateRequest): Promise<Session>;
     deleteChannel(sessionId: bigint, channelId: bigint): Promise<StandardResponse>;
     deleteDocument(documentId: bigint): Promise<StandardResponse>;
@@ -155,6 +173,8 @@ export interface backendInterface {
     getCallerUserRole(): Promise<UserRole>;
     getChannels(sessionId: bigint): Promise<Array<Channel>>;
     getDocument(documentId: bigint): Promise<Document | null>;
+    getDocumentFileBlob(fileId: bigint): Promise<ExternalBlob | null>;
+    getDocumentFileReference(fileId: bigint): Promise<DocumentFileReference | null>;
     getDocumentWithImages(documentId: bigint): Promise<DocumentWithImages | null>;
     getImageReferences(documentId: bigint): Promise<Array<ImageReference>>;
     getImages(sessionId: bigint): Promise<Array<ImageReference>>;
@@ -166,6 +186,7 @@ export interface backendInterface {
     importSession(exportData: SessionExport): Promise<StandardResponse>;
     isCallerAdmin(): Promise<boolean>;
     joinSession(request: JoinSessionRequest): Promise<StandardResponse>;
+    listDocumentFiles(documentId: bigint): Promise<Array<DocumentFileReference>>;
     listDocuments(sessionId: bigint): Promise<Array<Document>>;
     listPlayerDocuments(sessionId: bigint): Promise<Array<PlayerDocument>>;
     listPlayerDocumentsMetadata(sessionId: bigint): Promise<Array<PlayerDocumentMetadata>>;
@@ -179,7 +200,8 @@ export interface backendInterface {
     renamePlayerDocument(documentId: bigint, newName: string): Promise<StandardResponse>;
     roll(sessionId: bigint, pattern: string): Promise<DiceRollResult>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    setPlayerDocumentVisibility(documentId: bigint, visible: boolean): Promise<StandardResponse>;
+    setPlayerDocumentVisibility(documentId: bigint, isPrivate: boolean): Promise<StandardResponse>;
     setTurnOrder(sessionId: bigint, order: Array<string>): Promise<StandardResponse>;
     unlockDocument(documentId: bigint): Promise<StandardResponse>;
+    uploadDocumentFile(request: UploadFileRequest): Promise<StandardResponse>;
 }

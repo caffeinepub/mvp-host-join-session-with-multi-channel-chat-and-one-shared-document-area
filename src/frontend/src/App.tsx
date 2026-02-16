@@ -6,6 +6,9 @@ import LobbyPage from './pages/LobbyPage';
 import SessionPage from './pages/SessionPage';
 import { getSessionStorage, setSessionStorage, clearSessionStorage } from './lib/sessionStorage';
 import { usePreferences } from './hooks/usePreferences';
+import { PreferencesProvider } from './context/PreferencesContext';
+import { AppErrorBoundary } from './components/app/AppErrorBoundary';
+import { clearLocalAppData } from './lib/clearLocalAppData';
 import { Button } from './components/ui/button';
 import { Alert, AlertDescription } from './components/ui/alert';
 import { Loader2 } from 'lucide-react';
@@ -17,7 +20,7 @@ export type SessionContext = {
   isHost: boolean;
 };
 
-function App() {
+function AppInner() {
   const { identity, login, clear, loginStatus, isInitializing } = useInternetIdentity();
   const { actor, isFetching: actorFetching } = useActor();
   const { preferences } = usePreferences();
@@ -245,6 +248,16 @@ function App() {
         )}
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AppErrorBoundary onClearData={clearLocalAppData}>
+      <PreferencesProvider>
+        <AppInner />
+      </PreferencesProvider>
+    </AppErrorBoundary>
   );
 }
 

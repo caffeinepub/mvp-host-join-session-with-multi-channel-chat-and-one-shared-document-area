@@ -1,46 +1,40 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-15T23:12:24.471Z",
-  "summary": "Diff adds a reactive PreferencesContext with immediate theme application and early theme init in index.html; introduces profile avatar components and Settings UI for uploading/removing a profile picture; updates chat messages to render avatars with cached user profile lookups; and extends backend UserProfile with optional profilePicture plus a migration. However, backend API additions required to support the new frontend hooks are not evidenced in the provided backend diff excerpt, and there is no evidence that the new PreferencesProvider is wired into the app root (needed for the single reactive preferences source).",
+  "generatedAt": "2026-02-16T00:46:25.282Z",
+  "summary": "Diff implements frontend support for listing/selecting player documents and a privacy toggle UI, plus adds hooks and a backend state migration introducing an `isPrivate` field. However, backend privacy enforcement and the requested preference to reuse the existing `PlayerDocument.visible` field are not evidenced/are contradicted by the migration and type changes.",
   "missing_requirements": [
     {
-      "id": "REQ-19",
-      "requirement": "Ensure there is a single reactive preferences source shared across the app (no stale per-component copies) so changes (theme/background/nickname/template) apply immediately.",
-      "reason": "A PreferencesContext/Provider is added, but the diff summary does not show it being mounted at the app root (e.g., wrapping <App />). Without wiring the provider, components cannot share a single reactive source reliably.",
+      "id": "REQ-4",
+      "requirement": "Enforce privacy on the backend so that when a player document is marked Private/hidden, only the document owner can fetch its content (and it is excluded from list responses for non-owners).",
+      "reason": "The diff summary shows new `isPrivate` fields/types and frontend calls to `listPlayerDocuments`, `getPlayerDocument`, and `setPlayerDocumentVisibility`, but does not include (in the provided truncated backend diff) the actual backend method implementations/guards that filter list responses by visibility/ownership, return null/safe response on private access by non-owners, or restrict edits based on privacy. With only the shown excerpts, backend enforcement cannot be verified.",
       "evidence": [
-        "frontend/src/context/PreferencesContext.tsx",
-        "frontend/src/hooks/usePreferences.ts",
-        "frontend/src/App.tsx"
-      ]
-    },
-    {
-      "id": "REQ-21",
-      "requirement": "Extend backend user profile model and APIs to set/update/clear/get profile pictures (caller and other users as needed), using existing blob storage mixin; provide migration if required.",
-      "reason": "The backend type change and migration file are shown, and the frontend calls new actor methods (getCallerUserProfile, saveCallerUserProfile, removeProfilePicture, getUserProfile), but the provided backend/main.mo excerpt does not show these API methods being implemented/exposed. Based on available evidence, the required backend APIs are not verifiable.",
-      "evidence": [
-        "backend/main.mo",
-        "backend/migration.mo",
-        "frontend/src/hooks/useUserProfile.ts"
+        "backend/main.mo (truncated; no shown implementations of listPlayerDocuments/getPlayerDocument/editPlayerDocument privacy checks)",
+        "frontend/src/hooks/usePlayerDocuments.ts (calls actor.listPlayerDocuments/getPlayerDocument/setPlayerDocumentVisibility but does not prove backend enforcement)"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.56,
+  "hallucinated_features": [
+    {
+      "description": "Introduced a new persisted field `isPrivate` for player documents (and a migration mapping `visible` -> `isPrivate`), instead of reusing the existing `PlayerDocument.visible` field as requested/preferred.",
+      "reason": "BuildRequest constraint says to prefer reusing existing `PlayerDocument.visible` for privacy; the diff adds `isPrivate : Bool` to PlayerDocument types and adds backend/migration.mo that converts `visible` into `isPrivate = not oldDoc.visible`. This is an unrequested schema change and contradicts the stated preference.",
+      "evidence": [
+        "backend/migration.mo (defines NewPlayerDocument with isPrivate and maps isPrivate = not oldDoc.visible)",
+        "backend/main.mo (defines PlayerDocument and PlayerDocumentMetadata with isPrivate : Bool)",
+        "frontend/src/components/docs/PlayerDocumentEditorView.tsx (uses document.isPrivate)",
+        "frontend/src/hooks/usePlayerDocuments.ts (setPlayerDocumentVisibility takes isPrivate)"
+      ]
+    }
+  ],
+  "confidence": 0.63,
   "changed_files": [
     "backend/main.mo",
     "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/index.html",
-    "frontend/src/App.tsx",
-    "frontend/src/components/chat/ChannelChatView.tsx",
-    "frontend/src/components/chat/ChatMessageItem.tsx",
-    "frontend/src/components/profile/Avatar.tsx",
-    "frontend/src/components/profile/ProfilePictureSection.tsx",
-    "frontend/src/components/settings/PreLobbySettingsView.tsx",
-    "frontend/src/context/PreferencesContext.tsx",
-    "frontend/src/hooks/usePreferences.ts",
-    "frontend/src/hooks/useUserProfile.ts",
+    "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
+    "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
+    "frontend/src/components/session/SessionSidebar.tsx",
+    "frontend/src/hooks/usePlayerDocuments.ts",
     "frontend/src/pages/SessionPage.tsx",
     "project_state.json"
   ]

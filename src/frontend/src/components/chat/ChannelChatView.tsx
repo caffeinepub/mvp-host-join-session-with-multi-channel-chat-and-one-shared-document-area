@@ -78,13 +78,6 @@ export default function ChannelChatView({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Channel Header */}
@@ -120,7 +113,6 @@ export default function ChannelChatView({
           <Textarea
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
-            onKeyDown={handleKeyDown}
             placeholder="Type a message... (Use /roll d20 for dice)"
             className="resize-none"
             rows={2}
@@ -140,7 +132,7 @@ export default function ChannelChatView({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Press Enter to send, Shift+Enter for new line
+          Use the Send button to send your message
         </p>
       </div>
     </div>

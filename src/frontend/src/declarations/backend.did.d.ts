@@ -31,6 +31,16 @@ export interface Document {
   'sessionId' : bigint,
   'revision' : bigint,
 }
+export interface DocumentFileReference {
+  'id' : bigint,
+  'file' : ExternalBlob,
+  'createdBy' : Principal,
+  'size' : bigint,
+  'mimeType' : string,
+  'filename' : string,
+  'lastModified' : bigint,
+  'documentId' : bigint,
+}
 export interface DocumentWithImages {
   'id' : bigint,
   'content' : string,
@@ -72,7 +82,7 @@ export interface PlayerDocument {
   'name' : string,
   'createdBy' : Principal,
   'lastModified' : bigint,
-  'visible' : boolean,
+  'isPrivate' : boolean,
   'sessionId' : bigint,
   'images' : Array<ImageReference>,
 }
@@ -82,7 +92,7 @@ export interface PlayerDocumentMetadata {
   'name' : string,
   'createdBy' : Principal,
   'lastModified' : bigint,
-  'visible' : boolean,
+  'isPrivate' : boolean,
   'sessionId' : bigint,
 }
 export interface Session {
@@ -107,6 +117,7 @@ export interface SessionExport {
   'messages' : Array<Message>,
   'channels' : Array<Channel>,
   'session' : Session,
+  'documentFiles' : Array<DocumentFileReference>,
   'images' : Array<ImageReference>,
 }
 export interface SessionMember {
@@ -120,6 +131,13 @@ export interface TurnOrder {
   'currentIndex' : bigint,
   'order' : Array<string>,
   'sessionId' : bigint,
+}
+export interface UploadFileRequest {
+  'file' : ExternalBlob,
+  'size' : bigint,
+  'mimeType' : string,
+  'filename' : string,
+  'documentId' : bigint,
 }
 export interface UserProfile {
   'name' : string,
@@ -178,6 +196,11 @@ export interface _SERVICE {
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getChannels' : ActorMethod<[bigint], Array<Channel>>,
   'getDocument' : ActorMethod<[bigint], [] | [Document]>,
+  'getDocumentFileBlob' : ActorMethod<[bigint], [] | [ExternalBlob]>,
+  'getDocumentFileReference' : ActorMethod<
+    [bigint],
+    [] | [DocumentFileReference]
+  >,
   'getDocumentWithImages' : ActorMethod<[bigint], [] | [DocumentWithImages]>,
   'getImageReferences' : ActorMethod<[bigint], Array<ImageReference>>,
   'getImages' : ActorMethod<[bigint], Array<ImageReference>>,
@@ -189,6 +212,7 @@ export interface _SERVICE {
   'importSession' : ActorMethod<[SessionExport], StandardResponse>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'joinSession' : ActorMethod<[JoinSessionRequest], StandardResponse>,
+  'listDocumentFiles' : ActorMethod<[bigint], Array<DocumentFileReference>>,
   'listDocuments' : ActorMethod<[bigint], Array<Document>>,
   'listPlayerDocuments' : ActorMethod<[bigint], Array<PlayerDocument>>,
   'listPlayerDocumentsMetadata' : ActorMethod<
@@ -211,6 +235,7 @@ export interface _SERVICE {
   >,
   'setTurnOrder' : ActorMethod<[bigint, Array<string>], StandardResponse>,
   'unlockDocument' : ActorMethod<[bigint], StandardResponse>,
+  'uploadDocumentFile' : ActorMethod<[UploadFileRequest], StandardResponse>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

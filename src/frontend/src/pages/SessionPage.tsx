@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useActor } from '../hooks/useActor';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useSessionData } from '../hooks/useSessionData';
+import { useListPlayerDocuments } from '../hooks/usePlayerDocuments';
 import type { SessionContext } from '../App';
-import type { Channel, Document, SessionMember } from '../backend';
+import type { Channel, Document, PlayerDocument } from '../backend';
 import SessionSidebar from '../components/session/SessionSidebar';
 import ChannelChatView from '../components/chat/ChannelChatView';
 import DocumentEditorView from '../components/docs/DocumentEditorView';
+import PlayerDocumentEditorView from '../components/docs/PlayerDocumentEditorView';
 import { Button } from '../components/ui/button';
 import { LogOut, ArrowLeft, Users } from 'lucide-react';
 import { Separator } from '../components/ui/separator';
@@ -17,7 +19,7 @@ type SessionPageProps = {
   onLogout: () => void;
 };
 
-type ViewType = 'channel' | 'document';
+type ViewType = 'channel' | 'document' | 'playerDocument';
 
 export default function SessionPage({ sessionContext, onLeaveSession, onLogout }: SessionPageProps) {
   const { actor } = useActor();
@@ -25,6 +27,7 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
   const [viewType, setViewType] = useState<ViewType>('channel');
   const [selectedChannelId, setSelectedChannelId] = useState<bigint | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<bigint | null>(null);
+  const [selectedPlayerDocumentId, setSelectedPlayerDocumentId] = useState<bigint | null>(null);
 
   const {
     session,
@@ -40,6 +43,8 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
     refetchDocument,
   } = useSessionData(sessionContext.sessionId, selectedChannelId, selectedDocumentId);
 
+  const { data: playerDocuments, refetch: refetchPlayerDocuments } = useListPlayerDocuments(sessionContext.sessionId);
+
   // Auto-select first channel on load
   useEffect(() => {
     if (channels && channels.length > 0 && !selectedChannelId) {
@@ -50,12 +55,23 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
 
   const handleSelectChannel = (channel: Channel) => {
     setSelectedChannelId(channel.id);
+    setSelectedDocumentId(null);
+    setSelectedPlayerDocumentId(null);
     setViewType('channel');
   };
 
   const handleSelectDocument = (doc: Document) => {
     setSelectedDocumentId(doc.id);
+    setSelectedChannelId(null);
+    setSelectedPlayerDocumentId(null);
     setViewType('document');
+  };
+
+  const handleSelectPlayerDocument = (doc: PlayerDocument) => {
+    setSelectedPlayerDocumentId(doc.id);
+    setSelectedChannelId(null);
+    setSelectedDocumentId(null);
+    setViewType('playerDocument');
   };
 
   const isHost = identity?.getPrincipal().toString() === session?.host.toString();
@@ -97,13 +113,17 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
           sessionId={sessionContext.sessionId}
           channels={channels || []}
           documents={documents || []}
+          playerDocuments={playerDocuments || []}
           selectedChannelId={selectedChannelId}
           selectedDocumentId={selectedDocumentId}
+          selectedPlayerDocumentId={selectedPlayerDocumentId}
           isHost={isHost}
           onSelectChannel={handleSelectChannel}
           onSelectDocument={handleSelectDocument}
+          onSelectPlayerDocument={handleSelectPlayerDocument}
           onChannelsChanged={refetchChannels}
           onDocumentsChanged={refetchDocuments}
+          onPlayerDocumentsChanged={refetchPlayerDocuments}
         />
 
         {/* Main Panel */}
@@ -126,7 +146,13 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
               onDocumentChanged={refetchDocument}
             />
           )}
-          {!selectedChannelId && !selectedDocumentId && (
+          {viewType === 'playerDocument' && selectedPlayerDocumentId && (
+            <PlayerDocumentEditorView
+              documentId={selectedPlayerDocumentId}
+              onDocumentChanged={refetchPlayerDocuments}
+            />
+          )}
+          {!selectedChannelId && !selectedDocumentId && !selectedPlayerDocumentId && (
             <div className="h-full flex items-center justify-center text-muted-foreground">
               <p>Select a channel or document to get started</p>
             </div>

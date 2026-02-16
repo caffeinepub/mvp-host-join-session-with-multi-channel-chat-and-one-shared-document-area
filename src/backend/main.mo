@@ -13,10 +13,10 @@ import Runtime "mo:core/Runtime";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
+
 import AccessControl "authorization/access-control";
 import Migration "migration";
 
-// STATE MIGRATION
 (with migration = Migration.run)
 actor {
   include MixinStorage();
@@ -88,10 +88,10 @@ actor {
     owner : Principal;
     name : Text;
     content : Text;
-    visible : Bool;
     createdBy : Principal;
     lastModified : Int;
     images : [ImageReference];
+    isPrivate : Bool;
   };
 
   public type PlayerDocumentMetadata = {
@@ -99,9 +99,9 @@ actor {
     sessionId : Nat;
     owner : Principal;
     name : Text;
-    visible : Bool;
     createdBy : Principal;
     lastModified : Int;
+    isPrivate : Bool;
   };
 
   public type ImageReference = {
@@ -111,6 +111,17 @@ actor {
     caption : Text;
     position : Int;
     size : Int;
+    createdBy : Principal;
+    lastModified : Int;
+  };
+
+  public type DocumentFileReference = {
+    id : Nat;
+    documentId : Nat;
+    file : Storage.ExternalBlob;
+    filename : Text;
+    mimeType : Text;
+    size : Nat;
     createdBy : Principal;
     lastModified : Int;
   };
@@ -145,6 +156,14 @@ actor {
     #error : Text;
   };
 
+  public type UploadFileRequest = {
+    documentId : Nat;
+    file : Storage.ExternalBlob;
+    filename : Text;
+    mimeType : Text;
+    size : Nat;
+  };
+
   public type SessionExport = {
     session : Session;
     channels : [Channel];
@@ -152,6 +171,7 @@ actor {
     documents : [Document];
     playerDocuments : [PlayerDocument];
     images : [ImageReference];
+    documentFiles : [DocumentFileReference];
     turnOrder : ?TurnOrder;
   };
 
@@ -159,12 +179,13 @@ actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
-  // ==== State Variables ====
+  // ==== State Vars ====
   var nextSessionId : Nat = 1;
   var nextChannelId : Nat = 1;
   var nextMessageId : Nat = 1;
   var nextDocumentId : Nat = 1;
   var nextImageId : Nat = 1;
+  var nextFileId : Nat = 1;
 
   let sessions = Map.empty<Nat, Session>();
   let messages = Map.empty<Nat, List.List<Message>>();
@@ -173,6 +194,7 @@ actor {
   let turnOrders = Map.empty<Nat, TurnOrder>();
   let userProfiles = Map.empty<Principal, UserProfile>();
   let imageReferences = Map.empty<Nat, ImageReference>();
+  let documentFileReferences = Map.empty<Nat, DocumentFileReference>();
 
   // ==== Helper Functions ====
 
@@ -727,6 +749,96 @@ actor {
     filtered.toArray();
   };
 
+  public shared ({ caller }) func uploadDocumentFile(request : UploadFileRequest) : async StandardResponse {
+    // Validate user authorization
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return #error("Unauthorized: Only users can upload files");
+    };
+
+    // Validate document existence first
+    let doc = switch (documents.get(request.documentId)) {
+      case (null) {
+        return #error("Document not found for file upload");
+      };
+      case (?d) { d };
+    };
+
+    // Validate is session host for the specific document's session
+    if (not isSessionHost(doc.sessionId, caller)) {
+      return #error("Unauthorized: Only session hosts can upload files");
+    };
+
+    // File type and size validation (already checked in frontend for <=10MB)
+    if (request.size > 10_000_000) {
+      return #error("File size must not exceed 10MB");
+    };
+
+    let newFileReference : DocumentFileReference = {
+      id = nextFileId;
+      documentId = request.documentId;
+      file = request.file;
+      filename = request.filename;
+      mimeType = request.mimeType;
+      size = request.size;
+      createdBy = caller;
+      lastModified = Time.now();
+    };
+    nextFileId += 1;
+
+    documentFileReferences.add(newFileReference.id, newFileReference);
+    #ok("File uploaded successfully");
+  };
+
+  public query ({ caller }) func listDocumentFiles(documentId : Nat) : async [DocumentFileReference] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return [];
+    };
+
+    let docSessionId = switch (documents.get(documentId)) {
+      case (null) { return [] };
+      case (?doc) { doc.sessionId };
+    };
+
+    if (not isSessionMember(docSessionId, caller)) {
+      return [];
+    };
+
+    let filteredFiles = documentFileReferences.values().filter(
+      func(file) { file.documentId == documentId }
+    );
+    filteredFiles.toArray();
+  };
+
+  public query ({ caller }) func getDocumentFileReference(fileId : Nat) : async ?DocumentFileReference {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return null;
+    };
+
+    return documentFileReferences.get(fileId);
+  };
+
+  public query ({ caller }) func getDocumentFileBlob(fileId : Nat) : async ?Storage.ExternalBlob {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return null;
+    };
+
+    let fileRef = switch (documentFileReferences.get(fileId)) {
+      case (null) { return null };
+      case (?ref) { ref };
+    };
+
+    let docSessionId = switch (documents.get(fileRef.documentId)) {
+      case (null) { return null };
+      case (?doc) { doc.sessionId };
+    };
+
+    if (not isSessionMember(docSessionId, caller)) {
+      return null;
+    };
+
+    ?fileRef.file;
+  };
+
   // ==== RPG Utilities: Dice Roller ====
 
   func parseDicePattern(pattern : Text) : ?(Nat, Nat, Int) {
@@ -971,7 +1083,7 @@ actor {
 
   // ==== Player Documents ====
 
-  public shared ({ caller }) func createPlayerDocument(sessionId : Nat, name : Text, content : Text, visible : Bool) : async StandardResponse {
+  public shared ({ caller }) func createPlayerDocument(sessionId : Nat, name : Text, content : Text, isPrivate : Bool) : async StandardResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create documents");
     };
@@ -986,10 +1098,10 @@ actor {
       owner = caller;
       name;
       content;
-      visible;
       createdBy = caller;
       lastModified = Time.now();
       images = [];
+      isPrivate;
     };
     nextDocumentId += 1;
 
@@ -1065,7 +1177,7 @@ actor {
     };
   };
 
-  public shared ({ caller }) func setPlayerDocumentVisibility(documentId : Nat, visible : Bool) : async StandardResponse {
+  public shared ({ caller }) func setPlayerDocumentVisibility(documentId : Nat, isPrivate : Bool) : async StandardResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can change visibility");
     };
@@ -1079,7 +1191,7 @@ actor {
 
         let updated = {
           doc with
-          visible;
+          isPrivate;
           lastModified = Time.now();
         };
         playerDocumentsMap.add(documentId, updated);
@@ -1101,12 +1213,12 @@ actor {
           return ?doc;
         };
 
-        // Hidden documents: no access to content for non-owners
-        if (not doc.visible) {
+        // Private documents: no access to content for non-owners
+        if (doc.isPrivate) {
           return null;
         };
 
-        // Visible documents: only session members can see
+        // Public documents: only session members can see
         if (not isSessionMember(doc.sessionId, caller)) {
           Runtime.trap("Unauthorized: Only session members can view player documents");
         };
@@ -1136,8 +1248,8 @@ actor {
           return true;
         };
 
-        // Others (including host) only see visible documents
-        doc.visible;
+        // Others (including host) only see non-private documents
+        not doc.isPrivate;
       }
     );
     filtered.toArray();
@@ -1163,9 +1275,9 @@ actor {
           sessionId = doc.sessionId;
           owner = doc.owner;
           name = doc.name;
-          visible = doc.visible;
           createdBy = doc.createdBy;
           lastModified = doc.lastModified;
+          isPrivate = doc.isPrivate;
         };
       }
     ).toArray();
@@ -1200,6 +1312,8 @@ actor {
 
         let sessionImages = imageReferences.values().toArray();
 
+        let sessionDocumentFiles = documentFileReferences.values().toArray();
+
         let sessionTurnOrder = turnOrders.get(sessionId);
 
         ?{
@@ -1209,6 +1323,7 @@ actor {
           documents = sessionDocuments;
           playerDocuments = sessionPlayerDocuments;
           images = sessionImages;
+          documentFiles = sessionDocumentFiles;
           turnOrder = sessionTurnOrder;
         };
       };
@@ -1277,6 +1392,16 @@ actor {
       };
       nextImageId += 1;
       imageReferences.add(newImg.id, newImg);
+    };
+
+    // Import document files
+    for (file in exportData.documentFiles.vals()) {
+      let newFile = {
+        file with
+        id = nextFileId;
+      };
+      nextFileId += 1;
+      documentFileReferences.add(newFile.id, newFile);
     };
 
     // Import turn order

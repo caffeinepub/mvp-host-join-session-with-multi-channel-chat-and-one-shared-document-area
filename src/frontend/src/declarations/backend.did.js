@@ -70,7 +70,7 @@ export const PlayerDocument = IDL.Record({
   'name' : IDL.Text,
   'createdBy' : IDL.Principal,
   'lastModified' : IDL.Int,
-  'visible' : IDL.Bool,
+  'isPrivate' : IDL.Bool,
   'sessionId' : IDL.Nat,
   'images' : IDL.Vec(ImageReference),
 });
@@ -96,6 +96,17 @@ export const Message = IDL.Record({
   'author' : IDL.Text,
   'timestamp' : IDL.Int,
 });
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
+export const DocumentFileReference = IDL.Record({
+  'id' : IDL.Nat,
+  'file' : ExternalBlob,
+  'createdBy' : IDL.Principal,
+  'size' : IDL.Nat,
+  'mimeType' : IDL.Text,
+  'filename' : IDL.Text,
+  'lastModified' : IDL.Int,
+  'documentId' : IDL.Nat,
+});
 export const SessionExport = IDL.Record({
   'playerDocuments' : IDL.Vec(PlayerDocument),
   'turnOrder' : IDL.Opt(TurnOrder),
@@ -103,9 +114,9 @@ export const SessionExport = IDL.Record({
   'messages' : IDL.Vec(Message),
   'channels' : IDL.Vec(Channel),
   'session' : Session,
+  'documentFiles' : IDL.Vec(DocumentFileReference),
   'images' : IDL.Vec(ImageReference),
 });
-export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'profilePicture' : IDL.Opt(ExternalBlob),
@@ -132,7 +143,7 @@ export const PlayerDocumentMetadata = IDL.Record({
   'name' : IDL.Text,
   'createdBy' : IDL.Principal,
   'lastModified' : IDL.Int,
-  'visible' : IDL.Bool,
+  'isPrivate' : IDL.Bool,
   'sessionId' : IDL.Nat,
 });
 export const DiceRollResult = IDL.Record({
@@ -140,6 +151,13 @@ export const DiceRollResult = IDL.Record({
   'total' : IDL.Int,
   'modifier' : IDL.Int,
   'rolls' : IDL.Vec(IDL.Nat),
+});
+export const UploadFileRequest = IDL.Record({
+  'file' : ExternalBlob,
+  'size' : IDL.Nat,
+  'mimeType' : IDL.Text,
+  'filename' : IDL.Text,
+  'documentId' : IDL.Nat,
 });
 
 export const idlService = IDL.Service({
@@ -198,6 +216,16 @@ export const idlService = IDL.Service({
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getChannels' : IDL.Func([IDL.Nat], [IDL.Vec(Channel)], ['query']),
   'getDocument' : IDL.Func([IDL.Nat], [IDL.Opt(Document)], ['query']),
+  'getDocumentFileBlob' : IDL.Func(
+      [IDL.Nat],
+      [IDL.Opt(ExternalBlob)],
+      ['query'],
+    ),
+  'getDocumentFileReference' : IDL.Func(
+      [IDL.Nat],
+      [IDL.Opt(DocumentFileReference)],
+      ['query'],
+    ),
   'getDocumentWithImages' : IDL.Func(
       [IDL.Nat],
       [IDL.Opt(DocumentWithImages)],
@@ -225,6 +253,11 @@ export const idlService = IDL.Service({
   'importSession' : IDL.Func([SessionExport], [StandardResponse], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'joinSession' : IDL.Func([JoinSessionRequest], [StandardResponse], []),
+  'listDocumentFiles' : IDL.Func(
+      [IDL.Nat],
+      [IDL.Vec(DocumentFileReference)],
+      ['query'],
+    ),
   'listDocuments' : IDL.Func([IDL.Nat], [IDL.Vec(Document)], ['query']),
   'listPlayerDocuments' : IDL.Func(
       [IDL.Nat],
@@ -269,6 +302,7 @@ export const idlService = IDL.Service({
       [],
     ),
   'unlockDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
+  'uploadDocumentFile' : IDL.Func([UploadFileRequest], [StandardResponse], []),
 });
 
 export const idlInitArgs = [];
@@ -333,7 +367,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'createdBy' : IDL.Principal,
     'lastModified' : IDL.Int,
-    'visible' : IDL.Bool,
+    'isPrivate' : IDL.Bool,
     'sessionId' : IDL.Nat,
     'images' : IDL.Vec(ImageReference),
   });
@@ -359,6 +393,17 @@ export const idlFactory = ({ IDL }) => {
     'author' : IDL.Text,
     'timestamp' : IDL.Int,
   });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
+  const DocumentFileReference = IDL.Record({
+    'id' : IDL.Nat,
+    'file' : ExternalBlob,
+    'createdBy' : IDL.Principal,
+    'size' : IDL.Nat,
+    'mimeType' : IDL.Text,
+    'filename' : IDL.Text,
+    'lastModified' : IDL.Int,
+    'documentId' : IDL.Nat,
+  });
   const SessionExport = IDL.Record({
     'playerDocuments' : IDL.Vec(PlayerDocument),
     'turnOrder' : IDL.Opt(TurnOrder),
@@ -366,9 +411,9 @@ export const idlFactory = ({ IDL }) => {
     'messages' : IDL.Vec(Message),
     'channels' : IDL.Vec(Channel),
     'session' : Session,
+    'documentFiles' : IDL.Vec(DocumentFileReference),
     'images' : IDL.Vec(ImageReference),
   });
-  const ExternalBlob = IDL.Vec(IDL.Nat8);
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
     'profilePicture' : IDL.Opt(ExternalBlob),
@@ -395,7 +440,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'createdBy' : IDL.Principal,
     'lastModified' : IDL.Int,
-    'visible' : IDL.Bool,
+    'isPrivate' : IDL.Bool,
     'sessionId' : IDL.Nat,
   });
   const DiceRollResult = IDL.Record({
@@ -403,6 +448,13 @@ export const idlFactory = ({ IDL }) => {
     'total' : IDL.Int,
     'modifier' : IDL.Int,
     'rolls' : IDL.Vec(IDL.Nat),
+  });
+  const UploadFileRequest = IDL.Record({
+    'file' : ExternalBlob,
+    'size' : IDL.Nat,
+    'mimeType' : IDL.Text,
+    'filename' : IDL.Text,
+    'documentId' : IDL.Nat,
   });
   
   return IDL.Service({
@@ -465,6 +517,16 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getChannels' : IDL.Func([IDL.Nat], [IDL.Vec(Channel)], ['query']),
     'getDocument' : IDL.Func([IDL.Nat], [IDL.Opt(Document)], ['query']),
+    'getDocumentFileBlob' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Opt(ExternalBlob)],
+        ['query'],
+      ),
+    'getDocumentFileReference' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Opt(DocumentFileReference)],
+        ['query'],
+      ),
     'getDocumentWithImages' : IDL.Func(
         [IDL.Nat],
         [IDL.Opt(DocumentWithImages)],
@@ -492,6 +554,11 @@ export const idlFactory = ({ IDL }) => {
     'importSession' : IDL.Func([SessionExport], [StandardResponse], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'joinSession' : IDL.Func([JoinSessionRequest], [StandardResponse], []),
+    'listDocumentFiles' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Vec(DocumentFileReference)],
+        ['query'],
+      ),
     'listDocuments' : IDL.Func([IDL.Nat], [IDL.Vec(Document)], ['query']),
     'listPlayerDocuments' : IDL.Func(
         [IDL.Nat],
@@ -536,6 +603,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'unlockDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
+    'uploadDocumentFile' : IDL.Func(
+        [UploadFileRequest],
+        [StandardResponse],
+        [],
+      ),
   });
 };
 

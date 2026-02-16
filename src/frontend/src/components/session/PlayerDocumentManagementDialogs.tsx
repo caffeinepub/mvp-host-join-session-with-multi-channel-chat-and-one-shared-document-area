@@ -32,15 +32,17 @@ type CreatePlayerDocumentDialogProps = {
   sessionId: bigint;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 };
 
 export function CreatePlayerDocumentDialog({
   sessionId,
   open,
   onOpenChange,
+  onSuccess,
 }: CreatePlayerDocumentDialogProps) {
   const [name, setName] = useState('');
-  const [visible, setVisible] = useState(true);
+  const [isPrivate, setIsPrivate] = useState(false);
   const createMutation = useCreatePlayerDocument();
 
   const handleCreate = async () => {
@@ -51,13 +53,14 @@ export function CreatePlayerDocumentDialog({
         sessionId,
         name: name.trim(),
         content: '',
-        visible,
+        isPrivate,
       });
 
       if (result.__kind__ === 'ok') {
         setName('');
-        setVisible(true);
+        setIsPrivate(false);
         onOpenChange(false);
+        onSuccess?.();
       }
     } catch (error) {
       console.error('Error creating player document:', error);
@@ -88,15 +91,15 @@ export function CreatePlayerDocumentDialog({
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="doc-visible">Visible to Others</Label>
+              <Label htmlFor="doc-private">Private</Label>
               <p className="text-xs text-muted-foreground">
-                Allow other session members to view this document
+                Hide this document from other session members
               </p>
             </div>
             <Switch
-              id="doc-visible"
-              checked={visible}
-              onCheckedChange={setVisible}
+              id="doc-private"
+              checked={isPrivate}
+              onCheckedChange={setIsPrivate}
               disabled={createMutation.isPending}
             />
           </div>
@@ -119,9 +122,10 @@ export function CreatePlayerDocumentDialog({
 type PlayerDocumentMenuProps = {
   document: PlayerDocument;
   isOwner: boolean;
+  onSuccess?: () => void;
 };
 
-export function PlayerDocumentMenu({ document, isOwner }: PlayerDocumentMenuProps) {
+export function PlayerDocumentMenu({ document, isOwner, onSuccess }: PlayerDocumentMenuProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [newName, setNewName] = useState(document.name);
@@ -141,6 +145,7 @@ export function PlayerDocumentMenu({ document, isOwner }: PlayerDocumentMenuProp
 
       if (result.__kind__ === 'ok') {
         setRenameOpen(false);
+        onSuccess?.();
       }
     } catch (error) {
       console.error('Error renaming document:', error);
@@ -153,6 +158,7 @@ export function PlayerDocumentMenu({ document, isOwner }: PlayerDocumentMenuProp
 
       if (result.__kind__ === 'ok') {
         setDeleteOpen(false);
+        onSuccess?.();
       }
     } catch (error) {
       console.error('Error deleting document:', error);
@@ -163,8 +169,9 @@ export function PlayerDocumentMenu({ document, isOwner }: PlayerDocumentMenuProp
     try {
       await visibilityMutation.mutateAsync({
         documentId: document.id,
-        visible: !document.visible,
+        isPrivate: !document.isPrivate,
       });
+      onSuccess?.();
     } catch (error) {
       console.error('Error toggling visibility:', error);
     }
@@ -176,21 +183,21 @@ export function PlayerDocumentMenu({ document, isOwner }: PlayerDocumentMenuProp
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleToggleVisibility} disabled={visibilityMutation.isPending}>
-            {document.visible ? (
+            {document.isPrivate ? (
               <>
-                <EyeOff className="mr-2 h-4 w-4" />
-                Make Hidden
+                <Eye className="mr-2 h-4 w-4" />
+                Make Public
               </>
             ) : (
               <>
-                <Eye className="mr-2 h-4 w-4" />
-                Make Visible
+                <EyeOff className="mr-2 h-4 w-4" />
+                Make Private
               </>
             )}
           </DropdownMenuItem>

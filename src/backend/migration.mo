@@ -1,37 +1,68 @@
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
-import Storage "blob-storage/Storage";
+import Principal "mo:core/Principal";
 
 module {
-  // Original user profile type without profile pictures.
-  type OldUserProfile = {
+  type OldPlayerDocument = {
+    id : Nat;
+    sessionId : Nat;
+    owner : Principal;
     name : Text;
+    content : Text;
+    visible : Bool;
+    createdBy : Principal;
+    lastModified : Int;
+    images : [ImageReference];
   };
 
-  // Original actor type with old user profiles
+  type ImageReference = {
+    id : Nat;
+    documentId : Nat;
+    fileId : Text;
+    caption : Text;
+    position : Int;
+    size : Int;
+    createdBy : Principal;
+    lastModified : Int;
+  };
+
   type OldActor = {
-    userProfiles : Map.Map<Principal, OldUserProfile>;
+    playerDocumentsMap : Map.Map<Nat, OldPlayerDocument>;
   };
 
-  // New user profile type with optional profile picture
-  type NewUserProfile = {
+  type NewPlayerDocument = {
+    id : Nat;
+    sessionId : Nat;
+    owner : Principal;
     name : Text;
-    profilePicture : ?Storage.ExternalBlob;
+    content : Text;
+    createdBy : Principal;
+    lastModified : Int;
+    images : [ImageReference];
+    isPrivate : Bool;
   };
 
-  // New actor type with updated user profiles
   type NewActor = {
-    userProfiles : Map.Map<Principal, NewUserProfile>;
+    playerDocumentsMap : Map.Map<Nat, NewPlayerDocument>;
   };
 
   public func run(old : OldActor) : NewActor {
-    {
-      old with
-      userProfiles = old.userProfiles.map<Principal, OldUserProfile, NewUserProfile>(
-        func(_id, oldProf) {
-          { oldProf with profilePicture = null };
-        }
-      )
-    };
+    let newPlayerDocumentsMap = old.playerDocumentsMap.map<Nat, OldPlayerDocument, NewPlayerDocument>(
+      func(_id, oldDoc) {
+        {
+          id = oldDoc.id;
+          sessionId = oldDoc.sessionId;
+          owner = oldDoc.owner;
+          name = oldDoc.name;
+          content = oldDoc.content;
+          createdBy = oldDoc.createdBy;
+          lastModified = oldDoc.lastModified;
+          images = oldDoc.images;
+          isPrivate = not oldDoc.visible;
+        };
+      }
+    );
+
+    { playerDocumentsMap = newPlayerDocumentsMap };
   };
 };

@@ -1,136 +1,79 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix reactive preferences (dark mode/settings) and add profile pictures to Settings and chat",
+  "title": "Players' Documents sidebar + per-document privacy toggle",
   "requirements": [
     {
-      "id": "REQ-18",
-      "summary": "Make Dark Mode toggle apply instantly, persist across reloads, and remain consistent across all screens.",
+      "id": "REQ-1",
+      "summary": "Add a PLAYERS' DOCUMENTS section to the session sidebar that lists visible player-owned docs for the active session and supports selecting one to open.",
       "acceptanceCriteria": [
-        "When the user toggles Dark Mode in Settings, the UI switches theme immediately while staying on the same page",
-        "After reloading the app, the previously selected theme is restored and applied before the main UI is shown",
-        "Dark Mode affects all screens (unauthenticated login screen, LobbyPage, PreLobbySettingsView, SessionPage) consistently"
+        "Session sidebar shows a new header \"PLAYERS' DOCUMENTS\" below \"Documents\".",
+        "The section displays a list of player documents returned for the active session.",
+        "Clicking a player document switches the main panel to that player document view."
       ],
       "file_operations": [
         {
-          "path": "frontend/index.html",
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
           "operation": "modify",
-          "description": "Add an early theme initialization step that reads the stored preference and sets the document theme class before the React app renders, so the correct theme is applied before the main UI is shown."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Refactor app root to consume a single shared preferences source (provider) and apply theme/background consistently for loading, login prompt, lobby, settings, and session without requiring refresh."
-        },
-        {
-          "path": "frontend/src/hooks/usePreferences.ts",
-          "operation": "modify",
-          "description": "Update the preferences hook to be backed by a shared reactive source (context/provider) so theme changes propagate immediately to the whole app."
-        }
-      ]
-    },
-    {
-      "id": "REQ-19",
-      "summary": "Ensure Pre‑Lobby Settings changes (theme, background, nickname, template) are driven by one reactive preferences source with no stale copies.",
-      "acceptanceCriteria": [
-        "Changing background image in Settings updates the background immediately on the Settings screen and when navigating back to the lobby without requiring a reload",
-        "Changing default nickname in Settings updates the Lobby host/join nickname prefill behavior within the same app session",
-        "Changes made in Settings are reflected in App.tsx theme/background application logic immediately (no refresh required)"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/context/PreferencesContext.tsx",
-          "operation": "create",
-          "description": "Create a PreferencesProvider/PreferencesContext that loads preferences from storage once, exposes reactive state + update/reset actions, and keeps localStorage in sync (single source of truth shared across the app)."
-        },
-        {
-          "path": "frontend/src/hooks/usePreferences.ts",
-          "operation": "modify",
-          "description": "Rewrite usePreferences to read/write through PreferencesContext (instead of creating per-component state), ensuring updates are reactive across screens."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wrap the application UI in PreferencesProvider and ensure App.tsx uses the provider-backed preferences for theme/background application logic immediately."
-        },
-        {
-          "path": "frontend/src/components/settings/PreLobbySettingsView.tsx",
-          "operation": "modify",
-          "description": "Update Settings view to use the provider-backed preferences and verify that theme/background/nickname changes propagate immediately without navigation or refresh."
-        },
-        {
-          "path": "frontend/src/pages/LobbyPage.tsx",
-          "operation": "modify",
-          "description": "Ensure lobby nickname prefill behavior reacts to defaultNickname updates during the same session (using the provider-backed preferences), without relying on stale local state."
-        }
-      ]
-    },
-    {
-      "id": "REQ-20",
-      "summary": "Add Settings UI to upload/update/remove the authenticated user’s profile picture with preview and validation, persisting via backend user profile APIs.",
-      "acceptanceCriteria": [
-        "Settings page includes a \"Profile Picture\" section with current avatar preview, an upload control, and a remove/clear action",
-        "Uploading a valid image updates the preview and persists so it is still present after reload and re-login",
-        "Uploading a non-image file shows an English error message and does not change the saved profile picture",
-        "Removing the profile picture clears the preview and persists after reload"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useUserProfile.ts",
-          "operation": "create",
-          "description": "Add React Query hooks for fetching/updating the caller user profile (including profilePicture), calling backend functions already exposed in the typed interface. Use the selected blob-storage component’s ExternalBlob for image upload/URL handling; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/profile/ProfilePictureSection.tsx",
-          "operation": "create",
-          "description": "Create a Settings subcomponent that renders current avatar preview, validates uploads (image-only + reasonable size limit), supports update via saving the caller profile, and supports remove via backend removeProfilePicture. Use the selected blob-storage component’s ExternalBlob to create upload blobs and display via direct URL; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/settings/PreLobbySettingsView.tsx",
-          "operation": "modify",
-          "description": "Integrate the new ProfilePictureSection into the Settings screen under a \"Profile Picture\" area and wire success/error messaging and preview updates."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "On logout, clear cached user data in the frontend (e.g., React Query cache) so profile picture/profile state does not persist across sessions, aligning with the selected authorization component guidance; verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-22",
-      "summary": "Render profile pictures (avatars) next to chat messages with fallbacks and cached fetching.",
-      "acceptanceCriteria": [
-        "Each chat message shows an avatar next to the author name",
-        "If the author has no profile picture, a placeholder avatar is rendered (e.g., initials)",
-        "Avatar display does not break message rendering for roll messages or long content",
-        "Avatar fetching is performant (uses caching and does not refetch for every render)"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/profile/Avatar.tsx",
-          "operation": "create",
-          "description": "Create a reusable Avatar component that can render an image (from a direct URL) or a fallback (initials placeholder) and gracefully handles image load errors."
-        },
-        {
-          "path": "frontend/src/hooks/useUserProfile.ts",
-          "operation": "modify",
-          "description": "Extend user-profile hooks to support fetching other users’ profiles (by principal) with React Query caching (stable query keys, sensible staleTime) to prevent refetching on every render."
+          "description": "Add a new sidebar section labeled \"PLAYERS' DOCUMENTS\" below the existing \"Documents\" section; render the provided player documents list and invoke a new onSelectPlayerDocument handler when a player document is clicked. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/pages/SessionPage.tsx",
           "operation": "modify",
-          "description": "Pass session member information into the chat view so message authors can be mapped to principals for avatar lookup when possible (while keeping rendering robust if mapping fails)."
+          "description": "Fetch the active session's player documents (via existing React Query hooks) and pass them into SessionSidebar along with selection state and callbacks so selecting a player doc can drive main-panel navigation. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Extend SessionPage selection state/navigation to support rendering player documents in the main panel using PlayerDocumentEditorView.",
+      "acceptanceCriteria": [
+        "SessionPage supports a third view type for player documents.",
+        "Selecting a player document renders PlayerDocumentEditorView with the selected player document id.",
+        "Switching between channel/shared document/player document updates the main panel accordingly without breaking existing channel/document behavior."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/SessionPage.tsx",
+          "operation": "modify",
+          "description": "Add a player-document view type (e.g., 'playerDocument') and selectedPlayerDocumentId state; wire sidebar selection so it updates viewType and selected ids, and render PlayerDocumentEditorView when a player document is selected while preserving existing channel/document behavior. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
           "operation": "modify",
-          "description": "Thread through the session members (or an author->principal resolver) to each rendered ChatMessageItem so it can request the correct user profile for avatars with caching."
+          "description": "Extend props to include selectedPlayerDocumentId and onSelectPlayerDocument; ensure the correct button styling reflects player-document selection without affecting existing channel/document selection. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add an owner-only privacy toggle for player documents and ensure UI lists/visibility reflect the private state using existing backend capabilities.",
+      "acceptanceCriteria": [
+        "For the owner of a player document, the UI shows a clearly labeled checkbox/toggle: \"Private\" (or \"Hide from others\").",
+        "Toggling the control updates the document’s visibility via the backend API and the UI reflects the new state.",
+        "When a player document is Private, other session members cannot open it and do not see it listed in the \"PLAYERS' DOCUMENTS\" section.",
+        "When a player document is not Private, other session members can open it; editing behavior matches the app’s intended permissions for non-owners (if non-owners are allowed to edit, edits persist; otherwise they are read-only)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
+          "operation": "modify",
+          "description": "Add an owner-only \"Private\" (or \"Hide from others\") toggle using existing UI components (e.g., Switch/Checkbox) that calls the existing player-document visibility mutation; update rendering logic to use the correct backend field name (isPrivate) and gracefully handle non-owner access when the backend returns null/denied. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
+          "path": "frontend/src/hooks/usePlayerDocuments.ts",
           "operation": "modify",
-          "description": "Update message rendering layout to include an Avatar next to the author name and keep roll highlighting/long content rendering intact. Use cached user profile lookups and fall back to initials when no profile picture exists or cannot be loaded."
+          "description": "Align player-document hooks to the backend interface: use isPrivate naming (not visible) for create/update flows and update the setPlayerDocumentVisibility mutation to accept/send an isPrivate boolean; ensure query invalidation keeps sidebar + editor state consistent after toggling. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
+          "operation": "modify",
+          "description": "Update create/visibility UI to use \"Private\" semantics (backed by isPrivate) rather than \"Visible to Others\"; ensure toggles/menus call the updated hook and reflect private state text/icons appropriately. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "operation": "modify",
+          "description": "Ensure the PLAYERS' DOCUMENTS list only renders documents returned as visible to the caller; optionally add an extra client-side guard to exclude private docs not owned by the current user (defense-in-depth) while relying on backend filtering for correctness. Verify the component's usage instructions before implementing."
         }
       ]
     }

@@ -1,90 +1,64 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-15T23:12:24.475Z",
+  "generatedAt": "2026-02-16T00:46:25.284Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 4,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
-        "id": "REQ-18",
-        "summary": "Fix Dark Mode so that toggling the Dark Mode setting reliably updates the app UI immediately (without requiring refresh), persists across reloads, and is applied consistently on all screens (login prompt, lobby, settings, session).",
+        "id": "REQ-1",
+        "summary": "Add a new sidebar section directly below the existing \"Documents\" section titled \"PLAYERS' DOCUMENTS\" that lists player-owned documents for the current session and allows selecting a player document to open it in the main panel.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/index.html",
-          "frontend/src/App.tsx",
-          "frontend/src/hooks/usePreferences.ts"
+          "frontend/src/components/session/SessionSidebar.tsx",
+          "frontend/src/pages/SessionPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/index.html",
-          "frontend/src/App.tsx",
-          "frontend/src/hooks/usePreferences.ts"
+          "frontend/src/components/session/SessionSidebar.tsx",
+          "frontend/src/pages/SessionPage.tsx"
         ]
       },
       {
-        "id": "REQ-19",
-        "summary": "Make preference changes in the Pre‑Lobby Settings screen actually apply to the running app (theme, background image, nickname, template) by ensuring there is a single reactive preferences source shared across the app (no stale per-component copies).",
+        "id": "REQ-2",
+        "summary": "Update the Session page navigation/state so it supports selecting and rendering a player document in the main panel (in addition to channels and shared documents), using the existing PlayerDocumentEditorView for the selected player document.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/context/PreferencesContext.tsx",
-          "frontend/src/hooks/usePreferences.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/settings/PreLobbySettingsView.tsx",
-          "frontend/src/pages/LobbyPage.tsx"
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/context/PreferencesContext.tsx",
-          "frontend/src/hooks/usePreferences.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/settings/PreLobbySettingsView.tsx"
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx"
         ]
       },
       {
-        "id": "REQ-20",
-        "summary": "Add profile picture support to user profiles: allow the authenticated user to upload, update, and remove a profile picture from the Settings screen, with a preview and validation (image-only, reasonable size constraints).",
+        "id": "REQ-3",
+        "summary": "Add a simple per-player-document privacy control as a toggle/checkbox labeled \"Private\" (or \"Hide from others\") for the document owner; when enabled, the document is not visible to any other session members; when disabled, the document is visible and behaves like a shared doc for viewing/editing (as allowed by the app’s current permissions model).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useUserProfile.ts",
-          "frontend/src/components/profile/ProfilePictureSection.tsx",
-          "frontend/src/components/settings/PreLobbySettingsView.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
+          "frontend/src/hooks/usePlayerDocuments.ts",
+          "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useUserProfile.ts",
-          "frontend/src/components/profile/ProfilePictureSection.tsx",
-          "frontend/src/components/settings/PreLobbySettingsView.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
+          "frontend/src/hooks/usePlayerDocuments.ts",
+          "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx"
         ]
       },
       {
-        "id": "REQ-21",
-        "summary": "Extend the backend user profile model and APIs to store and serve an optional profile picture reference for each principal, using the existing backend storage approach (single-actor, existing blob storage mixin). Add APIs needed by the frontend to set/get the caller’s profile picture and to fetch other users’ profile picture metadata needed for display.",
+        "id": "REQ-4",
+        "summary": "Enforce privacy on the backend so that when a player document is marked Private/hidden, only the document owner can fetch its content (and it is excluded from list responses for non-owners).",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
-      },
-      {
-        "id": "REQ-22",
-        "summary": "Display user profile pictures in-session: show avatars alongside chat messages (and at minimum for the message author) with sensible fallbacks (e.g., initials placeholder) when a user has no profile picture or it cannot be loaded.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/profile/Avatar.tsx",
-          "frontend/src/hooks/useUserProfile.ts",
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/profile/Avatar.tsx",
-          "frontend/src/hooks/useUserProfile.ts",
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
-        ]
       }
     ]
   },
@@ -95,20 +69,14 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/index.html",
-    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/chat/ChannelChatView.tsx",
-    "frontend/src/components/chat/ChatMessageItem.tsx",
-    "frontend/src/components/profile/Avatar.tsx",
-    "frontend/src/components/profile/ProfilePictureSection.tsx",
-    "frontend/src/components/settings/PreLobbySettingsView.tsx",
-    "frontend/src/context/PreferencesContext.tsx",
+    "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
+    "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
+    "frontend/src/components/session/SessionSidebar.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/usePreferences.ts",
-    "frontend/src/hooks/useUserProfile.ts",
+    "frontend/src/hooks/usePlayerDocuments.ts",
     "frontend/src/pages/SessionPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
