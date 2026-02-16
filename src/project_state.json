@@ -1,53 +1,42 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project now includes replacing existing Documents/Players' Documents with Members' Channels, plus per-player document privacy controls; also needs investigation of an initialization hang after login.",
+  "summary": "Build a documents/notes editor with a toggleable Preview mode that renders note text and inline file/image placeholders.",
   "architectural_notes": [
-    "Define access rules for private player documents: when Private, only owner (and possibly client) can view/edit; when not private, all members can view/edit like shared docs.",
-    "Clarify whether 'Members' Channels' is a renamed/parallel entity to existing Channels and how it replaces Documents/Players' Documents in navigation and data model."
+    "Preview mode should parse noteContent for [FILE:id:filename] tags and render a mixed sequence of <Text> and inline <Image>/<file placeholder> components in a ScrollView, using an existing fileId->URI map."
   ],
-  "known_issues": [
-    "App remains stuck on 'Initializing' after login (user reports it still initializing)."
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-remove-the-host-owned-documents-feature-from-the-app-ui-including-sidebar-section-creation-rename-delete-lock-controls-and-the-document-editor-view-so-session-navigation-no-longer-offers-host-documents",
-      "title": "Remove the host-owned \"Documents\" feature from the app UI, including sidebar section, creation/rename/delete/lock controls, and the document editor view, so session navigation no longer offers host documents.",
+      "id": "feature-add-a-preview-edit-toggle-control-to-the-session-document-editor-screen-documenteditorview-that-switches-between-the-existing-editable-textarea-and-a-read-only-preview-view-user-facing-labels-must-be-in-english-preview-and-edit",
+      "title": "Add a Preview/Edit toggle control to the session document editor screen (DocumentEditorView) that switches between the existing editable textarea and a read-only preview view. User-facing labels must be in English (\"Preview\" and \"Edit\").",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-new-session-feature-called-members-channels-that-behaves-like-the-existing-chat-channels-feature-list-selectable-to-open-chat-but-is-distinct-from-the-host-managed-channels-list",
-      "title": "Add a new session feature called \"Members' Channels\" that behaves like the existing chat channels feature (list + selectable to open chat), but is distinct from the host-managed \"Channels\" list.",
+      "id": "feature-implement-a-minimal-preview-renderer-for-document-content-that-parses-embedded-file-markers-in-the-form-file-id-filename-and-renders-the-document-as-a-scrollable-formatted-read-only-view-with-inline-file-items-at-the-marker-positions",
+      "title": "Implement a minimal preview renderer for document content that parses embedded file markers in the form \"[FILE:<id>:<filename>]\" and renders the document as a scrollable, formatted read-only view with inline file items at the marker positions.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-define-and-enforce-permissions-for-members-channels-any-session-member-can-create-a-members-channel-the-channel-creator-can-rename-delete-their-own-members-channels-the-session-host-can-rename-delete-any-members-channel",
-      "title": "Define and enforce permissions for Members' Channels: any session member can create a Members' Channel; the channel creator can rename/delete their own Members' Channels; the session host can rename/delete any Members' Channel.",
+      "id": "feature-in-preview-mode-resolve-each-file-marker-to-the-corresponding-uploaded-file-using-the-existing-documentfiles-list-via-uselistdocumentfiles-and-the-existing-filemap-lookup-file-id-file-reference-render-images-inline-using-the-file-s-direct-url-render-non-image-files-inline-as-a-small-attachment-row-that-shows-the-filename-and-provides-an-open-file-action",
+      "title": "In preview mode, resolve each file marker to the corresponding uploaded file using the existing documentFiles list (via useListDocumentFiles) and the existing fileMap lookup (file ID -> file reference). Render images inline using the file’s direct URL; render non-image files inline as a small attachment row that shows the filename and provides an \"Open file\" action.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-remove-the-players-documents-section-from-the-sidebar-and-replace-it-with-members-channels-navigation-while-preserving-the-requested-per-player-document-privacy-control-behavior-for-any-remaining-player-document-access-paths-in-the-app",
-      "title": "Remove the \"Players' Documents\" section from the sidebar and replace it with \"Members' Channels\" navigation, while preserving the requested per-player-document privacy control behavior for any remaining player-document access paths in the app.",
+      "id": "feature-keep-the-change-tightly-scoped-to-the-session-documenteditorview-only-do-not-modify-upload-logic-save-logic-player-documents-ui-chat-stickers-or-other-unrelated-screens",
+      "title": "Keep the change tightly scoped to the session DocumentEditorView only; do not modify upload logic, save logic, player documents UI, chat, stickers, or other unrelated screens.",
       "reqIds": [
         "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-fix-the-post-login-app-state-where-the-ui-remains-stuck-on-the-initializing-screen-by-identifying-and-correcting-the-blocking-condition-s-in-frontend-initialization-and-or-backend-calls-so-authenticated-users-reliably-reach-the-lobby-or-session-ui",
-      "title": "Fix the post-login app state where the UI remains stuck on the \"Initializing...\" screen by identifying and correcting the blocking condition(s) in frontend initialization and/or backend calls so authenticated users reliably reach the Lobby or Session UI.",
-      "reqIds": [
-        "REQ-7"
       ],
       "version": 1
     }
@@ -55,34 +44,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Remove Documents and Players' Documents and replace with 'Members' Channels' (same as Channels)",
+      "summary": "Add Preview/Edit toggle in document editor to render read-only preview with inline images/files parsed from [FILE:id:filename] tags (scrollable, minimal/no new libs).",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Add per-player document privacy toggle ('Hide from others'/'Private') to control member visibility/editing",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Add a simple privacy toggle control labeled \"Private\" (or \"Hide from others\") on each player document (where player documents are created/managed/edited) and ensure it updates the player document privacy state.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-8",
-      "summary": "Enforce player document privacy on the backend: when a player document is private, only its owner (and optionally the host if you choose that policy) can list, fetch, or edit it; other session members must not see it in lists or be able to open it.",
-      "reqIds": [
-        "REQ-6"
-      ],
       "status": "pending"
     }
   ],
-  "projectName": "Replace Documents with Members' Channels and enforce Player Document privacy visibility",
+  "projectName": "Session Docs",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

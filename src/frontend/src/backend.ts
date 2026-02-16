@@ -96,6 +96,7 @@ export type CreatePlayerDocumentResponse = {
     __kind__: "error";
     error: string;
 };
+export type Time = bigint;
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
 }
@@ -191,6 +192,13 @@ export interface PlayerDocumentMetadata {
     isPrivate: boolean;
     sessionId: bigint;
 }
+export interface DocumentComment {
+    id: bigint;
+    text: string;
+    author: Principal;
+    timestamp: Time;
+    documentId: bigint;
+}
 export interface TurnOrder {
     currentIndex: bigint;
     order: Array<string>;
@@ -216,13 +224,9 @@ export interface JoinSessionRequest {
     password?: string;
     sessionId: bigint;
 }
-export interface Channel {
-    id: bigint;
-    name: string;
-    createdBy: Principal;
-}
 export interface ImageReference {
     id: bigint;
+    title: string;
     createdBy: Principal;
     size: bigint;
     lastModified: bigint;
@@ -230,6 +234,11 @@ export interface ImageReference {
     caption: string;
     documentId: bigint;
     position: bigint;
+}
+export interface Channel {
+    id: bigint;
+    name: string;
+    createdBy: Principal;
 }
 export type StandardResponse = {
     __kind__: "ok";
@@ -285,8 +294,10 @@ export interface backendInterface {
     _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
-    addImageToDocument(sessionId: bigint, documentId: bigint, fileId: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
-    addImageToPlayerDocument(documentId: bigint, fileId: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
+    addComment(documentId: bigint, text: string): Promise<bigint>;
+    addImageToDocument(sessionId: bigint, documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
+    addImageToPlayerDocument(documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
+    addPlayerImage(documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createChannel(sessionId: bigint, name: string): Promise<StandardResponse>;
     createDocument(sessionId: bigint, name: string, content: string): Promise<CreateDocumentResponse>;
@@ -294,6 +305,7 @@ export interface backendInterface {
     createPlayerDocument(sessionId: bigint, name: string, content: string, isPrivate: boolean): Promise<CreatePlayerDocumentResponse>;
     createSession(request: SessionCreateRequest): Promise<Session>;
     deleteChannel(sessionId: bigint, channelId: bigint): Promise<StandardResponse>;
+    deleteComment(commentId: bigint): Promise<void>;
     deleteDocument(documentId: bigint): Promise<StandardResponse>;
     deleteMembersChannel(sessionId: bigint, channelId: bigint): Promise<StandardResponse>;
     deletePlayerDocument(documentId: bigint): Promise<StandardResponse>;
@@ -303,6 +315,7 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getChannels(sessionId: bigint): Promise<Array<Channel>>;
+    getComments(documentId: bigint): Promise<Array<DocumentComment>>;
     getDocument(documentId: bigint): Promise<Document | null>;
     getDocumentFileBlob(fileId: bigint): Promise<ExternalBlob | null>;
     getDocumentFileReference(fileId: bigint): Promise<DocumentFileReference | null>;
@@ -313,7 +326,6 @@ export interface backendInterface {
     getMessages(sessionId: bigint, channelId: bigint): Promise<Array<Message>>;
     getPlayerDocument(documentId: bigint): Promise<PlayerDocument | null>;
     getSession(sessionId: bigint): Promise<Session | null>;
-    getTurnOrder(sessionId: bigint): Promise<TurnOrder | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     importSession(exportData: SessionExport): Promise<StandardResponse>;
     isCallerAdmin(): Promise<boolean>;
@@ -336,6 +348,7 @@ export interface backendInterface {
     setPlayerDocumentVisibility(documentId: bigint, isPrivate: boolean): Promise<StandardResponse>;
     setTurnOrder(sessionId: bigint, order: Array<string>): Promise<StandardResponse>;
     unlockDocument(documentId: bigint): Promise<StandardResponse>;
+    updateComment(commentId: bigint, text: string): Promise<void>;
     uploadDocumentFile(request: UploadFileRequest): Promise<UploadDocumentFileResponse>;
 }
 import type { AddImageToDocumentResponse as _AddImageToDocumentResponse, Channel as _Channel, CreateDocumentResponse as _CreateDocumentResponse, CreatePlayerDocumentResponse as _CreatePlayerDocumentResponse, Document as _Document, DocumentFileReference as _DocumentFileReference, DocumentWithImages as _DocumentWithImages, ExternalBlob as _ExternalBlob, ImageReference as _ImageReference, JoinSessionRequest as _JoinSessionRequest, MembersChannel as _MembersChannel, Message as _Message, PlayerDocument as _PlayerDocument, Session as _Session, SessionCreateRequest as _SessionCreateRequest, SessionExport as _SessionExport, SessionMember as _SessionMember, StandardResponse as _StandardResponse, TurnOrder as _TurnOrder, UploadDocumentFileResponse as _UploadDocumentFileResponse, UploadFileRequest as _UploadFileRequest, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
@@ -439,32 +452,60 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async addImageToDocument(arg0: bigint, arg1: bigint, arg2: string, arg3: string, arg4: bigint, arg5: bigint): Promise<AddImageToDocumentResponse> {
+    async addComment(arg0: bigint, arg1: string): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.addImageToDocument(arg0, arg1, arg2, arg3, arg4, arg5);
+                const result = await this.actor.addComment(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addComment(arg0, arg1);
+            return result;
+        }
+    }
+    async addImageToDocument(arg0: bigint, arg1: bigint, arg2: string, arg3: string, arg4: string, arg5: bigint, arg6: bigint): Promise<AddImageToDocumentResponse> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addImageToDocument(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
                 return from_candid_AddImageToDocumentResponse_n8(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.addImageToDocument(arg0, arg1, arg2, arg3, arg4, arg5);
+            const result = await this.actor.addImageToDocument(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
             return from_candid_AddImageToDocumentResponse_n8(this._uploadFile, this._downloadFile, result);
         }
     }
-    async addImageToPlayerDocument(arg0: bigint, arg1: string, arg2: string, arg3: bigint, arg4: bigint): Promise<AddImageToDocumentResponse> {
+    async addImageToPlayerDocument(arg0: bigint, arg1: string, arg2: string, arg3: string, arg4: bigint, arg5: bigint): Promise<AddImageToDocumentResponse> {
         if (this.processError) {
             try {
-                const result = await this.actor.addImageToPlayerDocument(arg0, arg1, arg2, arg3, arg4);
+                const result = await this.actor.addImageToPlayerDocument(arg0, arg1, arg2, arg3, arg4, arg5);
                 return from_candid_AddImageToDocumentResponse_n8(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.addImageToPlayerDocument(arg0, arg1, arg2, arg3, arg4);
+            const result = await this.actor.addImageToPlayerDocument(arg0, arg1, arg2, arg3, arg4, arg5);
             return from_candid_AddImageToDocumentResponse_n8(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async addPlayerImage(arg0: bigint, arg1: string, arg2: string, arg3: string, arg4: bigint, arg5: bigint): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addPlayerImage(arg0, arg1, arg2, arg3, arg4, arg5);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addPlayerImage(arg0, arg1, arg2, arg3, arg4, arg5);
+            return result;
         }
     }
     async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
@@ -563,6 +604,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.deleteChannel(arg0, arg1);
             return from_candid_StandardResponse_n12(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async deleteComment(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteComment(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteComment(arg0);
+            return result;
         }
     }
     async deleteDocument(arg0: bigint): Promise<StandardResponse> {
@@ -688,6 +743,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getChannels(arg0);
+            return result;
+        }
+    }
+    async getComments(arg0: bigint): Promise<Array<DocumentComment>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getComments(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getComments(arg0);
             return result;
         }
     }
@@ -829,20 +898,6 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getSession(arg0);
             return from_candid_opt_n42(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getTurnOrder(arg0: bigint): Promise<TurnOrder | null> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getTurnOrder(arg0);
-                return from_candid_opt_n24(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getTurnOrder(arg0);
-            return from_candid_opt_n24(this._uploadFile, this._downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
@@ -1151,6 +1206,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.unlockDocument(arg0);
             return from_candid_StandardResponse_n12(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async updateComment(arg0: bigint, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateComment(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateComment(arg0, arg1);
+            return result;
         }
     }
     async uploadDocumentFile(arg0: UploadFileRequest): Promise<UploadDocumentFileResponse> {

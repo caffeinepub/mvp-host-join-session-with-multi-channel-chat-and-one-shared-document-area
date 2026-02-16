@@ -1,131 +1,77 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T02:32:15.206Z",
+  "generatedAt": "2026-02-16T19:44:20.699Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 7,
-    "implemented": 5,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove the host-owned \"Documents\" feature from the app UI, including sidebar section, creation/rename/delete/lock controls, and the document editor view, so session navigation no longer offers host documents.",
+        "summary": "Add a Preview/Edit toggle control to the session document editor screen (DocumentEditorView) that switches between the existing editable textarea and a read-only preview view. User-facing labels must be in English (\"Preview\" and \"Edit\").",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/hooks/useSessionData.ts"
+          "frontend/src/components/docs/DocumentEditorView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/hooks/useSessionData.ts"
+          "frontend/src/components/docs/DocumentEditorView.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add a new session feature called \"Members' Channels\" that behaves like the existing chat channels feature (list + selectable to open chat), but is distinct from the host-managed \"Channels\" list.",
+        "summary": "Implement a minimal preview renderer for document content that parses embedded file markers in the form \"[FILE:<id>:<filename>]\" and renders the document as a scrollable, formatted read-only view with inline file items at the marker positions.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useSessionData.ts",
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx"
+          "frontend/src/components/docs/DocumentContentPreview.tsx",
+          "frontend/src/components/docs/DocumentEditorView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useSessionData.ts",
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx"
+          "frontend/src/components/docs/DocumentContentPreview.tsx",
+          "frontend/src/components/docs/DocumentEditorView.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Define and enforce permissions for Members' Channels: any session member can create a Members' Channel; the channel creator can rename/delete their own Members' Channels; the session host can rename/delete any Members' Channel.",
+        "summary": "In preview mode, resolve each file marker to the corresponding uploaded file using the existing documentFiles list (via useListDocumentFiles) and the existing fileMap lookup (file ID -> file reference). Render images inline using the file’s direct URL; render non-image files inline as a small attachment row that shows the filename and provides an \"Open file\" action.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx"
+          "frontend/src/components/docs/DocumentContentPreview.tsx",
+          "frontend/src/components/docs/DocumentEditorView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx"
+          "frontend/src/components/docs/DocumentContentPreview.tsx",
+          "frontend/src/components/docs/DocumentEditorView.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Remove the \"Players' Documents\" section from the sidebar and replace it with \"Members' Channels\" navigation, while preserving the requested per-player-document privacy control behavior for any remaining player-document access paths in the app.",
+        "summary": "Keep the change tightly scoped to the session DocumentEditorView only; do not modify upload logic, save logic, player documents UI, chat, stickers, or other unrelated screens.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/components/session/PlayerDocumentsDialog.tsx",
-          "frontend/src/pages/SessionPage.tsx"
+          "frontend/src/components/docs/DocumentEditorView.tsx",
+          "frontend/src/components/docs/DocumentContentPreview.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/components/session/PlayerDocumentsDialog.tsx",
-          "frontend/src/pages/SessionPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Add a simple privacy toggle control labeled \"Private\" (or \"Hide from others\") on each player document (where player documents are created/managed/edited) and ensure it updates the player document privacy state.",
-        "status": "missing",
-        "plannedFiles": [
-          "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
-          "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
-          "frontend/src/hooks/usePlayerDocuments.ts"
-        ],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Enforce player document privacy on the backend: when a player document is private, only its owner (and optionally the host if you choose that policy) can list, fetch, or edit it; other session members must not see it in lists or be able to open it.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Fix the post-login app state where the UI remains stuck on the \"Initializing...\" screen by identifying and correcting the blocking condition(s) in frontend initialization and/or backend calls so authenticated users reliably reach the Lobby or Session UI.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useActor.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/hooks/useUserProfile.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/App.tsx"
+          "frontend/src/components/docs/DocumentEditorView.tsx",
+          "frontend/src/components/docs/DocumentContentPreview.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
-    "frontend/src/components/session/PlayerDocumentsDialog.tsx",
-    "frontend/src/components/session/SessionSidebar.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useSessionData.ts",
-    "frontend/src/pages/SessionPage.tsx",
+    "frontend/src/components/docs/DocumentContentPreview.tsx",
+    "frontend/src/components/docs/DocumentEditorView.tsx",
+    "frontend/src/config.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

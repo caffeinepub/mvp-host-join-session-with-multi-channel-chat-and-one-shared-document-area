@@ -73,6 +73,7 @@ export const Session = IDL.Record({
 });
 export const ImageReference = IDL.Record({
   'id' : IDL.Nat,
+  'title' : IDL.Text,
   'createdBy' : IDL.Principal,
   'size' : IDL.Int,
   'lastModified' : IDL.Int,
@@ -139,6 +140,14 @@ export const SessionExport = IDL.Record({
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'profilePicture' : IDL.Opt(ExternalBlob),
+});
+export const Time = IDL.Int;
+export const DocumentComment = IDL.Record({
+  'id' : IDL.Nat,
+  'text' : IDL.Text,
+  'author' : IDL.Principal,
+  'timestamp' : Time,
+  'documentId' : IDL.Nat,
 });
 export const DocumentWithImages = IDL.Record({
   'id' : IDL.Nat,
@@ -211,14 +220,20 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'addComment' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Nat], []),
   'addImageToDocument' : IDL.Func(
-      [IDL.Nat, IDL.Nat, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
+      [IDL.Nat, IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
       [AddImageToDocumentResponse],
       [],
     ),
   'addImageToPlayerDocument' : IDL.Func(
-      [IDL.Nat, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
+      [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
       [AddImageToDocumentResponse],
+      [],
+    ),
+  'addPlayerImage' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
+      [IDL.Nat],
       [],
     ),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
@@ -240,6 +255,7 @@ export const idlService = IDL.Service({
     ),
   'createSession' : IDL.Func([SessionCreateRequest], [Session], []),
   'deleteChannel' : IDL.Func([IDL.Nat, IDL.Nat], [StandardResponse], []),
+  'deleteComment' : IDL.Func([IDL.Nat], [], []),
   'deleteDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
   'deleteMembersChannel' : IDL.Func([IDL.Nat, IDL.Nat], [StandardResponse], []),
   'deletePlayerDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
@@ -249,6 +265,7 @@ export const idlService = IDL.Service({
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getChannels' : IDL.Func([IDL.Nat], [IDL.Vec(Channel)], ['query']),
+  'getComments' : IDL.Func([IDL.Nat], [IDL.Vec(DocumentComment)], ['query']),
   'getDocument' : IDL.Func([IDL.Nat], [IDL.Opt(Document)], ['query']),
   'getDocumentFileBlob' : IDL.Func(
       [IDL.Nat],
@@ -283,7 +300,6 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getSession' : IDL.Func([IDL.Nat], [IDL.Opt(Session)], ['query']),
-  'getTurnOrder' : IDL.Func([IDL.Nat], [IDL.Opt(TurnOrder)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -346,6 +362,7 @@ export const idlService = IDL.Service({
       [],
     ),
   'unlockDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
+  'updateComment' : IDL.Func([IDL.Nat, IDL.Text], [], []),
   'uploadDocumentFile' : IDL.Func(
       [UploadFileRequest],
       [UploadDocumentFileResponse],
@@ -418,6 +435,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ImageReference = IDL.Record({
     'id' : IDL.Nat,
+    'title' : IDL.Text,
     'createdBy' : IDL.Principal,
     'size' : IDL.Int,
     'lastModified' : IDL.Int,
@@ -484,6 +502,14 @@ export const idlFactory = ({ IDL }) => {
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
     'profilePicture' : IDL.Opt(ExternalBlob),
+  });
+  const Time = IDL.Int;
+  const DocumentComment = IDL.Record({
+    'id' : IDL.Nat,
+    'text' : IDL.Text,
+    'author' : IDL.Principal,
+    'timestamp' : Time,
+    'documentId' : IDL.Nat,
   });
   const DocumentWithImages = IDL.Record({
     'id' : IDL.Nat,
@@ -556,14 +582,20 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'addComment' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Nat], []),
     'addImageToDocument' : IDL.Func(
-        [IDL.Nat, IDL.Nat, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
+        [IDL.Nat, IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
         [AddImageToDocumentResponse],
         [],
       ),
     'addImageToPlayerDocument' : IDL.Func(
-        [IDL.Nat, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
+        [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
         [AddImageToDocumentResponse],
+        [],
+      ),
+    'addPlayerImage' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
+        [IDL.Nat],
         [],
       ),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
@@ -585,6 +617,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'createSession' : IDL.Func([SessionCreateRequest], [Session], []),
     'deleteChannel' : IDL.Func([IDL.Nat, IDL.Nat], [StandardResponse], []),
+    'deleteComment' : IDL.Func([IDL.Nat], [], []),
     'deleteDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
     'deleteMembersChannel' : IDL.Func(
         [IDL.Nat, IDL.Nat],
@@ -602,6 +635,7 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getChannels' : IDL.Func([IDL.Nat], [IDL.Vec(Channel)], ['query']),
+    'getComments' : IDL.Func([IDL.Nat], [IDL.Vec(DocumentComment)], ['query']),
     'getDocument' : IDL.Func([IDL.Nat], [IDL.Opt(Document)], ['query']),
     'getDocumentFileBlob' : IDL.Func(
         [IDL.Nat],
@@ -636,7 +670,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getSession' : IDL.Func([IDL.Nat], [IDL.Opt(Session)], ['query']),
-    'getTurnOrder' : IDL.Func([IDL.Nat], [IDL.Opt(TurnOrder)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -699,6 +732,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'unlockDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
+    'updateComment' : IDL.Func([IDL.Nat, IDL.Text], [], []),
     'uploadDocumentFile' : IDL.Func(
         [UploadFileRequest],
         [UploadDocumentFileResponse],

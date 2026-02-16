@@ -2,12 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-the-host-owned-documents-feature-from-the-app-ui-including-sidebar-section-creation-rename-delete-lock-controls-and-the-document-editor-view-so-session-navigation-no-longer-offers-host-documents",
-      "featureTitle": "Remove the host-owned \"Documents\" feature from the app UI, including sidebar section, creation/rename/delete/lock controls, and the document editor view, so session navigation no longer offers host documents.",
+      "featureId": "feature-add-a-preview-edit-toggle-control-to-the-session-document-editor-screen-documenteditorview-that-switches-between-the-existing-editable-textarea-and-a-read-only-preview-view-user-facing-labels-must-be-in-english-preview-and-edit",
+      "featureTitle": "Add a Preview/Edit toggle control to the session document editor screen (DocumentEditorView) that switches between the existing editable textarea and a read-only preview view. User-facing labels must be in English (\"Preview\" and \"Edit\").",
       "files": [
-        "frontend/src/components/session/SessionSidebar.tsx",
-        "frontend/src/hooks/useSessionData.ts",
-        "frontend/src/pages/SessionPage.tsx"
+        "frontend/src/components/docs/DocumentEditorView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -24,13 +22,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-new-session-feature-called-members-channels-that-behaves-like-the-existing-chat-channels-feature-list-selectable-to-open-chat-but-is-distinct-from-the-host-managed-channels-list",
-      "featureTitle": "Add a new session feature called \"Members' Channels\" that behaves like the existing chat channels feature (list + selectable to open chat), but is distinct from the host-managed \"Channels\" list.",
+      "featureId": "feature-implement-a-minimal-preview-renderer-for-document-content-that-parses-embedded-file-markers-in-the-form-file-id-filename-and-renders-the-document-as-a-scrollable-formatted-read-only-view-with-inline-file-items-at-the-marker-positions",
+      "featureTitle": "Implement a minimal preview renderer for document content that parses embedded file markers in the form \"[FILE:<id>:<filename>]\" and renders the document as a scrollable, formatted read-only view with inline file items at the marker positions.",
       "files": [
-        "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
-        "frontend/src/components/session/SessionSidebar.tsx",
-        "frontend/src/hooks/useSessionData.ts",
-        "frontend/src/pages/SessionPage.tsx"
+        "frontend/src/components/docs/DocumentContentPreview.tsx",
+        "frontend/src/components/docs/DocumentEditorView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -47,12 +43,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-define-and-enforce-permissions-for-members-channels-any-session-member-can-create-a-members-channel-the-channel-creator-can-rename-delete-their-own-members-channels-the-session-host-can-rename-delete-any-members-channel",
-      "featureTitle": "Define and enforce permissions for Members' Channels: any session member can create a Members' Channel; the channel creator can rename/delete their own Members' Channels; the session host can rename/delete any Members' Channel.",
+      "featureId": "feature-in-preview-mode-resolve-each-file-marker-to-the-corresponding-uploaded-file-using-the-existing-documentfiles-list-via-uselistdocumentfiles-and-the-existing-filemap-lookup-file-id-file-reference-render-images-inline-using-the-file-s-direct-url-render-non-image-files-inline-as-a-small-attachment-row-that-shows-the-filename-and-provides-an-open-file-action",
+      "featureTitle": "In preview mode, resolve each file marker to the corresponding uploaded file using the existing documentFiles list (via useListDocumentFiles) and the existing fileMap lookup (file ID -> file reference). Render images inline using the file’s direct URL; render non-image files inline as a small attachment row that shows the filename and provides an \"Open file\" action.",
       "files": [
-        "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
-        "frontend/src/components/session/SessionSidebar.tsx",
-        "frontend/src/pages/SessionPage.tsx"
+        "frontend/src/components/docs/DocumentContentPreview.tsx",
+        "frontend/src/components/docs/DocumentEditorView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -69,12 +64,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-remove-the-players-documents-section-from-the-sidebar-and-replace-it-with-members-channels-navigation-while-preserving-the-requested-per-player-document-privacy-control-behavior-for-any-remaining-player-document-access-paths-in-the-app",
-      "featureTitle": "Remove the \"Players' Documents\" section from the sidebar and replace it with \"Members' Channels\" navigation, while preserving the requested per-player-document privacy control behavior for any remaining player-document access paths in the app.",
+      "featureId": "feature-keep-the-change-tightly-scoped-to-the-session-documenteditorview-only-do-not-modify-upload-logic-save-logic-player-documents-ui-chat-stickers-or-other-unrelated-screens",
+      "featureTitle": "Keep the change tightly scoped to the session DocumentEditorView only; do not modify upload logic, save logic, player documents UI, chat, stickers, or other unrelated screens.",
       "files": [
-        "frontend/src/components/session/PlayerDocumentsDialog.tsx",
-        "frontend/src/components/session/SessionSidebar.tsx",
-        "frontend/src/pages/SessionPage.tsx"
+        "frontend/src/components/docs/DocumentContentPreview.tsx",
+        "frontend/src/components/docs/DocumentEditorView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -87,26 +81,6 @@
       ],
       "testIds": [
         "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-fix-the-post-login-app-state-where-the-ui-remains-stuck-on-the-initializing-screen-by-identifying-and-correcting-the-blocking-condition-s-in-frontend-initialization-and-or-backend-calls-so-authenticated-users-reliably-reach-the-lobby-or-session-ui",
-      "featureTitle": "Fix the post-login app state where the UI remains stuck on the \"Initializing...\" screen by identifying and correcting the blocking condition(s) in frontend initialization and/or backend calls so authenticated users reliably reach the Lobby or Session UI.",
-      "files": [
-        "frontend/src/App.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
       ],
       "confidence": "high"
     }

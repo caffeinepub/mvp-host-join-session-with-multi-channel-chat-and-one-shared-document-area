@@ -21,6 +21,7 @@ export type CreatePlayerDocumentResponse = {
     __kind__: "error";
     error: string;
 };
+export type Time = bigint;
 export interface Document {
     id: bigint;
     content: string;
@@ -109,6 +110,13 @@ export interface PlayerDocumentMetadata {
     isPrivate: boolean;
     sessionId: bigint;
 }
+export interface DocumentComment {
+    id: bigint;
+    text: string;
+    author: Principal;
+    timestamp: Time;
+    documentId: bigint;
+}
 export interface TurnOrder {
     currentIndex: bigint;
     order: Array<string>;
@@ -134,13 +142,9 @@ export interface JoinSessionRequest {
     password?: string;
     sessionId: bigint;
 }
-export interface Channel {
-    id: bigint;
-    name: string;
-    createdBy: Principal;
-}
 export interface ImageReference {
     id: bigint;
+    title: string;
     createdBy: Principal;
     size: bigint;
     lastModified: bigint;
@@ -148,6 +152,11 @@ export interface ImageReference {
     caption: string;
     documentId: bigint;
     position: bigint;
+}
+export interface Channel {
+    id: bigint;
+    name: string;
+    createdBy: Principal;
 }
 export type StandardResponse = {
     __kind__: "ok";
@@ -192,8 +201,10 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
-    addImageToDocument(sessionId: bigint, documentId: bigint, fileId: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
-    addImageToPlayerDocument(documentId: bigint, fileId: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
+    addComment(documentId: bigint, text: string): Promise<bigint>;
+    addImageToDocument(sessionId: bigint, documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
+    addImageToPlayerDocument(documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
+    addPlayerImage(documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createChannel(sessionId: bigint, name: string): Promise<StandardResponse>;
     createDocument(sessionId: bigint, name: string, content: string): Promise<CreateDocumentResponse>;
@@ -201,6 +212,7 @@ export interface backendInterface {
     createPlayerDocument(sessionId: bigint, name: string, content: string, isPrivate: boolean): Promise<CreatePlayerDocumentResponse>;
     createSession(request: SessionCreateRequest): Promise<Session>;
     deleteChannel(sessionId: bigint, channelId: bigint): Promise<StandardResponse>;
+    deleteComment(commentId: bigint): Promise<void>;
     deleteDocument(documentId: bigint): Promise<StandardResponse>;
     deleteMembersChannel(sessionId: bigint, channelId: bigint): Promise<StandardResponse>;
     deletePlayerDocument(documentId: bigint): Promise<StandardResponse>;
@@ -210,6 +222,7 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getChannels(sessionId: bigint): Promise<Array<Channel>>;
+    getComments(documentId: bigint): Promise<Array<DocumentComment>>;
     getDocument(documentId: bigint): Promise<Document | null>;
     getDocumentFileBlob(fileId: bigint): Promise<ExternalBlob | null>;
     getDocumentFileReference(fileId: bigint): Promise<DocumentFileReference | null>;
@@ -220,7 +233,6 @@ export interface backendInterface {
     getMessages(sessionId: bigint, channelId: bigint): Promise<Array<Message>>;
     getPlayerDocument(documentId: bigint): Promise<PlayerDocument | null>;
     getSession(sessionId: bigint): Promise<Session | null>;
-    getTurnOrder(sessionId: bigint): Promise<TurnOrder | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     importSession(exportData: SessionExport): Promise<StandardResponse>;
     isCallerAdmin(): Promise<boolean>;
@@ -243,5 +255,6 @@ export interface backendInterface {
     setPlayerDocumentVisibility(documentId: bigint, isPrivate: boolean): Promise<StandardResponse>;
     setTurnOrder(sessionId: bigint, order: Array<string>): Promise<StandardResponse>;
     unlockDocument(documentId: bigint): Promise<StandardResponse>;
+    updateComment(commentId: bigint, text: string): Promise<void>;
     uploadDocumentFile(request: UploadFileRequest): Promise<UploadDocumentFileResponse>;
 }

@@ -1,64 +1,42 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T02:32:15.203Z",
-  "summary": "Diff adds Members' Channels UI and related frontend hooks, plus introduces a migration to add membersChannels to Session and adjusts App initialization flow. However, evidence shows the host-owned Documents feature still exists in the frontend (and likely remains accessible), and there is no visible implementation of a per-player-document privacy toggle UI nor clear backend enforcement of player-document privacy in the provided diff excerpts.",
+  "generatedAt": "2026-02-16T19:44:20.696Z",
+  "summary": "Preview rendering and a new DocumentContentPreview component were added, but the change set appears to include backend modifications (violating the “no backend changes / tightly scoped” requirement). From the truncated diffs, some acceptance details (notably scrollability of the preview area and exact toggle labels) cannot be fully verified.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Remove the host-owned \"Documents\" feature from the app UI, including sidebar section, creation/rename/delete/lock controls, and the document editor view, so session navigation no longer offers host documents.",
-      "reason": "The diff summary still references host document management and editor UI components as present/updated, indicating the Documents feature has not been removed from the UI codebase.",
+      "id": "REQ-2",
+      "requirement": "Preview area is scrollable within the editor panel.",
+      "reason": "The added preview component renders content in a normal <div className=\"space-y-4\"> with no visible scroll container styling; the DocumentEditorView diff is truncated before showing the preview container layout, so scrollability is not evidenced.",
       "evidence": [
-        "frontend-file-summaries.txt (mentions \"frontend/src/components/session/DocumentManagementDialogs.tsx\" and \"frontend/src/components/docs/DocumentEditorView.tsx\")"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "requirement": "Add a simple privacy toggle control labeled \"Private\" (or \"Hide from others\") on each player document (where player documents are created/managed/edited) and ensure it updates the player document privacy state.",
-      "reason": "No diff evidence shows a privacy toggle control being added to any player document create/manage/edit UI. The added PlayerDocumentsDialog lists documents and shows a lock icon for private docs, but does not include an editable toggle per document.",
-      "evidence": [
-        "frontend/src/components/session/PlayerDocumentsDialog.tsx"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "requirement": "Enforce player document privacy on the backend: when a player document is private, only its owner (and optionally the host) can list, fetch, or edit it; other session members must not see it in lists or be able to open it.",
-      "reason": "While backend types include `isPrivate` on PlayerDocument/PlayerDocumentMetadata, the provided backend diff excerpt does not show any authorization checks or filtering logic in list/fetch/edit APIs to enforce privacy (diff is truncated and no relevant functions are evidenced).",
-      "evidence": [
-        "backend/main.mo (truncated excerpt shows type additions/definitions but no privacy enforcement logic)",
-        "frontend/src/components/session/PlayerDocumentsDialog.tsx (UI claims private docs are only visible to you, implying backend filtering should exist but is not evidenced)"
+        "frontend/src/components/docs/DocumentContentPreview.tsx",
+        "frontend/src/components/docs/DocumentEditorView.tsx (truncated)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added a new Player Documents modal dialog and header button entry point for managing/selecting player documents.",
-      "reason": "The BuildRequest focuses on removing sidebar \"Players' Documents\" and replacing it with \"Members' Channels\" while preserving remaining access paths; it does not explicitly request adding a new modal dialog UI for player documents (this may be a design choice beyond the stated requirements).",
+      "description": "Backend Motoko file was modified despite requirement to make no backend changes for this feature.",
+      "reason": "BuildRequest explicitly forbids backend schema/Motoko changes; diff shows modifications to backend/main.mo.",
       "evidence": [
-        "frontend/src/components/session/PlayerDocumentsDialog.tsx",
-        "frontend/src/pages/SessionPage.tsx (shows \"Player Documents\" button in header opening the dialog)"
+        "backend/main.mo"
       ]
     },
     {
-      "description": "Introduced a backend data migration module to add `membersChannels` to Session state.",
-      "reason": "REQ-2 requires Members' Channels storage and APIs, but does not explicitly request a separate migration module/file; this is additional implementation infrastructure beyond the stated requirements (though compatible with constraints).",
+      "description": "Extra project/meta files updated that are outside the requested scoped UI change (e.g., project_state.json and a repository-wide frontend-file-summaries.txt).",
+      "reason": "REQ-4 asks to keep the change tightly scoped to DocumentEditorView only; these files are not part of that screen’s implementation.",
       "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo (uses `(with migration = Migration.run)` and adds `membersChannels` to Session)"
+        "project_state.json",
+        "frontend-file-summaries.txt"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.72,
   "changed_files": [
     "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
-    "frontend/src/components/session/PlayerDocumentsDialog.tsx",
-    "frontend/src/components/session/SessionSidebar.tsx",
-    "frontend/src/hooks/useSessionData.ts",
-    "frontend/src/pages/SessionPage.tsx",
+    "frontend/src/components/docs/DocumentContentPreview.tsx",
+    "frontend/src/components/docs/DocumentEditorView.tsx",
     "project_state.json"
   ]
 }

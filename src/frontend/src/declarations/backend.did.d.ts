@@ -37,6 +37,13 @@ export interface Document {
   'sessionId' : bigint,
   'revision' : bigint,
 }
+export interface DocumentComment {
+  'id' : bigint,
+  'text' : string,
+  'author' : Principal,
+  'timestamp' : Time,
+  'documentId' : bigint,
+}
 export interface DocumentFileReference {
   'id' : bigint,
   'file' : ExternalBlob,
@@ -61,6 +68,7 @@ export interface DocumentWithImages {
 export type ExternalBlob = Uint8Array;
 export interface ImageReference {
   'id' : bigint,
+  'title' : string,
   'createdBy' : Principal,
   'size' : bigint,
   'lastModified' : bigint,
@@ -140,6 +148,7 @@ export interface SessionMember {
 }
 export type StandardResponse = { 'ok' : string } |
   { 'error' : string };
+export type Time = bigint;
 export interface TurnOrder {
   'currentIndex' : bigint,
   'order' : Array<string>,
@@ -189,13 +198,18 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'addComment' : ActorMethod<[bigint, string], bigint>,
   'addImageToDocument' : ActorMethod<
-    [bigint, bigint, string, string, bigint, bigint],
+    [bigint, bigint, string, string, string, bigint, bigint],
     AddImageToDocumentResponse
   >,
   'addImageToPlayerDocument' : ActorMethod<
-    [bigint, string, string, bigint, bigint],
+    [bigint, string, string, string, bigint, bigint],
     AddImageToDocumentResponse
+  >,
+  'addPlayerImage' : ActorMethod<
+    [bigint, string, string, string, bigint, bigint],
+    bigint
   >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createChannel' : ActorMethod<[bigint, string], StandardResponse>,
@@ -210,6 +224,7 @@ export interface _SERVICE {
   >,
   'createSession' : ActorMethod<[SessionCreateRequest], Session>,
   'deleteChannel' : ActorMethod<[bigint, bigint], StandardResponse>,
+  'deleteComment' : ActorMethod<[bigint], undefined>,
   'deleteDocument' : ActorMethod<[bigint], StandardResponse>,
   'deleteMembersChannel' : ActorMethod<[bigint, bigint], StandardResponse>,
   'deletePlayerDocument' : ActorMethod<[bigint], StandardResponse>,
@@ -219,6 +234,7 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getChannels' : ActorMethod<[bigint], Array<Channel>>,
+  'getComments' : ActorMethod<[bigint], Array<DocumentComment>>,
   'getDocument' : ActorMethod<[bigint], [] | [Document]>,
   'getDocumentFileBlob' : ActorMethod<[bigint], [] | [ExternalBlob]>,
   'getDocumentFileReference' : ActorMethod<
@@ -232,7 +248,6 @@ export interface _SERVICE {
   'getMessages' : ActorMethod<[bigint, bigint], Array<Message>>,
   'getPlayerDocument' : ActorMethod<[bigint], [] | [PlayerDocument]>,
   'getSession' : ActorMethod<[bigint], [] | [Session]>,
-  'getTurnOrder' : ActorMethod<[bigint], [] | [TurnOrder]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'importSession' : ActorMethod<[SessionExport], StandardResponse>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
@@ -267,6 +282,7 @@ export interface _SERVICE {
   >,
   'setTurnOrder' : ActorMethod<[bigint, Array<string>], StandardResponse>,
   'unlockDocument' : ActorMethod<[bigint], StandardResponse>,
+  'updateComment' : ActorMethod<[bigint, string], undefined>,
   'uploadDocumentFile' : ActorMethod<
     [UploadFileRequest],
     UploadDocumentFileResponse

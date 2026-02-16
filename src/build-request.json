@@ -1,153 +1,109 @@
 {
   "kind": "build_request",
-  "title": "Replace Documents with Members' Channels and enforce Player Document privacy visibility",
-  "priority": "high",
+  "title": "Add Preview/Edit mode to Document editor with inline file rendering",
+  "projectName": "Session Docs",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove the host-owned \"Documents\" feature from the app UI, including sidebar section, creation/rename/delete/lock controls, and the document editor view, so session navigation no longer offers host documents.",
+      "text": "Add a Preview/Edit toggle control to the session document editor screen (DocumentEditorView) that switches between the existing editable textarea and a read-only preview view. User-facing labels must be in English (\"Preview\" and \"Edit\").",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3",
-          "msg-10"
+          "msg-5"
         ],
         "quotes": [
-          "Remove documents and players' documents and add something called members' channels",
-          "It's still Initializing"
+          "Goal: Add a \"Preview\" button (or toggle switch) in the document editor screen."
         ]
       },
       "acceptanceCriteria": [
-        "The Session sidebar no longer renders a \"Documents\" section.",
-        "The Session main panel no longer routes to or renders the host document editor view.",
-        "No UI entry points remain for create/rename/delete/lock host documents."
+        "A control is visible in the document editor UI that toggles between Edit and Preview modes.",
+        "When in Preview mode, the textarea is not shown and content cannot be edited.",
+        "When in Edit mode, the current behavior remains unchanged (textarea editing, upload buttons, save button, etc.)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add a new session feature called \"Members' Channels\" that behaves like the existing chat channels feature (list + selectable to open chat), but is distinct from the host-managed \"Channels\" list.",
-      "target": "both",
+      "text": "Implement a minimal preview renderer for document content that parses embedded file markers in the form \"[FILE:<id>:<filename>]\" and renders the document as a scrollable, formatted read-only view with inline file items at the marker positions.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-10"
+          "msg-5"
         ],
         "quotes": [
-          "add something called members' channels it's same as channels"
+          "For each [FILE:id:filename.ext] tag → display the corresponding image inline at that position in the flow",
+          "In preview: parse noteContent - Split by /\\[FILE:(\\d+):([^\\]]+)\\]/g"
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes APIs to list Members' Channels for a session and to create/rename/delete a Members' Channel.",
-        "Frontend sidebar displays a \"Members' Channels\" section and selecting an item opens the chat view for that channel.",
-        "Members' Channels are stored and returned independently from the existing host \"Channels\" list (no mixing in the UI)."
+        "Preview mode renders the full content in reading order (text segments interleaved with file elements).",
+        "Multiline text is preserved (line breaks are visible) using standard HTML/text rendering approaches (no new libraries).",
+        "File markers are detected using the existing marker format used by the editor (\"[FILE:id:filename]\") and are not shown verbatim in preview output.",
+        "The preview area is scrollable within the editor panel."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Define and enforce permissions for Members' Channels: any session member can create a Members' Channel; the channel creator can rename/delete their own Members' Channels; the session host can rename/delete any Members' Channel.",
-      "target": "both",
+      "text": "In preview mode, resolve each file marker to the corresponding uploaded file using the existing documentFiles list (via useListDocumentFiles) and the existing fileMap lookup (file ID -> file reference). Render images inline using the file’s direct URL; render non-image files inline as a small attachment row that shows the filename and provides an \"Open file\" action.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-10"
+          "msg-5"
         ],
         "quotes": [
-          "members' channels it's same as channels"
+          "Use the uploaded image (assume you have a map like fileIdToUri = { '1': 'file://.../e1eb...jpg' } or base64/data URI)",
+          "If file is not image (pdf/txt), show filename + \"Open file\" button or placeholder"
         ]
       },
       "acceptanceCriteria": [
-        "A non-host session member can create a Members' Channel successfully.",
-        "A non-host session member cannot rename/delete a Members' Channel they did not create (receives an error).",
-        "The session host can rename/delete any Members' Channel.",
-        "Only session members can list or access Members' Channels for that session."
+        "For markers whose file reference exists and has mimeType starting with \"image/\", an inline <img> is rendered at that location using fileRef.file.getDirectURL(), sized to fit the editor width (contain-style behavior).",
+        "For markers whose file reference exists but mimeType is not an image, an inline element shows the filename and an \"Open file\" action (e.g., link/button) that opens/downloads the file URL.",
+        "For markers whose file reference cannot be found, preview renders a clear inline placeholder (e.g., \"File not found: <filename>\") at that position.",
+        "No backend changes are required; all preview rendering uses already-available frontend data (documentFiles + file.getDirectURL())."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Remove the \"Players' Documents\" section from the sidebar and replace it with \"Members' Channels\" navigation, while preserving the requested per-player-document privacy control behavior for any remaining player-document access paths in the app.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-10"
-        ],
-        "quotes": [
-          "Remove documents and players' documents and add something called members' channels",
-          "Add a simple toggle/checkbox on each player's document: \"Hide from others\" (or \"Private\")"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The sidebar no longer displays the header text \"Players' Documents\".",
-        "The sidebar instead displays \"Members' Channels\" (user-facing text in English).",
-        "No broken imports or references remain to the removed sidebar Player Documents section UI."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Add a simple privacy toggle control labeled \"Private\" (or \"Hide from others\") on each player document (where player documents are created/managed/edited) and ensure it updates the player document privacy state.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-10"
-        ],
-        "quotes": [
-          "Add a simple toggle/checkbox on each player's document: \"Hide from others\" (or \"Private\")"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Player document UI contains a clearly labeled privacy toggle control in English (\"Private\" or \"Hide from others\").",
-        "Toggling the control updates the document privacy state and the UI reflects the new state after refresh/refetch.",
-        "When the current user is not the document owner, the privacy toggle is not editable."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Enforce player document privacy on the backend: when a player document is private, only its owner (and optionally the host if you choose that policy) can list, fetch, or edit it; other session members must not see it in lists or be able to open it.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-10"
-        ],
-        "quotes": [
-          "If it's checked none of the members can see it",
-          "Simplest implementation: when private, client just + owner visible to all (or even hide title if easier — decide what's cleanest)."
-        ]
-      },
-      "acceptanceCriteria": [
-        "When a player document is marked private, it does not appear in any player-document listing returned to non-authorized session members.",
-        "When a non-authorized member attempts to fetch a private player document by id, the backend rejects the request (error or trap) and does not return content/metadata.",
-        "Authorized users (owner, and host only if policy includes host) can still list/fetch/edit the private player document.",
-        "When a player document is not private, all session members can list/fetch/edit it as shared content (current behavior preserved)."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Fix the post-login app state where the UI remains stuck on the \"Initializing...\" screen by identifying and correcting the blocking condition(s) in frontend initialization and/or backend calls so authenticated users reliably reach the Lobby or Session UI.",
+      "text": "Keep the change tightly scoped to the session DocumentEditorView only; do not modify upload logic, save logic, player documents UI, chat, stickers, or other unrelated screens.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-5"
         ],
         "quotes": [
-          "It's still Initializing"
+          "Keep it minimal: - No new libraries if possible",
+          "Do NOT change upload, save, player docs, chat, stickers, or anything else."
         ]
       },
       "acceptanceCriteria": [
-        "After login, the app exits the \"Initializing...\" screen without requiring a hard refresh.",
-        "If initialization fails, the UI surfaces a recoverable error state rather than spinning indefinitely.",
-        "Regression check: a normal login with no session restored lands on the Lobby page; a restored session lands on the Session page."
+        "No changes are made to backend Motoko canisters.",
+        "No changes are made to PlayerDocumentEditorView or player-document management flows.",
+        "Existing upload and save behaviors in DocumentEditorView continue to work as before in Edit mode."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not edit files under frontend/src/components/ui or other frontend immutablePaths; compose existing UI components instead.",
-    "Use English for all user-facing text."
+    "Do not add new third-party libraries for parsing/markdown; implement preview with simple string parsing and existing utilities.",
+    "Do not edit files under frontend/src/components/ui or other frontend immutable paths (compose existing UI components only).",
+    "Do not change backend schema or Motoko logic for this feature."
   ],
   "nonGoals": [
-    "Adding third-party authentication providers (only Internet Identity is used).",
-    "Introducing external databases or non-Motoko backend services.",
-    "Real-time updates via websockets (keep existing polling/query patterns)."
+    "Markdown rendering (beyond basic multiline text preservation) and advanced rich-text formatting (e.g., bold/italics) are out of scope for this change.",
+    "Changing how file markers are created/inserted/saved is out of scope.",
+    "Reworking the existing image gallery and attachments sections beyond optionally hiding them in preview mode is out of scope."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

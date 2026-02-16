@@ -1,177 +1,86 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Replace host Documents UI with Members' Channels, preserve Player Document privacy toggle, and fix initializing hang (frontend-only)",
+  "title": "Preview/Edit mode for session DocumentEditorView with inline file rendering",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Remove host-owned Documents from session navigation and UI entry points.",
+      "summary": "Add an Edit/Preview toggle in DocumentEditorView to switch between editable textarea and read-only preview UI with English labels.",
       "acceptanceCriteria": [
-        "The Session sidebar no longer renders a \"Documents\" section.",
-        "The Session main panel no longer routes to or renders the host document editor view.",
-        "No UI entry points remain for create/rename/delete/lock host documents."
+        "A control is visible in the document editor UI that toggles between Edit and Preview modes.",
+        "When in Preview mode, the textarea is not shown and content cannot be edited.",
+        "When in Edit mode, the current behavior remains unchanged (textarea editing, upload buttons, save button, etc.)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "path": "frontend/src/components/docs/DocumentEditorView.tsx",
           "operation": "modify",
-          "description": "Remove the host \"Documents\" sidebar section and all related create/rename/delete/lock UI triggers (including DocumentManagementDialogs wiring) so host documents are no longer navigable."
-        },
-        {
-          "path": "frontend/src/pages/SessionPage.tsx",
-          "operation": "modify",
-          "description": "Remove host-document selection state and rendering of DocumentEditorView so the main panel can no longer open the host document editor view."
-        },
-        {
-          "path": "frontend/src/hooks/useSessionData.ts",
-          "operation": "modify",
-          "description": "Stop querying and exposing host documents/current document data (listDocuments/getDocument) to eliminate frontend-level routing/data dependencies on host documents."
+          "description": "Add local view-mode state and a toggle control labeled \"Preview\" / \"Edit\"; conditionally render the existing textarea + upload/save controls only in Edit mode, and render the new preview panel in Preview mode. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Add Members' Channels sidebar section that opens chat, distinct from host Channels list.",
+      "summary": "Create a minimal, scrollable preview renderer that parses [FILE:<id>:<filename>] markers and renders text + inline file items in reading order with preserved line breaks.",
       "acceptanceCriteria": [
-        "Backend exposes APIs to list Members' Channels for a session and to create/rename/delete a Members' Channel.",
-        "Frontend sidebar displays a \"Members' Channels\" section and selecting an item opens the chat view for that channel.",
-        "Members' Channels are stored and returned independently from the existing host \"Channels\" list (no mixing in the UI)."
+        "Preview mode renders the full content in reading order (text segments interleaved with file elements).",
+        "Multiline text is preserved (line breaks are visible) using standard HTML/text rendering approaches (no new libraries).",
+        "File markers are detected using the existing marker format used by the editor (\"[FILE:id:filename]\") and are not shown verbatim in preview output.",
+        "The preview area is scrollable within the editor panel."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useSessionData.ts",
-          "operation": "modify",
-          "description": "Add a membersChannels query (using the existing backend capability to fetch membersChannels) and expose it alongside the existing host channels without mixing the two lists."
-        },
-        {
-          "path": "frontend/src/components/session/SessionSidebar.tsx",
-          "operation": "modify",
-          "description": "Add a distinct \"Members' Channels\" section that renders membersChannels and supports selecting one to open chat, without merging it into the existing host \"Channels\" section."
-        },
-        {
-          "path": "frontend/src/pages/SessionPage.tsx",
-          "operation": "modify",
-          "description": "Add selection state and view switching for Members' Channels so selecting one routes to the existing chat view with the selected members channel id."
-        },
-        {
-          "path": "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
+          "path": "frontend/src/components/docs/DocumentContentPreview.tsx",
           "operation": "create",
-          "description": "Create Members' Channels management dialogs (create/rename/delete) mirroring the existing ChannelManagementDialogs UX but calling members-channel backend capabilities. Verify the component's usage instructions before implementing."
+          "description": "Implement a read-only preview component that splits document content using the existing marker regex format and renders interleaved text segments and file placeholder slots; ensure the preview container is scrollable and preserves newlines (e.g., whitespace-pre-wrap). Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "path": "frontend/src/components/docs/DocumentEditorView.tsx",
           "operation": "modify",
-          "description": "Wire MembersChannelManagementDialogs into the \"Members' Channels\" section (create button and per-item menu) so Members' Channels are fully manageable from the sidebar. Verify the component's usage instructions before implementing."
+          "description": "Wire the new DocumentContentPreview into Preview mode rendering, passing the current content and the already-available document files lookup context. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Reflect Members' Channels permissions in the UI (create for any member; rename/delete for creator or host).",
+      "summary": "Resolve each file marker in preview via documentFiles/fileMap and render images inline by direct URL or non-images as attachment rows with an Open file action; show placeholders when missing.",
       "acceptanceCriteria": [
-        "A non-host session member can create a Members' Channel successfully.",
-        "A non-host session member cannot rename/delete a Members' Channel they did not create (receives an error).",
-        "The session host can rename/delete any Members' Channel.",
-        "Only session members can list or access Members' Channels for that session."
+        "For markers whose file reference exists and has mimeType starting with \"image/\", an inline <img> is rendered at that location using fileRef.file.getDirectURL(), sized to fit the editor width (contain-style behavior).",
+        "For markers whose file reference exists but mimeType is not an image, an inline element shows the filename and an \"Open file\" action (e.g., link/button) that opens/downloads the file URL.",
+        "For markers whose file reference cannot be found, preview renders a clear inline placeholder (e.g., \"File not found: <filename>\") at that position.",
+        "No backend changes are required; all preview rendering uses already-available frontend data (documentFiles + file.getDirectURL())."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
+          "path": "frontend/src/components/docs/DocumentContentPreview.tsx",
           "operation": "modify",
-          "description": "Implement UI-level gating: always show 'create' for session members; show rename/delete only when the current principal is the channel creator or the session host; display backend authorization failures as user-readable errors. Verify the component's usage instructions before implementing."
+          "description": "Use the existing documentFiles list (from useListDocumentFiles in the parent) and a fileMap (file ID -> file reference) to resolve markers; use the blob-storage ExternalBlob capability (file.getDirectURL()) to render inline images and to provide URLs for \"Open file\" actions; render a clear inline placeholder when a referenced file cannot be resolved. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "path": "frontend/src/components/docs/DocumentEditorView.tsx",
           "operation": "modify",
-          "description": "Pass session host identity/current identity context to Members' Channels item menus so rename/delete controls only appear when allowed; ensure unauthorized actions do not have UI entry points."
-        },
-        {
-          "path": "frontend/src/pages/SessionPage.tsx",
-          "operation": "modify",
-          "description": "Ensure the session host detection and current identity checks are available to the sidebar and Members' Channels management wiring for correct permission gating."
+          "description": "Ensure Preview mode passes documentFiles (or a derived fileMap) into DocumentContentPreview and hides the existing gallery/attachments sections (optional) to avoid duplicate rendering while keeping Edit mode unchanged. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Remove Players' Documents sidebar section and replace it with Members' Channels navigation without broken references.",
+      "summary": "Keep changes tightly scoped to session DocumentEditorView preview behavior without altering upload/save logic or other screens.",
       "acceptanceCriteria": [
-        "The sidebar no longer displays the header text \"Players' Documents\".",
-        "The sidebar instead displays \"Members' Channels\" (user-facing text in English).",
-        "No broken imports or references remain to the removed sidebar Player Documents section UI."
+        "No changes are made to backend Motoko canisters.",
+        "No changes are made to PlayerDocumentEditorView or player-document management flows.",
+        "Existing upload and save behaviors in DocumentEditorView continue to work as before in Edit mode."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "path": "frontend/src/components/docs/DocumentEditorView.tsx",
           "operation": "modify",
-          "description": "Remove the Players' Documents sidebar section header and its list rendering, and ensure the sidebar instead contains a \"Members' Channels\" section with working navigation."
+          "description": "Limit modifications to adding the mode toggle and conditional rendering for preview vs edit; do not change existing upload/save handlers or backend calls, and avoid any edits to PlayerDocumentEditorView or unrelated UI areas. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/SessionPage.tsx",
-          "operation": "modify",
-          "description": "Remove the sidebar props and handlers that were dedicated to Players' Documents list rendering to prevent broken imports/references after sidebar changes."
-        },
-        {
-          "path": "frontend/src/components/session/PlayerDocumentsDialog.tsx",
+          "path": "frontend/src/components/docs/DocumentContentPreview.tsx",
           "operation": "create",
-          "description": "Add a non-sidebar access path for player documents (e.g., a modal dialog listing player documents with create/select actions) so player documents remain reachable while meeting the sidebar replacement requirement. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/SessionPage.tsx",
-          "operation": "modify",
-          "description": "Wire PlayerDocumentsDialog into the Session UI (non-sidebar) to preserve player-document access paths while keeping the sidebar free of the removed Players' Documents section. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Ensure each player document has an owner-only privacy toggle that persists and refetches correctly.",
-      "acceptanceCriteria": [
-        "Player document UI contains a clearly labeled privacy toggle control in English (\"Private\" or \"Hide from others\").",
-        "Toggling the control updates the document privacy state and the UI reflects the new state after refresh/refetch.",
-        "When the current user is not the document owner, the privacy toggle is not editable."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/docs/PlayerDocumentEditorView.tsx",
-          "operation": "modify",
-          "description": "Verify and, if needed, adjust the existing \"Private\" toggle to ensure it is clearly labeled, disabled for non-owners, calls the visibility mutation, and triggers a refetch/update so the new state is reflected after refresh/refetch."
-        },
-        {
-          "path": "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
-          "operation": "modify",
-          "description": "Ensure player-document creation and management surfaces a \"Private\" control where applicable and that toggle actions invalidate/refetch player-document lists so privacy state stays consistent across the UI."
-        },
-        {
-          "path": "frontend/src/hooks/usePlayerDocuments.ts",
-          "operation": "modify",
-          "description": "Confirm the setPlayerDocumentVisibility mutation invalidates the correct queries (player document + lists/metadata) so toggling privacy is reflected after refresh/refetch."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Prevent the app from getting stuck on \"Initializing...\" and provide a recoverable error state when initialization fails.",
-      "acceptanceCriteria": [
-        "After login, the app exits the \"Initializing...\" screen without requiring a hard refresh.",
-        "If initialization fails, the UI surfaces a recoverable error state rather than spinning indefinitely.",
-        "Regression check: a normal login with no session restored lands on the Lobby page; a restored session lands on the Session page."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useActor.ts",
-          "operation": "modify",
-          "description": "Expose actor creation error/status (and a retry/refetch capability) so the UI can stop indefinite loading and present a recoverable error state when actor initialization fails. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Adjust the initialization gating logic so post-login transitions cannot be blocked indefinitely by actor fetching; add a recoverable error UI when identity/actor/profile initialization fails (e.g., show error message with retry and 'Clear local data' actions). Use the selected 'authorization' component guidance for handling auth-related initialization and caching; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useUserProfile.ts",
-          "operation": "modify",
-          "description": "Ensure current-user profile fetching correctly reflects actor dependency/loading/error states (to avoid UI hangs or indefinite spinners after login). Use the selected 'authorization' component guidance for preventing profile setup modal flash and for handling backend traps gracefully; verify the component's usage instructions before implementing."
+          "description": "Keep the preview renderer self-contained and only used by DocumentEditorView so the change remains tightly scoped. Verify the component's usage instructions before implementing."
         }
       ]
     }
