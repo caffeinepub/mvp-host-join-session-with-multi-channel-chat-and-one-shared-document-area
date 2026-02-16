@@ -1,92 +1,135 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "RPG Collaboration — Fix initialization hang and improve startup recovery",
+  "title": "Session Chat: message bubbles with left/right alignment and reply-to-message (long-press)",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Make actor initialization timeout fire reliably and transition the UI away from the infinite “Initializing…” screen, with a non-reloading retry path.",
+      "summary": "Render chat messages as left/right aligned rounded bubbles based on whether the message author matches the current session nickname, preserving existing roll/image/author/timestamp behaviors and input placeholder.",
       "acceptanceCriteria": [
-        "If backend actor creation/access-control initialization does not complete within 30 seconds, the app stops showing the infinite loading screen and shows the existing InitializationFailureScreen with a timeout error message.",
-        "The timeout mechanism does not reset continuously during renders while actor initialization is still in progress (i.e., the 30-second timer actually fires).",
-        "Clicking “Retry Initialization” retries actor initialization without requiring a full page reload loop that immediately returns to the same stuck state."
+        "Messages authored by the current user (matching the current session nickname passed into the chat view) render in a right-aligned bubble layout.",
+        "Messages authored by any other member render in a left-aligned bubble layout.",
+        "Existing roll-message styling, image attachment rendering, and author/timestamp display still work and are not removed.",
+        "The message input placeholder text remains unchanged."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
           "operation": "modify",
-          "description": "Refactor the hook to own the actor initialization lifecycle (instead of relying on render-driven timer state), implement a single 30-second timeout that cannot be continuously reset by re-renders, and expose a retry function that re-attempts actor initialization without using window.location.reload()."
+          "description": "Pass the current session nickname into each ChatMessageItem so the item can decide left/right alignment while keeping existing message list rendering and placeholder text unchanged."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
           "operation": "modify",
-          "description": "Ensure the app switches from the “Initializing…” screen to InitializationFailureScreen when useActorWithErrorHandling reports a timeout error, and wire “Retry Initialization” to the hook’s non-reloading retry function."
+          "description": "Update message rendering to use a bubble layout with conditional left/right alignment based on whether message.author matches the current session nickname; keep existing roll-message styling, image attachment link behavior, and author/timestamp display intact."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Surface actor creation/initialization failures immediately (not only via timeout) by capturing rejected promises and showing InitializationFailureScreen with the underlying error.",
+      "summary": "Enable selecting a reply target via long-press on a message bubble using React DOM events without interfering with existing clicks/links.",
       "acceptanceCriteria": [
-        "When the actor creation query fails quickly (e.g., rejected promise, agent error, canister trap), the error is captured and InitializationFailureScreen is shown with the error message.",
-        "The app does not remain on “Initializing…” indefinitely when an actor initialization error occurs before the timeout."
+        "Long-pressing a message bubble selects that message as the reply target.",
+        "Long-press interaction is implemented using standard React DOM events (no swipe-to-reply).",
+        "Selecting a reply target does not send a message by itself and does not interfere with existing click/links for image opening."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
           "operation": "modify",
-          "description": "Add immediate error capture for actor creation and any access-control initialization step so that failures (rejections/exceptions) set the hook error state and stop the loading UI without waiting for the timeout."
+          "description": "Add reply-target state and provide a callback to ChatMessageItem for setting the reply target when a long-press is detected."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
           "operation": "modify",
-          "description": "Confirm the app’s top-level render path prioritizes showing InitializationFailureScreen when the actor initialization hook reports an error, preventing indefinite “Initializing…” when initialization fails early."
+          "description": "Implement long-press detection on the message bubble using standard React DOM pointer/mouse/touch events and a timeout; call the provided onLongPress handler without preventing normal click behavior (e.g., image links) or sending messages."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Avoid indefinite access-control initialization by safely handling missing/empty admin token on the frontend and only attempting secret-based initialization when a token is present.",
+      "summary": "Show a compact reply preview above the message input when a reply target is selected, with \"You replied\", a truncated quote, and an X to cancel, without changing placeholder or existing controls.",
       "acceptanceCriteria": [
-        "If no `caffeineAdminToken` secret is present (via the existing getSecretParameter flow), actor initialization does not call secret-based access-control initialization with an empty string.",
-        "The app successfully reaches the login screen or main app flow (depending on authentication state) on a fresh load with no admin token present."
+        "Reply preview appears above the existing Textarea when a reply target is set.",
+        "Preview shows \"You replied\" and a truncated quote of the selected message.",
+        "Clicking the X clears the reply target and removes the preview.",
+        "The Textarea placeholder text is unchanged and the existing image upload and send controls remain present."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useActorWithErrorHandling.ts",
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
           "operation": "modify",
-          "description": "During actor initialization, read `caffeineAdminToken` via the existing getSecretParameter flow and conditionally perform secret-based access-control initialization only when a non-empty token is present, preventing empty-string secret initialization from blocking startup."
+          "description": "Render a reply preview UI above the existing Textarea when replyTarget is set (label \"You replied\", 1–2 line clamped quote snippet, and an X control to clear). Ensure the Textarea placeholder remains exactly \"Type a message... (Use /roll d20 for dice)\" and the image/upload + send controls stay present."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Validate the startup gating conditions so that, when no admin token is present and the user is unauthenticated, the UI can proceed to the existing login prompt (or the main flow when authenticated) rather than remaining stuck on “Initializing…”."
+          "description": "Add minimal, chat-scoped utility classes (e.g., for 1–2 line text clamping with ellipsis) used by the reply preview and reply indicator, avoiding changes that affect unrelated views."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Provide a minimal, actionable recovery path in InitializationFailureScreen with English-only messaging and a working “Clear Local Data & Retry” flow that re-attempts initialization without leaving an infinite spinner.",
+      "summary": "Include replyToId when sending text or image messages while replying, clear reply state after successful send, and keep polling-based updates.",
       "acceptanceCriteria": [
-        "InitializationFailureScreen continues to display an English error summary plus the underlying error message (e.g., timeout vs. initialization failure).",
-        "“Clear Local Data & Retry” clears local/session storage using the existing clearLocalAppData path and then re-attempts initialization successfully when the underlying issue is stale client state.",
-        "No infinite spinner remains after a failure; the user always ends up on either InitializationFailureScreen, the login prompt, profile setup, lobby, or session UI."
+        "Backend Message includes an optional replyToId field and it is returned from the message listing API used by the frontend (currently via actor.getMessages(sessionId, channelId)).",
+        "Backend message creation API (currently actor.postMessage(sessionId, channelId, content, image)) is updated to accept and store replyToId (optional) without breaking non-reply messages.",
+        "Frontend message sending includes replyToId only when a reply target is selected.",
+        "After a reply message is sent successfully, the message input is cleared (as today) and the reply target is also cleared.",
+        "Polling-based updates remain (no sockets are introduced)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/app/InitializationFailureScreen.tsx",
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
           "operation": "modify",
-          "description": "Tighten the recovery UX copy (English only) to clearly distinguish timeout vs. initialization failure using the provided error message, and ensure the screen remains the stable post-failure state (no spinner) while offering the two recovery actions."
+          "description": "Update the existing send (regular + /roll) and image-upload flows to pass replyToId to actor.postMessage only when a reply target is selected; after a successful send, clear the message input as today and also clear the reply target state; keep existing polling/refetch flow via onMessagesChanged (no sockets)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Render a purple reply indicator bubble above messages that have replyToId, showing \"Replay message\" and a truncated quote resolved from the current messages array, with safe fallback and clickability.",
+      "acceptanceCriteria": [
+        "For any message with replyToId, a purple (#6a5acd or close) rounded bubble appears directly above and visually attached to the main message bubble.",
+        "The purple bubble shows two lines/sections: bold white \"Replay message\" and a white quote snippet of the original message (clamped to 1–2 lines with ellipsis).",
+        "The original message content is resolved by looking up replyToId in the current messages array; if not found, the UI still renders a safe fallback (e.g., an empty quote or \"Message\").",
+        "The purple reply indicator is clickable/tappable but does not need to implement navigation."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "operation": "modify",
+          "description": "Provide ChatMessageItem access to the current messages array (or a derived lookup) so it can resolve replyToId into the original message content for rendering reply indicators."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
           "operation": "modify",
-          "description": "Update “Clear Local Data & Retry” wiring to call the existing clearLocalAppData path and then re-attempt initialization via the hook’s retry function (and react-query cache reset as needed), without using a forced full page reload, so users can recover from stale client state."
+          "description": "When message.replyToId is present, render a visually attached purple rounded indicator bubble above the main message bubble containing bold white \"Replay message\" and a clamped quote snippet of the original message resolved from the provided messages lookup; make the indicator clickable/tappable without implementing navigation; render a safe fallback when the original message cannot be found."
         },
         {
-          "path": "frontend/src/lib/clearLocalAppData.ts",
+          "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Confirm local/session storage clearing is robust for startup recovery (no throws, safe in all browsers) and supports the initialization recovery flow used by InitializationFailureScreen and AppErrorBoundary."
+          "description": "Add/extend chat-scoped styles needed for the purple reply indicator (e.g., subtle attachment/stack spacing and quote clamping) without changing unrelated sections."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Apply a dark, modern chat-only visual theme with rounded bubbles, spacing, and consistent typography to match the provided screenshot style, without changing unrelated sections.",
+      "acceptanceCriteria": [
+        "Chat area uses a consistent dark, modern visual treatment with rounded bubbles and spacing that supports left/right alignment and the purple reply indicator.",
+        "No changes are introduced to document editors, uploads, dice rolling logic, or other unrelated views."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "operation": "modify",
+          "description": "Adjust chat container/header/message list/input area styling using Tailwind utility classes to achieve the screenshot-like dark chat treatment and spacing while keeping changes localized to the chat view."
+        },
+        {
+          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
+          "operation": "modify",
+          "description": "Refine bubble shapes, spacing, and typography for message items (including roll and image cases) so left/right alignment and the reply indicator look cohesive on a dark background, without altering non-chat areas."
         }
       ]
     }

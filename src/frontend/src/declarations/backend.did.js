@@ -116,6 +116,7 @@ export const Message = IDL.Record({
   'author' : IDL.Text,
   'timestamp' : IDL.Int,
   'image' : IDL.Opt(ExternalBlob),
+  'replyToId' : IDL.Opt(IDL.Nat),
 });
 export const DocumentFileReference = IDL.Record({
   'id' : IDL.Nat,
@@ -328,7 +329,7 @@ export const idlService = IDL.Service({
   'lockDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
   'nextTurn' : IDL.Func([IDL.Nat], [StandardResponse], []),
   'postMessage' : IDL.Func(
-      [IDL.Nat, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob)],
+      [IDL.Nat, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob), IDL.Opt(IDL.Nat)],
       [StandardResponse],
       [],
     ),
@@ -478,6 +479,7 @@ export const idlFactory = ({ IDL }) => {
     'author' : IDL.Text,
     'timestamp' : IDL.Int,
     'image' : IDL.Opt(ExternalBlob),
+    'replyToId' : IDL.Opt(IDL.Nat),
   });
   const DocumentFileReference = IDL.Record({
     'id' : IDL.Nat,
@@ -698,7 +700,7 @@ export const idlFactory = ({ IDL }) => {
     'lockDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
     'nextTurn' : IDL.Func([IDL.Nat], [StandardResponse], []),
     'postMessage' : IDL.Func(
-        [IDL.Nat, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob)],
+        [IDL.Nat, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob), IDL.Opt(IDL.Nat)],
         [StandardResponse],
         [],
       ),

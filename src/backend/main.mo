@@ -13,7 +13,9 @@ import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 import AccessControl "authorization/access-control";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -49,6 +51,7 @@ actor {
     content : Text;
     timestamp : Int;
     image : ?Storage.ExternalBlob;
+    replyToId : ?Nat;
   };
 
   public type SessionMember = {
@@ -680,7 +683,7 @@ actor {
     };
   };
 
-  public shared ({ caller }) func postMessage(sessionId : Nat, channelId : Nat, content : Text, image : ?Storage.ExternalBlob) : async StandardResponse {
+  public shared ({ caller }) func postMessage(sessionId : Nat, channelId : Nat, content : Text, image : ?Storage.ExternalBlob, replyToId : ?Nat) : async StandardResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can post messages");
     };
@@ -699,6 +702,7 @@ actor {
           content;
           timestamp = Time.now();
           image;
+          replyToId;
         };
         nextMessageId += 1;
 

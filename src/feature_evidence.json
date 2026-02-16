@@ -2,11 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-initialization-hang-by-making-actor-initialization-timeouts-trigger-reliably-and-transition-the-ui-away-from-the-infinite-initializing-screen",
-      "featureTitle": "Fix the initialization hang by making actor initialization timeouts trigger reliably and transition the UI away from the infinite “Initializing…” screen.",
+      "featureId": "feature-implement-left-right-chat-message-bubble-layout-render-the-current-logged-in-user-s-messages-aligned-to-the-right-and-other-members-messages-aligned-to-the-left-while-preserving-existing-author-timestamp-and-image-roll-rendering-behavior",
+      "featureTitle": "Implement left/right chat message bubble layout: render the current logged-in user's messages aligned to the right and other members' messages aligned to the left, while preserving existing author/timestamp and image/roll rendering behavior.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/hooks/useActorWithErrorHandling.ts"
+        "frontend/src/components/chat/ChannelChatView.tsx",
+        "frontend/src/components/chat/ChatMessageItem.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,11 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-surface-actor-creation-failures-immediately-not-only-via-timeout-so-the-app-shows-initializationfailurescreen-when-the-actor-query-fails-due-to-exceptions-traps-during-initialization",
-      "featureTitle": "Surface actor creation failures immediately (not only via timeout) so the app shows InitializationFailureScreen when the actor query fails due to exceptions/traps during initialization.",
+      "featureId": "feature-add-reply-to-message-selection-via-long-press-on-a-chat-message-bubble-long-pressing-any-message-sets-it-as-the-current-reply-target-and-opens-a-reply-preview-ui-above-the-message-input",
+      "featureTitle": "Add reply-to-message selection via long-press on a chat message bubble: long-pressing any message sets it as the current reply target and opens a reply preview UI above the message input.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/hooks/useActorWithErrorHandling.ts"
+        "frontend/src/components/chat/ChannelChatView.tsx",
+        "frontend/src/components/chat/ChatMessageItem.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -44,11 +44,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-prevent-access-control-initialization-from-causing-an-indefinite-initialization-state-by-handling-missing-empty-admin-token-initialization-safely-on-the-frontend-and-only-attempting-secret-based-initialization-when-a-token-is-present",
-      "featureTitle": "Prevent access-control initialization from causing an indefinite initialization state by handling missing/empty admin token initialization safely on the frontend (and only attempting secret-based initialization when a token is present).",
+      "featureId": "feature-when-a-reply-target-is-selected-display-a-compact-reply-preview-above-the-message-input-containing-1-text-label-you-replied-2-a-quoted-snippet-of-the-original-message-clamped-to-1-2-lines-with-ellipsis-and-3-a-small-cancel-x-control-that-clears-the-reply-target",
+      "featureTitle": "When a reply target is selected, display a compact reply preview above the message input containing: (1) text label \"You replied\", (2) a quoted snippet of the original message (clamped to 1–2 lines with ellipsis), and (3) a small cancel (X) control that clears the reply target.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/hooks/useActorWithErrorHandling.ts"
+        "frontend/src/components/chat/ChannelChatView.tsx",
+        "frontend/src/index.css"
       ],
       "components": [
         "authorization@4.0.0",
@@ -65,12 +65,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-minimal-user-visible-recovery-path-for-initialization-issues-ensure-initializationfailurescreen-provides-enough-actionable-detail-to-unblock-users-stuck-at-startup-keep-all-user-facing-text-in-english",
-      "featureTitle": "Add a minimal, user-visible recovery path for initialization issues: ensure InitializationFailureScreen provides enough actionable detail to unblock users stuck at startup (keep all user-facing text in English).",
+      "featureId": "feature-persist-reply-metadata-with-messages-extend-the-backend-message-type-and-message-posting-api-to-store-an-optional-replytoid-for-each-message-update-the-frontend-send-and-image-upload-flows-to-pass-replytoid-when-replying-clear-the-reply-state-after-send-completes-successfully",
+      "featureTitle": "Persist reply metadata with messages: extend the backend Message type and message-posting API to store an optional replyToId for each message; update the frontend send and image-upload flows to pass replyToId when replying; clear the reply state after send completes successfully.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/app/InitializationFailureScreen.tsx",
-        "frontend/src/lib/clearLocalAppData.ts"
+        "frontend/src/components/chat/ChannelChatView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -83,6 +81,49 @@
       ],
       "testIds": [
         "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-render-reply-styling-on-messages-that-have-replytoid-attach-a-purple-rounded-reply-indicator-bubble-above-the-main-message-bubble-visually-connected-that-matches-the-uploaded-screenshot-style-with-white-text-including-bold-title-text-replay-message-and-the-quoted-original-message-snippet-beneath-it-the-indicator-must-be-tappable-clickable-no-scroll-to-original-behavior-required-yet",
+      "featureTitle": "Render reply styling on messages that have replyToId: attach a purple rounded reply indicator bubble above the main message bubble (visually connected) that matches the uploaded screenshot style with white text, including bold title text \"Replay message\" and the quoted original message snippet beneath it; the indicator must be tappable/clickable (no scroll-to-original behavior required yet).",
+      "files": [
+        "frontend/src/components/chat/ChannelChatView.tsx",
+        "frontend/src/components/chat/ChatMessageItem.tsx",
+        "frontend/src/index.css"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-cohesive-chat-visual-theme-consistent-with-the-uploaded-screenshot-dark-chat-background-rounded-message-bubbles-clear-spacing-and-consistent-typography-do-not-change-unrelated-app-sections",
+      "featureTitle": "Apply a cohesive chat visual theme consistent with the uploaded screenshot: dark chat background, rounded message bubbles, clear spacing, and consistent typography; do not change unrelated app sections.",
+      "files": [
+        "frontend/src/components/chat/ChannelChatView.tsx",
+        "frontend/src/components/chat/ChatMessageItem.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
       ],
       "confidence": "high"
     }

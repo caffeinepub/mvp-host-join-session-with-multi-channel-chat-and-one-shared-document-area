@@ -94,6 +94,7 @@ export interface Message {
   'author' : string,
   'timestamp' : bigint,
   'image' : [] | [ExternalBlob],
+  'replyToId' : [] | [bigint],
 }
 export interface PlayerDocument {
   'id' : bigint,
@@ -263,7 +264,7 @@ export interface _SERVICE {
   'lockDocument' : ActorMethod<[bigint], StandardResponse>,
   'nextTurn' : ActorMethod<[bigint], StandardResponse>,
   'postMessage' : ActorMethod<
-    [bigint, bigint, string, [] | [ExternalBlob]],
+    [bigint, bigint, string, [] | [ExternalBlob], [] | [bigint]],
     StandardResponse
   >,
   'removeProfilePicture' : ActorMethod<[], undefined>,

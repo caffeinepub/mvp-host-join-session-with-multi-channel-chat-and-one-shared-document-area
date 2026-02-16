@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
-import { useActorWithErrorHandling } from './hooks/useActorWithErrorHandling';
+import { useActor } from './hooks/useActor';
 import { useGetCallerUserProfile } from './hooks/useUserProfile';
 import LobbyPage from './pages/LobbyPage';
 import SessionPage from './pages/SessionPage';
@@ -8,7 +8,6 @@ import { getSessionStorage, setSessionStorage, clearSessionStorage } from './lib
 import { usePreferences } from './hooks/usePreferences';
 import { PreferencesProvider } from './context/PreferencesContext';
 import { AppErrorBoundary } from './components/app/AppErrorBoundary';
-import { InitializationFailureScreen } from './components/app/InitializationFailureScreen';
 import { clearLocalAppData } from './lib/clearLocalAppData';
 import { Button } from './components/ui/button';
 import { Alert, AlertDescription } from './components/ui/alert';
@@ -23,7 +22,7 @@ export type SessionContext = {
 
 function AppInner() {
   const { identity, login, clear, loginStatus, isInitializing } = useInternetIdentity();
-  const { actor, isFetching: actorFetching, error: actorError, isError: actorIsError, refetch: retryActor } = useActorWithErrorHandling();
+  const { actor, isFetching: actorFetching } = useActor();
   const { preferences } = usePreferences();
   const queryClient = useQueryClient();
   const [sessionContext, setSessionContext] = useState<SessionContext | null>(null);
@@ -89,27 +88,6 @@ function AppInner() {
     // Clear all cached data on logout
     queryClient.clear();
   };
-
-  const handleRetryInitialization = () => {
-    retryActor();
-  };
-
-  const handleClearDataAndRetry = () => {
-    clearLocalAppData();
-    queryClient.clear();
-    retryActor();
-  };
-
-  // Show initialization failure screen if actor creation failed
-  if (actorIsError && actorError) {
-    return (
-      <InitializationFailureScreen
-        error={actorError}
-        onRetry={handleRetryInitialization}
-        onClearData={handleClearDataAndRetry}
-      />
-    );
-  }
 
   // Loading state - only show while truly initializing
   if (isInitializing || (isAuthenticated && actorFetching)) {

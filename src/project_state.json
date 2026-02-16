@@ -1,48 +1,92 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
-  "known_issues": [
-    "App remains stuck on \"Initializing..\" screen after deployment (loading hang)."
+  "summary": "Chat UI to support left/right message bubbles (current user right, others left) and reply-to-message via long-press with reply preview and reply metadata stored with messages; messages should persist via backend storage and use non-socket updates (API calls/polling).",
+  "architectural_notes": [
+    "Messages should be stored/retrieved from backend canister for persistence.",
+    "Real-time sockets are not used; message sending/retrieval should be via API calls with optional polling for updates."
   ],
-  "isFixRequest": true,
+  "known_issues": [
+    "Previous attempt to implement reply-to-message failed to build; feature currently not implemented."
+  ],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-fix-the-initialization-hang-by-making-actor-initialization-timeouts-trigger-reliably-and-transition-the-ui-away-from-the-infinite-initializing-screen",
-      "title": "Fix the initialization hang by making actor initialization timeouts trigger reliably and transition the UI away from the infinite “Initializing…” screen.",
+      "id": "feature-implement-left-right-chat-message-bubble-layout-render-the-current-logged-in-user-s-messages-aligned-to-the-right-and-other-members-messages-aligned-to-the-left-while-preserving-existing-author-timestamp-and-image-roll-rendering-behavior",
+      "title": "Implement left/right chat message bubble layout: render the current logged-in user's messages aligned to the right and other members' messages aligned to the left, while preserving existing author/timestamp and image/roll rendering behavior.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-surface-actor-creation-failures-immediately-not-only-via-timeout-so-the-app-shows-initializationfailurescreen-when-the-actor-query-fails-due-to-exceptions-traps-during-initialization",
-      "title": "Surface actor creation failures immediately (not only via timeout) so the app shows InitializationFailureScreen when the actor query fails due to exceptions/traps during initialization.",
+      "id": "feature-add-reply-to-message-selection-via-long-press-on-a-chat-message-bubble-long-pressing-any-message-sets-it-as-the-current-reply-target-and-opens-a-reply-preview-ui-above-the-message-input",
+      "title": "Add reply-to-message selection via long-press on a chat message bubble: long-pressing any message sets it as the current reply target and opens a reply preview UI above the message input.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-prevent-access-control-initialization-from-causing-an-indefinite-initialization-state-by-handling-missing-empty-admin-token-initialization-safely-on-the-frontend-and-only-attempting-secret-based-initialization-when-a-token-is-present",
-      "title": "Prevent access-control initialization from causing an indefinite initialization state by handling missing/empty admin token initialization safely on the frontend (and only attempting secret-based initialization when a token is present).",
+      "id": "feature-when-a-reply-target-is-selected-display-a-compact-reply-preview-above-the-message-input-containing-1-text-label-you-replied-2-a-quoted-snippet-of-the-original-message-clamped-to-1-2-lines-with-ellipsis-and-3-a-small-cancel-x-control-that-clears-the-reply-target",
+      "title": "When a reply target is selected, display a compact reply preview above the message input containing: (1) text label \"You replied\", (2) a quoted snippet of the original message (clamped to 1–2 lines with ellipsis), and (3) a small cancel (X) control that clears the reply target.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-minimal-user-visible-recovery-path-for-initialization-issues-ensure-initializationfailurescreen-provides-enough-actionable-detail-to-unblock-users-stuck-at-startup-keep-all-user-facing-text-in-english",
-      "title": "Add a minimal, user-visible recovery path for initialization issues: ensure InitializationFailureScreen provides enough actionable detail to unblock users stuck at startup (keep all user-facing text in English).",
+      "id": "feature-persist-reply-metadata-with-messages-extend-the-backend-message-type-and-message-posting-api-to-store-an-optional-replytoid-for-each-message-update-the-frontend-send-and-image-upload-flows-to-pass-replytoid-when-replying-clear-the-reply-state-after-send-completes-successfully",
+      "title": "Persist reply metadata with messages: extend the backend Message type and message-posting API to store an optional replyToId for each message; update the frontend send and image-upload flows to pass replyToId when replying; clear the reply state after send completes successfully.",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-render-reply-styling-on-messages-that-have-replytoid-attach-a-purple-rounded-reply-indicator-bubble-above-the-main-message-bubble-visually-connected-that-matches-the-uploaded-screenshot-style-with-white-text-including-bold-title-text-replay-message-and-the-quoted-original-message-snippet-beneath-it-the-indicator-must-be-tappable-clickable-no-scroll-to-original-behavior-required-yet",
+      "title": "Render reply styling on messages that have replyToId: attach a purple rounded reply indicator bubble above the main message bubble (visually connected) that matches the uploaded screenshot style with white text, including bold title text \"Replay message\" and the quoted original message snippet beneath it; the indicator must be tappable/clickable (no scroll-to-original behavior required yet).",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-cohesive-chat-visual-theme-consistent-with-the-uploaded-screenshot-dark-chat-background-rounded-message-bubbles-clear-spacing-and-consistent-typography-do-not-change-unrelated-app-sections",
+      "title": "Apply a cohesive chat visual theme consistent with the uploaded screenshot: dark chat background, rounded message bubbles, clear spacing, and consistent typography; do not change unrelated app sections.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
     }
   ],
-  "new_feature_requests": [],
-  "projectName": "RPG Collaboration",
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Implement chat message bubbles with alignment: current logged-in user messages on the right, other members on the left",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Implement reply-to-message feature: long-press to set reply target, show reply preview above input with cancel, send reply metadata (replyToId), and render a purple reply indicator attached to the message bubble",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Persist chat messages on the backend (canister) instead of frontend-only storage",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Replace real-time sockets with non-socket messaging updates (API calls and/or polling)",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Session Chat",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

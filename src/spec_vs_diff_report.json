@@ -1,36 +1,33 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T21:22:41.474Z",
-  "summary": "Implemented a new frontend actor initialization wrapper with a non-resetting 30s timeout and added an InitializationFailureScreen recovery UI with Retry and Clear Local Data & Retry actions. However, the diff does not show handling of immediate actor creation failures (non-timeout errors) nor the requested safe handling of missing/empty `caffeineAdminToken` during access-control initialization.",
-  "missing_requirements": [
+  "generatedAt": "2026-02-16T21:56:55.157Z",
+  "summary": "Diff implements core chat reply metadata (replyToId), long-press reply targeting, left/right message alignment, and purple reply indicator styling. However, it also introduces broad global theme/color changes in frontend/src/index.css that go beyond chat-only styling and may affect unrelated app sections.",
+  "missing_requirements": [],
+  "hallucinated_features": [
     {
-      "id": "REQ-2",
-      "requirement": "Surface actor creation failures immediately (not only via timeout) so the app shows InitializationFailureScreen when the actor query fails due to exceptions/traps during initialization.",
-      "reason": "The added wrapper hook only synthesizes a timeout error based on `isFetching` and does not capture/propagate underlying actor creation/query errors (e.g., rejected promise, agent error, canister trap). The diff also does not show `useActor` being modified to return an error state that could be surfaced immediately.",
+      "description": "Global app-wide color/theme palette changes (OKLCH variables, warm green accent, sidebar colors, typography tweaks) that are not limited to the chat area.",
+      "reason": "REQ-6 asks for a cohesive chat visual theme and explicitly says not to change unrelated app sections; modifying global CSS variables and base element styles affects the entire app, not just chat.",
       "evidence": [
-        "frontend/src/hooks/useActorWithErrorHandling.ts",
-        "frontend/src/App.tsx"
+        "frontend/src/index.css"
       ]
     },
     {
-      "id": "REQ-3",
-      "requirement": "Prevent access-control initialization from causing an indefinite initialization state by handling missing/empty admin token initialization safely on the frontend (and only attempting secret-based initialization when a token is present).",
-      "reason": "No changes shown to the existing actor/access-control initialization path (e.g., `useActor` / secret retrieval / access-control init) to gate secret-based initialization on presence of `caffeineAdminToken`. The new code does not reference `caffeineAdminToken` or `getSecretParameter` flow.",
+      "description": "New generic global utility/style additions not explicitly requested (e.g., global code styling and heading line-height adjustments).",
+      "reason": "Not part of the chat bubble/reply requirements and applies across the app, risking changes to unrelated sections.",
       "evidence": [
-        "frontend/src/hooks/useActorWithErrorHandling.ts",
-        "frontend/src/App.tsx"
+        "frontend/src/index.css"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.74,
+  "confidence": 0.66,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/app/InitializationFailureScreen.tsx",
-    "frontend/src/hooks/useActorWithErrorHandling.ts",
-    "frontend/src/lib/clearLocalAppData.ts",
+    "frontend/src/components/chat/ChannelChatView.tsx",
+    "frontend/src/components/chat/ChatMessageItem.tsx",
+    "frontend/src/index.css",
     "project_state.json"
   ]
 }

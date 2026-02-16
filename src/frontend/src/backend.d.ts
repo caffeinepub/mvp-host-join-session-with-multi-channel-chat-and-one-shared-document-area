@@ -183,6 +183,7 @@ export interface Message {
     author: string;
     timestamp: bigint;
     image?: ExternalBlob;
+    replyToId?: bigint;
 }
 export type AddImageToDocumentResponse = {
     __kind__: "ok";
@@ -244,7 +245,7 @@ export interface backendInterface {
     listSessions(): Promise<Array<Session>>;
     lockDocument(documentId: bigint): Promise<StandardResponse>;
     nextTurn(sessionId: bigint): Promise<StandardResponse>;
-    postMessage(sessionId: bigint, channelId: bigint, content: string, image: ExternalBlob | null): Promise<StandardResponse>;
+    postMessage(sessionId: bigint, channelId: bigint, content: string, image: ExternalBlob | null, replyToId: bigint | null): Promise<StandardResponse>;
     removeProfilePicture(): Promise<void>;
     renameChannel(sessionId: bigint, channelId: bigint, newName: string): Promise<StandardResponse>;
     renameDocument(documentId: bigint, newName: string): Promise<StandardResponse>;

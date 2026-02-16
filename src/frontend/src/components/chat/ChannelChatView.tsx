@@ -5,9 +5,9 @@ import { ExternalBlob } from '../../backend';
 import ChatMessageItem from './ChatMessageItem';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Send, Loader2, Image } from 'lucide-react';
+import { Send, Loader2, Image, X } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
-import { parseRollCommand, rollDice, formatRollResult } from '../../lib/rollCommand';
+import { parseRollCommand } from '../../lib/rollCommand';
 
 type ChannelChatViewProps = {
   sessionId: bigint;
@@ -32,6 +32,7 @@ export default function ChannelChatView({
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [replyTarget, setReplyTarget] = useState<Message | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,39 +43,44 @@ export default function ChannelChatView({
     }
   }, [messages]);
 
+  // Create a lookup map for messages
+  const messagesMap = new Map<string, Message>();
+  messages.forEach((msg) => {
+    messagesMap.set(msg.id.toString(), msg);
+  });
+
   const handleSendMessage = async () => {
     if (!actor || !messageInput.trim() || isSending) return;
 
     const content = messageInput.trim();
+    const replyToId = replyTarget?.id || null;
     setIsSending(true);
 
     try {
       // Check if it's a roll command
       if (content.startsWith('/roll ')) {
-        const expression = content.slice(6).trim(); // Extract expression after "/roll "
-        const validation = parseRollCommand(expression);
+        const pattern = content.substring(6).trim();
+        const validation = parseRollCommand(pattern);
 
         if (!validation.valid) {
-          alert(validation.error || 'Invalid dice format. Use e.g. /roll d20+5');
+          alert(validation.error);
           setIsSending(false);
           return;
         }
 
-        // Roll dice client-side
-        const { numDice, diceSize, modifier } = validation;
-        const rolls = rollDice(numDice!, diceSize!);
+        // Execute roll
+        const result = await actor.roll(sessionId, pattern);
         
-        // Format result message
-        const rollMessage = formatRollResult(nickname, expression, rolls, modifier!);
-        
-        // Post roll result as a regular message
-        await actor.postMessage(sessionId, channelId, rollMessage, null);
+        // Post roll result as message
+        const rollMessage = `🎲 ${nickname} rolled ${result.pattern}: ${result.rolls.map(r => r.toString()).join(', ')}${result.modifier !== 0n ? ` ${result.modifier > 0n ? '+' : ''}${result.modifier}` : ''} = **${result.total}**`;
+        await actor.postMessage(sessionId, channelId, rollMessage, null, replyToId);
       } else {
         // Regular message
-        await actor.postMessage(sessionId, channelId, content, null);
+        await actor.postMessage(sessionId, channelId, content, null, replyToId);
       }
 
       setMessageInput('');
+      setReplyTarget(null);
       onMessagesChanged();
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -116,10 +122,12 @@ export default function ChannelChatView({
 
       // Post message with image attachment
       const content = messageInput.trim() || '📷 Image';
-      await actor.postMessage(sessionId, channelId, content, blob);
+      const replyToId = replyTarget?.id || null;
+      await actor.postMessage(sessionId, channelId, content, blob, replyToId);
 
       // Clear input and reset state
       setMessageInput('');
+      setReplyTarget(null);
       setUploadProgress(null);
       onMessagesChanged();
 
@@ -138,6 +146,19 @@ export default function ChannelChatView({
 
   const handleImageButtonClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleLongPress = (message: Message) => {
+    setReplyTarget(message);
+  };
+
+  const clearReplyTarget = () => {
+    setReplyTarget(null);
+  };
+
+  const truncateText = (text: string, maxLength: number = 60): string => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   };
 
   return (
@@ -163,6 +184,9 @@ export default function ChannelChatView({
                 key={message.id.toString()}
                 message={message}
                 members={members}
+                currentNickname={nickname}
+                messagesMap={messagesMap}
+                onLongPress={handleLongPress}
               />
             ))
           )}
@@ -171,6 +195,26 @@ export default function ChannelChatView({
 
       {/* Message Input */}
       <div className="border-t border-border px-6 py-4">
+        {/* Reply Preview */}
+        {replyTarget && (
+          <div className="mb-3 bg-muted/50 rounded-lg p-3 flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-muted-foreground mb-1">You replied</p>
+              <p className="text-sm text-foreground line-clamp-2">
+                {truncateText(replyTarget.content || '📷 Image')}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0"
+              onClick={clearReplyTarget}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <Textarea
             value={messageInput}
@@ -179,12 +223,6 @@ export default function ChannelChatView({
             className="resize-none"
             rows={2}
             disabled={isSending}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
           />
           <div className="flex flex-col gap-2">
             <Button

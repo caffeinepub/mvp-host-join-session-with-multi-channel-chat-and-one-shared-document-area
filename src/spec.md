@@ -1,12 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the app getting stuck on an infinite “Initializing…” screen after deployment by making initialization failures and timeouts reliably transition to a recovery screen.
+**Goal:** Add modern chat message bubbles with left/right alignment and a long-press “reply to message” workflow, including persisted reply metadata and reply rendering styled to match the provided screenshots.
 
 **Planned changes:**
-- Make actor initialization time out reliably after 30 seconds (without the timer being reset by rerenders) and transition to the existing InitializationFailureScreen with a timeout error message.
-- Surface actor creation/initialization errors immediately (rejected promises, agent errors, traps) by capturing and displaying them on InitializationFailureScreen instead of remaining on “Initializing…”.
-- Handle missing/empty admin token safely by skipping secret-based access-control initialization when no `caffeineAdminToken` is present.
-- Ensure InitializationFailureScreen provides an actionable recovery path: show an English error summary + underlying error message, support “Retry Initialization”, and support “Clear Local Data & Retry” using the existing clearLocalAppData flow.
+- Update chat message rendering to use left/right aligned rounded bubbles: current user messages on the right, other members on the left, while preserving existing author/timestamp display and roll/image rendering.
+- Add long-press on a message bubble to select it as a reply target (React DOM events only), without interfering with existing click behavior (e.g., opening images).
+- Show a compact reply preview above the message input when a reply target is selected: label “You replied”, a 1–2 line truncated quote of the original message, and an X control to cancel.
+- Persist replies end-to-end by extending the backend Message with optional `replyToId`, updating message creation and message listing to include it, and updating frontend send/upload flows to pass `replyToId` when set; clear reply state after a successful send.
+- Render reply styling for messages with `replyToId` by showing a purple rounded “Replay message” indicator bubble above and visually attached to the main bubble, with a truncated original-message snippet; indicator is clickable/tappable with no navigation behavior required.
+- Apply a cohesive dark chat theme consistent with the screenshots (dark background, spacing, typography) limited to the chat view.
 
-**User-visible outcome:** If initialization fails or takes too long, users are no longer stuck on an infinite spinner; they see a clear failure screen with an error message and can retry or clear local data and retry to reach login or the main app flow.
+**User-visible outcome:** In chat, messages appear in left/right bubbles based on author, users can long-press a message to reply, see and cancel a reply preview above the input, send replies that remember the referenced message, and view replies with a purple “Replay message” indicator matching the screenshot style.
