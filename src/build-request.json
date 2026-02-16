@@ -1,148 +1,72 @@
 {
   "kind": "build_request",
-  "title": "Chat message bubbles with left/right alignment and reply-to-message (long-press)",
+  "title": "Expand UI scale range to 10%–200%",
   "projectName": "Session Chat",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement left/right chat message bubble layout: render the current logged-in user's messages aligned to the right and other members' messages aligned to the left, while preserving existing author/timestamp and image/roll rendering behavior.",
+      "text": "Update the UI scale control so the slider range is 10% minimum to 200% maximum (instead of 70%–130%), and ensure any slider-driven changes are clamped to 10–200.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1",
-          "msg-2"
+          "msg-4"
         ],
         "quotes": [
-          "i want you to make message bubble and the ability to reply to them by referring to them.\nAnd the one how is writing on the right and the other members on the left.",
-          "Yes do that"
+          "I need to make it from 10% to 200% instead of 70% to 130%"
         ]
       },
       "acceptanceCriteria": [
-        "Messages authored by the current user (matching the current session nickname passed into the chat view) render in a right-aligned bubble layout.",
-        "Messages authored by any other member render in a left-aligned bubble layout.",
-        "Existing roll-message styling, image attachment rendering, and author/timestamp display still work and are not removed.",
-        "The message input placeholder text remains unchanged."
+        "In the UI scale settings popover, the slider minimum is 10 and maximum is 200.",
+        "Dragging the slider cannot set uiScale below 10 or above 200 (value is clamped).",
+        "The displayed label reflects the current uiScale value in percent."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add reply-to-message selection via long-press on a chat message bubble: long-pressing any message sets it as the current reply target and opens a reply preview UI above the message input.",
+      "text": "Update the UI scale preset buttons to align with the new 10%–200% range (add/adjust presets so they cover small, normal, and large values within 10–200).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Trigger reply: Long-press on any chat message bubble to select it as the reply target."
+          "I need to make it from 10% to 200% instead of 70% to 130%"
         ]
       },
       "acceptanceCriteria": [
-        "Long-pressing a message bubble selects that message as the reply target.",
-        "Long-press interaction is implemented using standard React DOM events (no swipe-to-reply).",
-        "Selecting a reply target does not send a message by itself and does not interfere with existing click/links for image opening."
+        "The preset buttons only contain values between 10 and 200 inclusive.",
+        "Clicking a preset sets the uiScale preference to that preset value and the slider updates accordingly."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "When a reply target is selected, display a compact reply preview above the message input containing: (1) text label \"You replied\", (2) a quoted snippet of the original message (clamped to 1–2 lines with ellipsis), and (3) a small cancel (X) control that clears the reply target.",
+      "text": "Harden preference loading/updating so a previously stored uiScale outside the 10%–200% range is automatically clamped into the valid range on load and when saving updates.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "When a message is selected for reply:\n   - Show a small preview box above the message input field:\n     - Text: \"You replied\"\n     - Quoted original message (1-2 lines max, ellipsis if longer)\n     - Small \"X\" or cancel button to clear the reply target"
+          "I need to make it from 10% to 200% instead of 70% to 130%"
         ]
       },
       "acceptanceCriteria": [
-        "Reply preview appears above the existing Textarea when a reply target is set.",
-        "Preview shows \"You replied\" and a truncated quote of the selected message.",
-        "Clicking the X clears the reply target and removes the preview.",
-        "The Textarea placeholder text is unchanged and the existing image upload and send controls remain present."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Persist reply metadata with messages: extend the backend Message type and message-posting API to store an optional replyToId for each message; update the frontend send and image-upload flows to pass replyToId when replying; clear the reply state after send completes successfully.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "When sending the reply:\n   - Include reply metadata in the socket emit: e.g. socket.emit('sendMessage', { text: input, replyToId: originalMessageId })\n   - Clear the input and reset reply target after send"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend Message includes an optional replyToId field and it is returned from the message listing API used by the frontend (currently via actor.getMessages(sessionId, channelId)).",
-        "Backend message creation API (currently actor.postMessage(sessionId, channelId, content, image)) is updated to accept and store replyToId (optional) without breaking non-reply messages.",
-        "Frontend message sending includes replyToId only when a reply target is selected.",
-        "After a reply message is sent successfully, the message input is cleared (as today) and the reply target is also cleared.",
-        "Polling-based updates remain (no sockets are introduced)."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Render reply styling on messages that have replyToId: attach a purple rounded reply indicator bubble above the main message bubble (visually connected) that matches the uploaded screenshot style with white text, including bold title text \"Replay message\" and the quoted original message snippet beneath it; the indicator must be tappable/clickable (no scroll-to-original behavior required yet).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "When rendering a message that is a reply (has replyToId):\n   - Above the normal message bubble, add a purple touchable bubble:\n     - Background: purple (#6a5acd or similar)\n     - Text inside: \"Replay message\" (bold, white) on top\n     - Below it: quoted original message text (white, 1-2 lines)\n     - Make it tappable (for future scroll-to-original if you add later)\n\n5. Use existing message array to lookup original message by ID when rendering replies (or store replyPreview text in the message object when sending)"
-        ]
-      },
-      "acceptanceCriteria": [
-        "For any message with replyToId, a purple (#6a5acd or close) rounded bubble appears directly above and visually attached to the main message bubble.",
-        "The purple bubble shows two lines/sections: bold white \"Replay message\" and a white quote snippet of the original message (clamped to 1–2 lines with ellipsis).",
-        "The original message content is resolved by looking up replyToId in the current messages array; if not found, the UI still renders a safe fallback (e.g., an empty quote or \"Message\").",
-        "The purple reply indicator is clickable/tappable but does not need to implement navigation."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Apply a cohesive chat visual theme consistent with the uploaded screenshot: dark chat background, rounded message bubbles, clear spacing, and consistent typography; do not change unrelated app sections.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Implement the reply-to-message feature exactly matching the provided screenshot style."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Chat area uses a consistent dark, modern visual treatment with rounded bubbles and spacing that supports left/right alignment and the purple reply indicator.",
-        "No changes are introduced to document editors, uploads, dice rolling logic, or other unrelated views."
+        "If localStorage contains an out-of-range uiScale value (e.g., 0 or 999), the app clamps it to the nearest valid value (10 or 200) and applies that clamped value to the UI scale CSS variable.",
+        "No part of the app applies a --ui-scale value corresponding to less than 10% or greater than 200%."
       ]
     }
   ],
   "constraints": [
-    "Do not change the Textarea placeholder text in the chat input (currently \"Type a message... (Use /roll d20 for dice)\").",
-    "Do not add swipe-to-reply; only long-press to select a reply target.",
-    "Do not introduce sockets/WebSockets; continue using actor calls plus existing polling/refetch patterns.",
-    "Do not modify or regress dice rolling, file/image upload, documents, player docs, stickers, preview mode, or other unrelated features.",
-    "Do not edit files under frontend/src/components/ui or other immutable paths listed in SYSTEM_CONTEXT."
+    "Do not modify files under frontend/src/components/ui (shadcn components are read-only).",
+    "Do not change backend canister logic; UI scale remains a purely frontend/localStorage preference."
   ],
   "nonGoals": [
-    "Implementing scroll-to-original-message behavior when tapping the reply indicator.",
-    "Adding real-time chat delivery beyond the existing polling/refetch approach.",
-    "Changing message placeholder text or adding new chat commands."
+    "Adding new settings unrelated to UI scaling.",
+    "Changing the overall UI scaling mechanism (keep using the existing --ui-scale and app-scale-wrapper approach)."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

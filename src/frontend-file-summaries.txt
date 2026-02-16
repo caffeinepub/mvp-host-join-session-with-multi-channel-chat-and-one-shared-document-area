@@ -1,8 +1,8 @@
 {
-  "frontend/src/App.tsx": "Main application component with error boundary and preferences provider wrapping, managing authentication, profile setup, routing between Lobby and Session, and proper loading state handling to prevent indefinite \"Initializing...\" hang.",
+  "frontend/src/App.tsx": "Main application component with error boundary (passing clearLocalAppData as onClearData prop) and preferences provider wrapping, managing authentication, profile setup, routing between Lobby and Session, proper loading state handling, and UI scaling wrapper for the entire app content.",
   "frontend/src/pages/LobbyPage.tsx": "Lobby page with Host/Join tabs, Settings navigation, template application on host, and nickname pre-filling from preferences.",
   "frontend/src/pages/SessionPage.tsx": "Main session screen coordinating sidebar, chat view, player document editor, and session document editor with three view types (channel, playerDocument, sessionDocument) and Documents/Player Documents navigation buttons.",
-  "frontend/src/components/session/SessionSidebar.tsx": "Session sidebar with two sections (Channels and Members' Channels) including create buttons, selection state, and proper permission-based management controls for members' channels.",
+  "frontend/src/components/session/SessionSidebar.tsx": "Session sidebar with collapsible toggle button and UI scale settings button in header, reducing width from w-64 to w-14 when collapsed, hiding channel lists while preserving selection state and providing accessible tooltips.",
   "frontend/src/components/session/ChannelManagementDialogs.tsx": "Reusable dialogs for creating, renaming, and deleting channels with backend integration and error handling.",
   "frontend/src/components/session/DocumentManagementDialogs.tsx": "Reusable dialogs for creating, renaming, locking/unlocking, and deleting documents with backend integration; now surfaces newly created document ID via onCreated callback for immediate selection.",
   "frontend/src/components/chat/ChannelChatView.tsx": "Channel chat interface with message list, compose box, /roll command support, image upload with progress tracking, and reply-to-message feature with reply target selection, preview above input, and proper state management for sending replies.",
@@ -14,9 +14,9 @@
   "frontend/src/lib/sessionStorage.ts": "Helper functions for persisting and restoring session context in localStorage across page refreshes.",
   "frontend/src/lib/rollCommand.ts": "Dice roll command parser and validator for /roll syntax checking before backend submission.",
   "frontend/src/lib/time.ts": "Timestamp formatting utility converting bigint nanoseconds to human-readable time strings.",
-  "frontend/src/index.css": "Global styles with OKLCH color system using warm green accent palette (avoiding blue/purple) optimized for chat and document readability, plus chat-specific utility classes for reply indicators and text clamping.",
+  "frontend/src/index.css": "Global styles with OKLCH color system using warm green accent palette, UI scale CSS variable (--ui-scale) with transform-based scaling applied to app wrapper, and chat-specific utility classes for reply indicators and text clamping.",
   "frontend/src/hooks/usePreferences.ts": "Re-exports usePreferences hook from PreferencesContext for backwards compatibility.",
-  "frontend/src/lib/preferencesStorage.ts": "LocalStorage-backed persistence layer for user preferences including theme mode, background image, and default nickname.",
+  "frontend/src/lib/preferencesStorage.ts": "LocalStorage-backed persistence layer for user preferences including theme mode, background image, default nickname, and UI scale percentage (default 100%, clamped to 10-200% range on load and save).",
   "frontend/src/lib/templateHistoryStorage.ts": "LocalStorage helpers for saving, loading, clearing, and validating session template/history files for pre-lobby import.",
   "frontend/src/lib/sessionExportFile.ts": "Utilities for creating versioned session export files, downloading them, and parsing imported files with validation and error handling.",
   "frontend/src/lib/documentImageMarkers.ts": "Plain-text image embed marker utilities for creating, parsing, inserting, and removing image references in document content.",
@@ -26,7 +26,7 @@
   "frontend/src/components/docs/PlayerDocumentEditorView.tsx": "Player document editor with owner-only editing, file/image upload (properly guarded to prevent uploads until document is loaded), privacy toggle, Preview/Edit mode toggle, inline preview rendering, and embedded comments section with owner delete privileges passed via isHost prop.",
   "frontend/src/components/session/HostSessionSaveLoad.tsx": "Host-only dropdown menu for exporting session to file and importing session from file with confirmation dialog and error handling.",
   "frontend/index.html": "HTML entry point with early theme initialization script that reads preferences from localStorage and applies dark mode class before React renders to prevent flash.",
-  "frontend/src/context/PreferencesContext.tsx": "React context provider for user preferences (theme, background, nickname) with reactive state management, automatic theme application to document element, and exported storage key constant for diagnostics.",
+  "frontend/src/context/PreferencesContext.tsx": "React context provider for user preferences with reactive state management, automatic theme and UI scale application to document element via CSS variables with clamping to 10-200% range, and exported storage key constant for diagnostics.",
   "frontend/src/hooks/useUserProfile.ts": "React Query hooks for fetching and updating user profiles including profile pictures, with caching and proper invalidation.",
   "frontend/src/components/profile/Avatar.tsx": "Reusable avatar component that displays profile pictures with fallback to initials, handles image load errors gracefully.",
   "frontend/src/components/profile/ProfilePictureSection.tsx": "Profile picture management component with upload, preview, remove functionality, progress tracking, and validation for image files up to 5MB.",
@@ -45,5 +45,6 @@
   "frontend/src/components/docs/DocumentCommentsSection.tsx": "Comments section component displaying chronological comments with author names, timestamps, add/delete functionality, and host/owner permission checks.",
   "frontend/src/components/session/SessionDocumentsDialog.tsx": "Modal dialog for managing session documents with list view, create/rename/delete actions, and document selection for editing.",
   "frontend/src/components/docs/DocumentContentPreview.tsx": "Read-only preview component that parses document content, splits it into text and file segments, and renders text with preserved line breaks and inline images/files at their marker positions.",
-  "frontend/docs/regression-test-plan-player-document-uploads.md": "Focused manual test plan covering player document uploads (private and shared), file/image upload validation, upload button disabled states, error handling, and regression checks for session document uploads."
+  "frontend/docs/regression-test-plan-player-document-uploads.md": "Focused manual test plan covering player document uploads (private and shared), file/image upload validation, upload button disabled states, error handling, and regression checks for session document uploads.",
+  "frontend/src/components/settings/UiScaleControl.tsx": "Popover component with slider (10-200%) and preset buttons (50%, 75%, 100%, 125%, 150%) for adjusting UI scale percentage, with touch-friendly controls and immediate preference updates."
 }

@@ -1,109 +1,60 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T21:56:55.161Z",
+  "generatedAt": "2026-02-16T22:23:53.227Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 6,
-    "implemented": 6,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Implement left/right chat message bubble layout: render the current logged-in user's messages aligned to the right and other members' messages aligned to the left, while preserving existing author/timestamp and image/roll rendering behavior.",
+        "summary": "Update the UI scale control so the slider range is 10% minimum to 200% maximum (instead of 70%–130%), and ensure any slider-driven changes are clamped to 10–200.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
+          "frontend/src/components/settings/UiScaleControl.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
+          "frontend/src/components/settings/UiScaleControl.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add reply-to-message selection via long-press on a chat message bubble: long-pressing any message sets it as the current reply target and opens a reply preview UI above the message input.",
+        "summary": "Update the UI scale preset buttons to align with the new 10%–200% range (add/adjust presets so they cover small, normal, and large values within 10–200).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
+          "frontend/src/components/settings/UiScaleControl.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
+          "frontend/src/components/settings/UiScaleControl.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "When a reply target is selected, display a compact reply preview above the message input containing: (1) text label \"You replied\", (2) a quoted snippet of the original message (clamped to 1–2 lines with ellipsis), and (3) a small cancel (X) control that clears the reply target.",
+        "summary": "Harden preference loading/updating so a previously stored uiScale outside the 10%–200% range is automatically clamped into the valid range on load and when saving updates.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/index.css"
+          "frontend/src/lib/preferencesStorage.ts",
+          "frontend/src/context/PreferencesContext.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/index.css"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Persist reply metadata with messages: extend the backend Message type and message-posting API to store an optional replyToId for each message; update the frontend send and image-upload flows to pass replyToId when replying; clear the reply state after send completes successfully.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Render reply styling on messages that have replyToId: attach a purple rounded reply indicator bubble above the main message bubble (visually connected) that matches the uploaded screenshot style with white text, including bold title text \"Replay message\" and the quoted original message snippet beneath it; the indicator must be tappable/clickable (no scroll-to-original behavior required yet).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx",
-          "frontend/src/index.css"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx",
-          "frontend/src/index.css"
-        ]
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Apply a cohesive chat visual theme consistent with the uploaded screenshot: dark chat background, rounded message bubbles, clear spacing, and consistent typography; do not change unrelated app sections.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
+          "frontend/src/lib/preferencesStorage.ts",
+          "frontend/src/context/PreferencesContext.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/chat/ChannelChatView.tsx",
-    "frontend/src/components/chat/ChatMessageItem.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/index.css",
+    "frontend/src/components/settings/UiScaleControl.tsx",
+    "frontend/src/context/PreferencesContext.tsx",
+    "frontend/src/lib/preferencesStorage.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

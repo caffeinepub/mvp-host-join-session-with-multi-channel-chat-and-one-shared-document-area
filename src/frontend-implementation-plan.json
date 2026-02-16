@@ -1,135 +1,56 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Session Chat: message bubbles with left/right alignment and reply-to-message (long-press)",
+  "title": "Expand UI scale range to 10%–200%",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Render chat messages as left/right aligned rounded bubbles based on whether the message author matches the current session nickname, preserving existing roll/image/author/timestamp behaviors and input placeholder.",
+      "summary": "Expand the UI scale slider range to 10%–200% and clamp slider-driven updates to that range.",
       "acceptanceCriteria": [
-        "Messages authored by the current user (matching the current session nickname passed into the chat view) render in a right-aligned bubble layout.",
-        "Messages authored by any other member render in a left-aligned bubble layout.",
-        "Existing roll-message styling, image attachment rendering, and author/timestamp display still work and are not removed.",
-        "The message input placeholder text remains unchanged."
+        "In the UI scale settings popover, the slider minimum is 10 and maximum is 200.",
+        "Dragging the slider cannot set uiScale below 10 or above 200 (value is clamped).",
+        "The displayed label reflects the current uiScale value in percent."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "path": "frontend/src/components/settings/UiScaleControl.tsx",
           "operation": "modify",
-          "description": "Pass the current session nickname into each ChatMessageItem so the item can decide left/right alignment while keeping existing message list rendering and placeholder text unchanged."
-        },
-        {
-          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
-          "operation": "modify",
-          "description": "Update message rendering to use a bubble layout with conditional left/right alignment based on whether message.author matches the current session nickname; keep existing roll-message styling, image attachment link behavior, and author/timestamp display intact."
+          "description": "Update MIN_SCALE/MAX_SCALE to 10/200, ensure Slider min/max match, and keep onValueChange clamping so slider interactions cannot push uiScale outside 10–200 while preserving the percent label display."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Enable selecting a reply target via long-press on a message bubble using React DOM events without interfering with existing clicks/links.",
+      "summary": "Adjust UI scale preset buttons to provide small/normal/large choices within the new 10%–200% range and keep slider in sync.",
       "acceptanceCriteria": [
-        "Long-pressing a message bubble selects that message as the reply target.",
-        "Long-press interaction is implemented using standard React DOM events (no swipe-to-reply).",
-        "Selecting a reply target does not send a message by itself and does not interfere with existing click/links for image opening."
+        "The preset buttons only contain values between 10 and 200 inclusive.",
+        "Clicking a preset sets the uiScale preference to that preset value and the slider updates accordingly."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "path": "frontend/src/components/settings/UiScaleControl.tsx",
           "operation": "modify",
-          "description": "Add reply-target state and provide a callback to ChatMessageItem for setting the reply target when a long-press is detected."
-        },
-        {
-          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
-          "operation": "modify",
-          "description": "Implement long-press detection on the message bubble using standard React DOM pointer/mouse/touch events and a timeout; call the provided onLongPress handler without preventing normal click behavior (e.g., image links) or sending messages."
+          "description": "Replace PRESET_SCALES with a set of values spanning small/normal/large within 10–200 (inclusive), and ensure preset clicks route through the same clamping rules so state + slider value remain consistent."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Show a compact reply preview above the message input when a reply target is selected, with \"You replied\", a truncated quote, and an X to cancel, without changing placeholder or existing controls.",
+      "summary": "Clamp persisted uiScale on load and on updates so out-of-range stored values never apply to the --ui-scale CSS variable.",
       "acceptanceCriteria": [
-        "Reply preview appears above the existing Textarea when a reply target is set.",
-        "Preview shows \"You replied\" and a truncated quote of the selected message.",
-        "Clicking the X clears the reply target and removes the preview.",
-        "The Textarea placeholder text is unchanged and the existing image upload and send controls remain present."
+        "If localStorage contains an out-of-range uiScale value (e.g., 0 or 999), the app clamps it to the nearest valid value (10 or 200) and applies that clamped value to the UI scale CSS variable.",
+        "No part of the app applies a --ui-scale value corresponding to less than 10% or greater than 200%."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "path": "frontend/src/lib/preferencesStorage.ts",
           "operation": "modify",
-          "description": "Render a reply preview UI above the existing Textarea when replyTarget is set (label \"You replied\", 1–2 line clamped quote snippet, and an X control to clear). Ensure the Textarea placeholder remains exactly \"Type a message... (Use /roll d20 for dice)\" and the image/upload + send controls stay present."
+          "description": "Introduce a shared UI scale clamp helper and apply it when loading preferences from localStorage and when saving preferences, ensuring stored uiScale is normalized into the 10–200 range."
         },
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/context/PreferencesContext.tsx",
           "operation": "modify",
-          "description": "Add minimal, chat-scoped utility classes (e.g., for 1–2 line text clamping with ellipsis) used by the reply preview and reply indicator, avoiding changes that affect unrelated views."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Include replyToId when sending text or image messages while replying, clear reply state after successful send, and keep polling-based updates.",
-      "acceptanceCriteria": [
-        "Backend Message includes an optional replyToId field and it is returned from the message listing API used by the frontend (currently via actor.getMessages(sessionId, channelId)).",
-        "Backend message creation API (currently actor.postMessage(sessionId, channelId, content, image)) is updated to accept and store replyToId (optional) without breaking non-reply messages.",
-        "Frontend message sending includes replyToId only when a reply target is selected.",
-        "After a reply message is sent successfully, the message input is cleared (as today) and the reply target is also cleared.",
-        "Polling-based updates remain (no sockets are introduced)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
-          "operation": "modify",
-          "description": "Update the existing send (regular + /roll) and image-upload flows to pass replyToId to actor.postMessage only when a reply target is selected; after a successful send, clear the message input as today and also clear the reply target state; keep existing polling/refetch flow via onMessagesChanged (no sockets)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Render a purple reply indicator bubble above messages that have replyToId, showing \"Replay message\" and a truncated quote resolved from the current messages array, with safe fallback and clickability.",
-      "acceptanceCriteria": [
-        "For any message with replyToId, a purple (#6a5acd or close) rounded bubble appears directly above and visually attached to the main message bubble.",
-        "The purple bubble shows two lines/sections: bold white \"Replay message\" and a white quote snippet of the original message (clamped to 1–2 lines with ellipsis).",
-        "The original message content is resolved by looking up replyToId in the current messages array; if not found, the UI still renders a safe fallback (e.g., an empty quote or \"Message\").",
-        "The purple reply indicator is clickable/tappable but does not need to implement navigation."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
-          "operation": "modify",
-          "description": "Provide ChatMessageItem access to the current messages array (or a derived lookup) so it can resolve replyToId into the original message content for rendering reply indicators."
-        },
-        {
-          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
-          "operation": "modify",
-          "description": "When message.replyToId is present, render a visually attached purple rounded indicator bubble above the main message bubble containing bold white \"Replay message\" and a clamped quote snippet of the original message resolved from the provided messages lookup; make the indicator clickable/tappable without implementing navigation; render a safe fallback when the original message cannot be found."
-        },
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Add/extend chat-scoped styles needed for the purple reply indicator (e.g., subtle attachment/stack spacing and quote clamping) without changing unrelated sections."
-        }
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "summary": "Apply a dark, modern chat-only visual theme with rounded bubbles, spacing, and consistent typography to match the provided screenshot style, without changing unrelated sections.",
-      "acceptanceCriteria": [
-        "Chat area uses a consistent dark, modern visual treatment with rounded bubbles and spacing that supports left/right alignment and the purple reply indicator.",
-        "No changes are introduced to document editors, uploads, dice rolling logic, or other unrelated views."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
-          "operation": "modify",
-          "description": "Adjust chat container/header/message list/input area styling using Tailwind utility classes to achieve the screenshot-like dark chat treatment and spacing while keeping changes localized to the chat view."
-        },
-        {
-          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
-          "operation": "modify",
-          "description": "Refine bubble shapes, spacing, and typography for message items (including roll and image cases) so left/right alignment and the reply indicator look cohesive on a dark background, without altering non-chat areas."
+          "description": "Harden preference application by clamping uiScale before (a) saving updates and (b) applying the --ui-scale CSS variable, guaranteeing the DOM never receives a scale outside 10%–200% even if state is somehow corrupted."
         }
       ]
     }

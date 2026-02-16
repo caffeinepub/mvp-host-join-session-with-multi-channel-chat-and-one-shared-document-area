@@ -223,37 +223,26 @@ function AppInner() {
     );
   }
 
-  // Main app - either Lobby or Session
+  // Main app content with scaling wrapper
   return (
-    <div className="min-h-screen bg-background">
-      {preferences.backgroundImage && (
-        <>
-          <div 
-            className="fixed inset-0 z-0 bg-cover bg-center"
-            style={{ 
-              backgroundImage: `url(${preferences.backgroundImage})`,
-              filter: 'blur(8px)',
-            }}
-          />
-          <div className="fixed inset-0 z-0 bg-background/80" />
-        </>
+    <div className="app-scale-wrapper">
+      {sessionContext ? (
+        <SessionPage
+          sessionContext={sessionContext}
+          onLeaveSession={handleLeaveSession}
+          onLogout={handleLogout}
+        />
+      ) : (
+        <LobbyPage
+          onSessionJoined={handleSessionJoined}
+          onLogout={handleLogout}
+        />
       )}
-      <div className="relative z-10">
-        {sessionContext ? (
-          <SessionPage
-            sessionContext={sessionContext}
-            onLeaveSession={handleLeaveSession}
-            onLogout={handleLogout}
-          />
-        ) : (
-          <LobbyPage onSessionJoined={handleSessionJoined} onLogout={handleLogout} />
-        )}
-      </div>
     </div>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <AppErrorBoundary onClearData={clearLocalAppData}>
       <PreferencesProvider>
@@ -262,5 +251,3 @@ function App() {
     </AppErrorBoundary>
   );
 }
-
-export default App;
