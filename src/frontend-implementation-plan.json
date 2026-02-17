@@ -1,37 +1,101 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Session header: mobile-safe layout and reduced height",
+  "title": "Fix initialization hang and improve mobile chat scrolling with auto-scroll toggle",
   "requirements": [
     {
-      "id": "REQ-5",
-      "summary": "Make the Session page header fully visible on phone screens with no clipping or horizontal overflow by changing only the SessionPage <header>.",
+      "id": "REQ-1",
+      "summary": "Prevent initialization-time runtime errors from trapping the app on the “Initializing…” screen and surface recoverable failures via the existing error boundary.",
       "acceptanceCriteria": [
-        "On a narrow/mobile viewport, the entire header content (Leave button, session name/ID/host label, Documents/Player Documents buttons, members count, logout icon) is visible without being cut off.",
-        "Header content does not overflow horizontally; no element is partially off-screen.",
-        "No unintended page-level horizontal scrolling is introduced by the header."
+        "Opening the deployed app no longer results in a blank/stuck screen; the UI renders successfully.",
+        "If an initialization failure occurs (e.g., backend/identity issues), the app shows a recoverable error state (via the existing error boundary) rather than silently hanging.",
+        "No uncaught exceptions appear in the browser console during a normal load flow."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/SessionPage.tsx",
+          "path": "frontend/src/hooks/useActor.ts",
           "operation": "modify",
-          "description": "Adjust ONLY the <header> markup/styles to be mobile-safe: restructure into a responsive layout (e.g., stacked rows on small screens), add min-w-0 and text truncation for the session title/metadata, ensure action area wraps instead of overflowing, and prevent horizontal overflow (e.g., w-full, flex-wrap, overflow-hidden where appropriate). Keep all existing controls present and usable (Leave, Documents, Player Documents, members count, Logout)."
+          "description": "Harden actor initialization so failures do not cause an infinite fetching loop (e.g., disable automatic retries for initialization, return explicit error/status), and defensively guard optional authorization initialization calls so missing methods cannot throw at runtime. Verify the component's usage instructions before implementing (authorization)."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Replace the unconditional “Initializing…” render path with a safe initialization state machine that (a) stops showing the spinner when actor creation fails and (b) surfaces actor/identity initialization errors by throwing into AppErrorBoundary or rendering a recoverable error UI that offers reload/clear-data. Verify the component's usage instructions before implementing (authorization)."
+        },
+        {
+          "path": "frontend/src/components/app/AppErrorBoundary.tsx",
+          "operation": "modify",
+          "description": "Ensure the error boundary messaging cleanly supports initialization failures (e.g., identity/actor setup) and encourages recovery (reload / clear local data) without leaving the app in a hanging state."
         }
       ]
     },
     {
-      "id": "REQ-6",
-      "summary": "Reduce the Session page header vertical height on mobile to reclaim space for the chat, by adjusting only header spacing/typography/layout in SessionPage.tsx.",
+      "id": "REQ-2",
+      "summary": "Make the channel chat view mobile-friendly with fixed-to-viewport layout and vertical-only scrolling inside the message list.",
       "acceptanceCriteria": [
-        "Compared to the current UI, the header occupies less vertical space on mobile (visibly shorter).",
-        "The chat message list visibly gains vertical space equivalent to ~3 message bubbles (approximate, not pixel-perfect).",
-        "No functional regressions: header buttons still work (Leave, Documents, Player Documents, Logout)."
+        "On a mobile-sized viewport, the channel chat view fits within the visible screen area without requiring the overall page to scroll.",
+        "Only the messages list scrolls vertically; horizontal scrolling is prevented.",
+        "The message input stays anchored at the bottom of the chat view while scrolling messages.",
+        "Switching channels still works as before (channel selection changes the message list without breaking layout)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/SessionPage.tsx",
           "operation": "modify",
-          "description": "Reduce ONLY the header’s vertical footprint via tighter spacing/typography in the <header>: decrease vertical padding, reduce gaps, use smaller font sizes/line-heights for the title/subtitle on small screens, and compress button sizing/spacing (while keeping labels/icons readable and all controls accessible). Ensure the header remains fully visible and does not introduce horizontal scrolling."
+          "description": "Update the session page container sizing to use a mobile-safe viewport height strategy (e.g., dynamic viewport units) and keep the main content region overflow-clipped so page-level scrolling is avoided on phones."
+        },
+        {
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "operation": "modify",
+          "description": "Refactor the chat layout so the header and input area stay fixed within the chat panel while only the message list area scrolls vertically; prevent horizontal overflow and ensure the message list is the only scroll container."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Adjust global layout/scroll rules to support the new fixed-to-viewport chat layout on mobile (e.g., avoid accidental page-level scrolling/overflow caused by scaling/root containers) while keeping existing theme variables and utilities intact."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add an auto-scroll toggle near the message input and implement conditional scroll-to-bottom behavior based on the toggle state.",
+      "acceptanceCriteria": [
+        "A toggle control is visible near the message input to enable/disable auto-scroll (English label/tooltip and accessible aria-label).",
+        "When auto-scroll is enabled, the message list scrolls to the newest message after sending/receiving messages and after switching channels.",
+        "When auto-scroll is disabled, the scroll position is preserved when new messages arrive (no forced jump to bottom).",
+        "Toggling auto-scroll does not break message sending, image uploading, reply selection, or channel switching."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "operation": "modify",
+          "description": "Introduce an auto-scroll enabled/disabled state with a toggle control placed next to the message input; implement scroll-to-bottom behavior that triggers only when enabled (including after switching channelId and after posting messages), and preserve scroll position when disabled. Ensure image upload flow continues to use ExternalBlob and remains unaffected. Verify the component's usage instructions before implementing (blob-storage)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Apply the improved chat layout and auto-scroll behavior consistently across all channels, including members channels, without regressing channel behavior.",
+      "acceptanceCriteria": [
+        "Channel list selection continues to determine which messages are fetched/rendered as before.",
+        "Layout/scroll behavior is consistent across all channels (regular channels and members channels).",
+        "No regressions in channel creation/rename/delete flows due to chat layout changes."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/SessionPage.tsx",
+          "operation": "modify",
+          "description": "Ensure ChannelChatView receives stable channel identifiers/names for both regular channels and members channels and that switching between them preserves the updated layout and auto-scroll behavior consistently."
+        },
+        {
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "operation": "modify",
+          "description": "Make auto-scroll/layout logic explicitly depend on channelId changes (not just messages array changes) so behavior is consistent when switching between regular channels and members channels; ensure no coupling to channel type."
+        },
+        {
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "operation": "modify",
+          "description": "Verify the sidebar selection UI continues to work with the new fixed-height/overflow strategy (no layout-induced click/scroll regressions) and adjust any necessary container overflow classes to keep navigation stable across channels and members channels."
         }
       ]
     }

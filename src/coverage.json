@@ -1,44 +1,79 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T14:00:25.173Z",
+  "generatedAt": "2026-02-17T13:34:27.622Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
-        "id": "REQ-5",
-        "summary": "Update the Session page header (/html/body/div/div/div/header) so it is fully visible on phone-sized screens without any clipping or horizontal overflow. This must be implemented by changing ONLY the SessionPage header markup/styles (the <header> in frontend/src/pages/SessionPage.tsx).",
+        "id": "REQ-1",
+        "summary": "Fix the post-deployment runtime error that prevents the app from loading (stuck on the \"Initializing...\" screen) so the app reliably renders the Lobby/Session UI and does not fail during initialization.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/SessionPage.tsx"
+          "frontend/src/hooks/useActor.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/app/AppErrorBoundary.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/SessionPage.tsx"
+          "frontend/src/components/app/AppErrorBoundary.tsx"
         ]
       },
       {
-        "id": "REQ-6",
-        "summary": "Reduce the vertical height of the Session page header (/html/body/div/div/div/header) to provide more vertical space to the main content (chat), targeting enough reclaimed space to show approximately ~3 additional chat messages in the visible message list on mobile. Implement this ONLY by adjusting the header’s spacing/typography/layout in frontend/src/pages/SessionPage.tsx (e.g., padding, gaps, font sizes, wrapping), without changing the chat component itself.",
+        "id": "REQ-2",
+        "summary": "Update the channel chat layout to be mobile-friendly: the chat view must fit the phone screen height, remain in place (no unintended page-level scrolling), and allow scrolling only vertically within the message list area.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/SessionPage.tsx"
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/chat/ChannelChatView.tsx",
+          "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/pages/SessionPage.tsx"
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/chat/ChannelChatView.tsx",
+          "frontend/src/index.css"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Implement auto-scroll-to-bottom behavior for channel messages with a user-controlled toggle button placed near the message input. When auto-scroll is OFF, new incoming messages must not force-scroll the user to the bottom.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/chat/ChannelChatView.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/chat/ChannelChatView.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Ensure the chat layout and auto-scroll changes apply consistently to every channel’s message list without breaking existing channel behavior (including member channels).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/chat/ChannelChatView.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/chat/ChannelChatView.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/components/app/AppErrorBoundary.tsx",
+    "frontend/src/components/chat/ChannelChatView.tsx",
+    "frontend/src/index.css",
     "frontend/src/pages/SessionPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",

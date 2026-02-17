@@ -1,73 +1,99 @@
 {
   "kind": "build_request",
-  "title": "Make Session header fully visible and free space for more chat messages",
+  "title": "Fix app load error and improve mobile chat scrolling with auto-scroll toggle",
   "projectName": "RPG Collaboration",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-5",
-      "text": "Update the Session page header (/html/body/div/div/div/header) so it is fully visible on phone-sized screens without any clipping or horizontal overflow. This must be implemented by changing ONLY the SessionPage header markup/styles (the <header> in frontend/src/pages/SessionPage.tsx).",
-      "target": "frontend",
+      "id": "REQ-1",
+      "text": "Fix the post-deployment runtime error that prevents the app from loading (stuck on the \"Initializing...\" screen) so the app reliably renders the Lobby/Session UI and does not fail during initialization.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-5",
-          "msg-9",
-          "msg-11"
+          "msg-4"
         ],
         "quotes": [
-          "You see this i want the chat to be a big bigger seeing like 3 more messages and the header to be shown completely",
-          "Start now",
-          "Try again"
+          "After being deployed the app doesn't seem to load because of an error fix it."
         ]
       },
       "acceptanceCriteria": [
-        "On a narrow/mobile viewport, the entire header content (Leave button, session name/ID/host label, Documents/Player Documents buttons, members count, logout icon) is visible without being cut off.",
-        "Header content does not overflow horizontally; no element is partially off-screen.",
-        "No unintended page-level horizontal scrolling is introduced by the header."
+        "Opening the deployed app no longer results in a blank/stuck screen; the UI renders successfully.",
+        "If an initialization failure occurs (e.g., backend/identity issues), the app shows a recoverable error state (via the existing error boundary) rather than silently hanging.",
+        "No uncaught exceptions appear in the browser console during a normal load flow."
       ]
     },
     {
-      "id": "REQ-6",
-      "text": "Reduce the vertical height of the Session page header (/html/body/div/div/div/header) to provide more vertical space to the main content (chat), targeting enough reclaimed space to show approximately ~3 additional chat messages in the visible message list on mobile. Implement this ONLY by adjusting the header’s spacing/typography/layout in frontend/src/pages/SessionPage.tsx (e.g., padding, gaps, font sizes, wrapping), without changing the chat component itself.",
+      "id": "REQ-2",
+      "text": "Update the channel chat layout to be mobile-friendly: the chat view must fit the phone screen height, remain in place (no unintended page-level scrolling), and allow scrolling only vertically within the message list area.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5",
-          "msg-9"
+          "msg-10"
         ],
         "quotes": [
-          "Perfect now because this part don't show up completely i need you to slace the chat a bit more than this to line up",
-          "You see this i want the chat to be a big bigger seeing like 3 more messages and the header to be shown completely"
+          "the chat area to be fixed. fixed height fit on the phone screen on place and streched to fit the phone screen. and able to scroll only vertically."
         ]
       },
       "acceptanceCriteria": [
-        "Compared to the current UI, the header occupies less vertical space on mobile (visibly shorter).",
-        "The chat message list visibly gains vertical space equivalent to ~3 message bubbles (approximate, not pixel-perfect).",
-        "No functional regressions: header buttons still work (Leave, Documents, Player Documents, Logout)."
+        "On a mobile-sized viewport, the channel chat view fits within the visible screen area without requiring the overall page to scroll.",
+        "Only the messages list scrolls vertically; horizontal scrolling is prevented.",
+        "The message input stays anchored at the bottom of the chat view while scrolling messages.",
+        "Switching channels still works as before (channel selection changes the message list without breaking layout)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement auto-scroll-to-bottom behavior for channel messages with a user-controlled toggle button placed near the message input. When auto-scroll is OFF, new incoming messages must not force-scroll the user to the bottom.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-10",
+          "msg-13"
+        ],
+        "quotes": [
+          "And as for auto‑scroll to the bottom but add button to toggle it on or off so the user don't get annoyed trying to read previous conversations",
+          "Yes and yes and near the message input"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A toggle control is visible near the message input to enable/disable auto-scroll (English label/tooltip and accessible aria-label).",
+        "When auto-scroll is enabled, the message list scrolls to the newest message after sending/receiving messages and after switching channels.",
+        "When auto-scroll is disabled, the scroll position is preserved when new messages arrive (no forced jump to bottom).",
+        "Toggling auto-scroll does not break message sending, image uploading, reply selection, or channel switching."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Ensure the chat layout and auto-scroll changes apply consistently to every channel’s message list without breaking existing channel behavior (including member channels).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-11",
+          "msg-13"
+        ],
+        "quotes": [
+          "Yes but i want this implemented without ruining how channels works",
+          "Yes and yes and near the message input"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Channel list selection continues to determine which messages are fetched/rendered as before.",
+        "Layout/scroll behavior is consistent across all channels (regular channels and members channels).",
+        "No regressions in channel creation/rename/delete flows due to chat layout changes."
       ]
     }
   ],
   "constraints": [
-    "Apply changes ONLY to the selected element: the SessionPage header (<header> in frontend/src/pages/SessionPage.tsx).",
-    "Do not edit any files under frontend/src/components/ui or any immutable paths listed in SYSTEM_CONTEXT."
+    "Do not edit files under frontend/src/components/ui (Shadcn UI sources); compose them from app components instead.",
+    "Keep all Motoko logic in the single backend actor (backend/main.mo); only add a migration file if a stable-state upgrade is required."
   ],
   "nonGoals": [
-    "Do not redesign the overall app theme or colors.",
-    "Do not modify chat scrolling/auto-scroll behavior as part of this change.",
-    "Do not change backend logic or data models."
+    "Do not redesign the channels feature or change how channels are created/managed.",
+    "Do not add real-time WebSocket features; continue using the existing polling approach.",
+    "Do not introduce third-party authentication beyond Internet Identity."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

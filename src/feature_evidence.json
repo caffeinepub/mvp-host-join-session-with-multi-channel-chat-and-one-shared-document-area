@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-session-page-header-html-body-div-div-div-header-so-it-is-fully-visible-on-phone-sized-screens-without-any-clipping-or-horizontal-overflow-this-must-be-implemented-by-changing-only-the-sessionpage-header-markup-styles-the-header-in-frontend-src-pages-sessionpage-tsx",
-      "featureTitle": "Update the Session page header (/html/body/div/div/div/header) so it is fully visible on phone-sized screens without any clipping or horizontal overflow. This must be implemented by changing ONLY the SessionPage header markup/styles (the <header> in frontend/src/pages/SessionPage.tsx).",
+      "featureId": "feature-fix-the-post-deployment-runtime-error-that-prevents-the-app-from-loading-stuck-on-the-initializing-screen-so-the-app-reliably-renders-the-lobby-session-ui-and-does-not-fail-during-initialization",
+      "featureTitle": "Fix the post-deployment runtime error that prevents the app from loading (stuck on the \"Initializing...\" screen) so the app reliably renders the Lobby/Session UI and does not fail during initialization.",
       "files": [
-        "frontend/src/pages/SessionPage.tsx"
+        "frontend/src/components/app/AppErrorBoundary.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -17,14 +17,16 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-5"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-reduce-the-vertical-height-of-the-session-page-header-html-body-div-div-div-header-to-provide-more-vertical-space-to-the-main-content-chat-targeting-enough-reclaimed-space-to-show-approximately-3-additional-chat-messages-in-the-visible-message-list-on-mobile-implement-this-only-by-adjusting-the-header-s-spacing-typography-layout-in-frontend-src-pages-sessionpage-tsx-e-g-padding-gaps-font-sizes-wrapping-without-changing-the-chat-component-itself",
-      "featureTitle": "Reduce the vertical height of the Session page header (/html/body/div/div/div/header) to provide more vertical space to the main content (chat), targeting enough reclaimed space to show approximately ~3 additional chat messages in the visible message list on mobile. Implement this ONLY by adjusting the header’s spacing/typography/layout in frontend/src/pages/SessionPage.tsx (e.g., padding, gaps, font sizes, wrapping), without changing the chat component itself.",
+      "featureId": "feature-update-the-channel-chat-layout-to-be-mobile-friendly-the-chat-view-must-fit-the-phone-screen-height-remain-in-place-no-unintended-page-level-scrolling-and-allow-scrolling-only-vertically-within-the-message-list-area",
+      "featureTitle": "Update the channel chat layout to be mobile-friendly: the chat view must fit the phone screen height, remain in place (no unintended page-level scrolling), and allow scrolling only vertically within the message list area.",
       "files": [
+        "frontend/src/components/chat/ChannelChatView.tsx",
+        "frontend/src/index.css",
         "frontend/src/pages/SessionPage.tsx"
       ],
       "components": [
@@ -37,7 +39,48 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-6"
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-auto-scroll-to-bottom-behavior-for-channel-messages-with-a-user-controlled-toggle-button-placed-near-the-message-input-when-auto-scroll-is-off-new-incoming-messages-must-not-force-scroll-the-user-to-the-bottom",
+      "featureTitle": "Implement auto-scroll-to-bottom behavior for channel messages with a user-controlled toggle button placed near the message input. When auto-scroll is OFF, new incoming messages must not force-scroll the user to the bottom.",
+      "files": [
+        "frontend/src/components/chat/ChannelChatView.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-chat-layout-and-auto-scroll-changes-apply-consistently-to-every-channel-s-message-list-without-breaking-existing-channel-behavior-including-member-channels",
+      "featureTitle": "Ensure the chat layout and auto-scroll changes apply consistently to every channel’s message list without breaking existing channel behavior (including member channels).",
+      "files": [
+        "frontend/src/components/chat/ChannelChatView.tsx",
+        "frontend/src/pages/SessionPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

@@ -1,26 +1,44 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
+  "summary": "Chat app with channel-based conversations; needs mobile-friendly chat layout and controllable auto-scroll without breaking channel behavior.",
+  "architectural_notes": [
+    "Chat UI changes must preserve existing channels behavior and apply per-channel message lists."
+  ],
   "known_issues": [
-    "Build/deployment failed: application generation did not complete successfully when starting build."
+    "Post-deployment app fails to load due to an error (needs investigation/fix)."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-the-session-page-header-html-body-div-div-div-header-so-it-is-fully-visible-on-phone-sized-screens-without-any-clipping-or-horizontal-overflow-this-must-be-implemented-by-changing-only-the-sessionpage-header-markup-styles-the-header-in-frontend-src-pages-sessionpage-tsx",
-      "title": "Update the Session page header (/html/body/div/div/div/header) so it is fully visible on phone-sized screens without any clipping or horizontal overflow. This must be implemented by changing ONLY the SessionPage header markup/styles (the <header> in frontend/src/pages/SessionPage.tsx).",
+      "id": "feature-fix-the-post-deployment-runtime-error-that-prevents-the-app-from-loading-stuck-on-the-initializing-screen-so-the-app-reliably-renders-the-lobby-session-ui-and-does-not-fail-during-initialization",
+      "title": "Fix the post-deployment runtime error that prevents the app from loading (stuck on the \"Initializing...\" screen) so the app reliably renders the Lobby/Session UI and does not fail during initialization.",
       "reqIds": [
-        "REQ-5"
+        "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-reduce-the-vertical-height-of-the-session-page-header-html-body-div-div-div-header-to-provide-more-vertical-space-to-the-main-content-chat-targeting-enough-reclaimed-space-to-show-approximately-3-additional-chat-messages-in-the-visible-message-list-on-mobile-implement-this-only-by-adjusting-the-header-s-spacing-typography-layout-in-frontend-src-pages-sessionpage-tsx-e-g-padding-gaps-font-sizes-wrapping-without-changing-the-chat-component-itself",
-      "title": "Reduce the vertical height of the Session page header (/html/body/div/div/div/header) to provide more vertical space to the main content (chat), targeting enough reclaimed space to show approximately ~3 additional chat messages in the visible message list on mobile. Implement this ONLY by adjusting the header’s spacing/typography/layout in frontend/src/pages/SessionPage.tsx (e.g., padding, gaps, font sizes, wrapping), without changing the chat component itself.",
+      "id": "feature-update-the-channel-chat-layout-to-be-mobile-friendly-the-chat-view-must-fit-the-phone-screen-height-remain-in-place-no-unintended-page-level-scrolling-and-allow-scrolling-only-vertically-within-the-message-list-area",
+      "title": "Update the channel chat layout to be mobile-friendly: the chat view must fit the phone screen height, remain in place (no unintended page-level scrolling), and allow scrolling only vertically within the message list area.",
       "reqIds": [
-        "REQ-6"
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-auto-scroll-to-bottom-behavior-for-channel-messages-with-a-user-controlled-toggle-button-placed-near-the-message-input-when-auto-scroll-is-off-new-incoming-messages-must-not-force-scroll-the-user-to-the-bottom",
+      "title": "Implement auto-scroll-to-bottom behavior for channel messages with a user-controlled toggle button placed near the message input. When auto-scroll is OFF, new incoming messages must not force-scroll the user to the bottom.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-chat-layout-and-auto-scroll-changes-apply-consistently-to-every-channel-s-message-list-without-breaking-existing-channel-behavior-including-member-channels",
+      "title": "Ensure the chat layout and auto-scroll changes apply consistently to every channel’s message list without breaking existing channel behavior (including member channels).",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
@@ -28,7 +46,19 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Adjust UI layout so header is fully visible and chat area is larger (shows ~3 more messages).",
+      "summary": "Fix chat area layout on phones: fixed height that fits the screen, stretches appropriately, and allows vertical-only scrolling.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add auto-scroll-to-bottom with a toggle button near the message input to enable/disable auto-scroll so users can read older messages.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Ensure chat layout/scroll changes apply to every channel’s message list without breaking existing channels behavior.",
       "reqIds": [],
       "status": "pending"
     }

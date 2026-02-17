@@ -103,46 +103,39 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
   return (
     <div className="session-page-container">
       {/* Header */}
-      <header className="border-b border-border bg-card px-2 py-1.5 sm:px-4 sm:py-2 flex-shrink-0 w-full overflow-hidden">
-        <div className="flex flex-col gap-1.5 sm:gap-2 w-full">
-          {/* Top row: Leave button + Session info */}
-          <div className="flex items-center gap-2 sm:gap-3 w-full min-w-0">
-            <Button variant="ghost" size="sm" onClick={onLeaveSession} className="h-7 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm flex-shrink-0">
-              <ArrowLeft className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Leave</span>
-            </Button>
-            <Separator orientation="vertical" className="h-4 sm:h-5 flex-shrink-0" />
-            <div className="min-w-0 flex-1 overflow-hidden">
-              <h1 className="text-sm sm:text-base font-semibold truncate leading-tight">{session?.name || 'Loading...'}</h1>
-              <p className="text-[10px] sm:text-xs text-muted-foreground truncate leading-tight">
-                ID: {sessionContext.sessionId.toString()}
-                {isHost && ' • Host'}
-              </p>
-            </div>
+      <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={onLeaveSession}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Leave
+          </Button>
+          <Separator orientation="vertical" className="h-6" />
+          <div>
+            <h1 className="text-lg font-semibold">{session?.name || 'Loading...'}</h1>
+            <p className="text-xs text-muted-foreground">
+              Session ID: {sessionContext.sessionId.toString()}
+              {isHost && ' • You are the host'}
+            </p>
           </div>
-
-          {/* Bottom row: Action buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full">
-            <Button variant="outline" size="sm" onClick={() => setShowSessionDocuments(true)} className="h-7 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm flex-shrink-0">
-              <FolderOpen className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Documents</span>
-              <span className="sm:hidden">Docs</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowPlayerDocuments(true)} className="h-7 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm flex-shrink-0">
-              <FileText className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Player Documents</span>
-              <span className="sm:hidden">Player</span>
-            </Button>
-            <Separator orientation="vertical" className="h-4 sm:h-5 flex-shrink-0" />
-            <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>{session?.members.length || 0}</span>
-            </div>
-            <Separator orientation="vertical" className="h-4 sm:h-5 flex-shrink-0" />
-            <Button variant="ghost" size="sm" onClick={onLogout} className="h-7 w-7 p-0 sm:h-8 sm:w-8 flex-shrink-0">
-              <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
-            </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowSessionDocuments(true)}>
+            <FolderOpen className="mr-2 h-4 w-4" />
+            Documents
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowPlayerDocuments(true)}>
+            <FileText className="mr-2 h-4 w-4" />
+            Player Documents
+          </Button>
+          <Separator orientation="vertical" className="h-6" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <span>{session?.members.length || 0} members</span>
           </div>
+          <Separator orientation="vertical" className="h-6" />
+          <Button variant="ghost" size="sm" onClick={onLogout}>
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </header>
 

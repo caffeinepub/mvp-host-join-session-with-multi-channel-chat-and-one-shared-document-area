@@ -1,7 +1,7 @@
 {
   "frontend/src/App.tsx": "Main application component with error boundary, preferences provider, authentication flow, profile setup, routing between Lobby and Session, and global UI scaling applied via CSS transform based on user preferences.",
   "frontend/src/pages/LobbyPage.tsx": "Lobby page with Host/Join tabs, Settings navigation, template application on host, and nickname pre-filling from preferences.",
-  "frontend/src/pages/SessionPage.tsx": "Main session screen with mobile-optimized header layout (stacked rows, reduced padding/font sizes, text truncation, flex-wrap) and dynamic viewport height container for fixed-height chat areas.",
+  "frontend/src/pages/SessionPage.tsx": "Main session screen with mobile-friendly container layout using dynamic viewport height and flex-based overflow control for fixed-height chat areas.",
   "frontend/src/components/session/SessionSidebar.tsx": "Session sidebar with collapsible toggle state, quick profile button, UI scale settings button in header control row, channel lists with selection state, and accessible tooltips for all header actions.",
   "frontend/src/components/session/ChannelManagementDialogs.tsx": "Reusable dialogs for creating, renaming, and deleting channels with backend integration and error handling.",
   "frontend/src/components/session/DocumentManagementDialogs.tsx": "Reusable dialogs for creating, renaming, locking/unlocking, and deleting documents with backend integration; now surfaces newly created document ID via onCreated callback for immediate selection.",
