@@ -1,101 +1,36 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix initialization hang and improve mobile chat scrolling with auto-scroll toggle",
+  "title": "Add lightweight markup rendering to DocumentContentPreview",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Prevent initialization-time runtime errors from trapping the app on the “Initializing…” screen and surface recoverable failures via the existing error boundary.",
+      "summary": "Extend DocumentContentPreview to render centered, sized, heading, tiny, spoiler, and underlined lightweight markup in preview mode (including around [FILE:id:name] markers) without changing stored content.",
       "acceptanceCriteria": [
-        "Opening the deployed app no longer results in a blank/stuck screen; the UI renders successfully.",
-        "If an initialization failure occurs (e.g., backend/identity issues), the app shows a recoverable error state (via the existing error boundary) rather than silently hanging.",
-        "No uncaught exceptions appear in the browser console during a normal load flow."
+        "Given document content containing lines starting with \"[C] \", the preview displays those lines centered (e.g., using Tailwind text-center) while preserving line breaks.",
+        "Given document content containing lines starting with \"[B] \", the preview displays those lines with noticeably larger font size than normal preview text.",
+        "Given document content containing lines starting with \"# \", the preview displays those lines as an extra-large heading style (largest of the provided options).",
+        "Given document content containing lines starting with \"-# \", the preview displays those lines as extra-small text (smaller than normal preview text).",
+        "Given document content containing \"||spoiler text||\", the preview hides the spoiler text by default and reveals it on click/tap; the interaction is accessible via keyboard (e.g., focusable + Enter/Space) and does not affect non-spoiler text.",
+        "Given document content containing \"__underlined__\" (including within a bullet like \"- __underlined__\"), the preview renders just the wrapped text underlined, leaving surrounding characters like \"- \" intact.",
+        "File marker rendering remains unchanged: images still render inline; non-image files still render as attachment rows; and text segments around file markers still apply the new markup rules where applicable.",
+        "No backend changes are required; the raw stored content remains exactly as typed, with markup applied only in preview rendering."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useActor.ts",
-          "operation": "modify",
-          "description": "Harden actor initialization so failures do not cause an infinite fetching loop (e.g., disable automatic retries for initialization, return explicit error/status), and defensively guard optional authorization initialization calls so missing methods cannot throw at runtime. Verify the component's usage instructions before implementing (authorization)."
+          "path": "frontend/src/lib/documentPreviewMarkup.ts",
+          "operation": "create",
+          "description": "Add helper utilities to tokenize document preview content into line-aware tokens (text + file marker placeholders) and render lightweight preview markup for line prefixes ([C], [B], #, -#) and inline patterns (||spoiler||, __underline__) without mutating the original content."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/docs/DocumentContentPreview.tsx",
           "operation": "modify",
-          "description": "Replace the unconditional “Initializing…” render path with a safe initialization state machine that (a) stops showing the spinner when actor creation fails and (b) surfaces actor/identity initialization errors by throwing into AppErrorBoundary or rendering a recoverable error UI that offers reload/clear-data. Verify the component's usage instructions before implementing (authorization)."
+          "description": "Update preview rendering to be line-aware across mixed text and [FILE:id:name] markers: render each line with appropriate Tailwind styling for [C]/[B]/#/-# prefixes (removing the prefix only in preview), and render inline spoiler (click/tap + keyboard accessible reveal) and underline spans within text while preserving existing inline image rendering and attachment-row rendering for file markers."
         },
         {
-          "path": "frontend/src/components/app/AppErrorBoundary.tsx",
+          "path": "frontend/docs/regression-test-plan-player-document-uploads.md",
           "operation": "modify",
-          "description": "Ensure the error boundary messaging cleanly supports initialization failures (e.g., identity/actor setup) and encourages recovery (reload / clear local data) without leaving the app in a hanging state."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Make the channel chat view mobile-friendly with fixed-to-viewport layout and vertical-only scrolling inside the message list.",
-      "acceptanceCriteria": [
-        "On a mobile-sized viewport, the channel chat view fits within the visible screen area without requiring the overall page to scroll.",
-        "Only the messages list scrolls vertically; horizontal scrolling is prevented.",
-        "The message input stays anchored at the bottom of the chat view while scrolling messages.",
-        "Switching channels still works as before (channel selection changes the message list without breaking layout)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/SessionPage.tsx",
-          "operation": "modify",
-          "description": "Update the session page container sizing to use a mobile-safe viewport height strategy (e.g., dynamic viewport units) and keep the main content region overflow-clipped so page-level scrolling is avoided on phones."
-        },
-        {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
-          "operation": "modify",
-          "description": "Refactor the chat layout so the header and input area stay fixed within the chat panel while only the message list area scrolls vertically; prevent horizontal overflow and ensure the message list is the only scroll container."
-        },
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Adjust global layout/scroll rules to support the new fixed-to-viewport chat layout on mobile (e.g., avoid accidental page-level scrolling/overflow caused by scaling/root containers) while keeping existing theme variables and utilities intact."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Add an auto-scroll toggle near the message input and implement conditional scroll-to-bottom behavior based on the toggle state.",
-      "acceptanceCriteria": [
-        "A toggle control is visible near the message input to enable/disable auto-scroll (English label/tooltip and accessible aria-label).",
-        "When auto-scroll is enabled, the message list scrolls to the newest message after sending/receiving messages and after switching channels.",
-        "When auto-scroll is disabled, the scroll position is preserved when new messages arrive (no forced jump to bottom).",
-        "Toggling auto-scroll does not break message sending, image uploading, reply selection, or channel switching."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
-          "operation": "modify",
-          "description": "Introduce an auto-scroll enabled/disabled state with a toggle control placed next to the message input; implement scroll-to-bottom behavior that triggers only when enabled (including after switching channelId and after posting messages), and preserve scroll position when disabled. Ensure image upload flow continues to use ExternalBlob and remains unaffected. Verify the component's usage instructions before implementing (blob-storage)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Apply the improved chat layout and auto-scroll behavior consistently across all channels, including members channels, without regressing channel behavior.",
-      "acceptanceCriteria": [
-        "Channel list selection continues to determine which messages are fetched/rendered as before.",
-        "Layout/scroll behavior is consistent across all channels (regular channels and members channels).",
-        "No regressions in channel creation/rename/delete flows due to chat layout changes."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/SessionPage.tsx",
-          "operation": "modify",
-          "description": "Ensure ChannelChatView receives stable channel identifiers/names for both regular channels and members channels and that switching between them preserves the updated layout and auto-scroll behavior consistently."
-        },
-        {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
-          "operation": "modify",
-          "description": "Make auto-scroll/layout logic explicitly depend on channelId changes (not just messages array changes) so behavior is consistent when switching between regular channels and members channels; ensure no coupling to channel type."
-        },
-        {
-          "path": "frontend/src/components/session/SessionSidebar.tsx",
-          "operation": "modify",
-          "description": "Verify the sidebar selection UI continues to work with the new fixed-height/overflow strategy (no layout-induced click/scroll regressions) and adjust any necessary container overflow classes to keep navigation stable across channels and members channels."
+          "description": "Append manual regression checks for the new preview-only markup rules (center/big/heading/tiny/spoiler/underline) including cases where markup appears before/after [FILE:id:name] markers and in both session and player document preview modes."
         }
       ]
     }

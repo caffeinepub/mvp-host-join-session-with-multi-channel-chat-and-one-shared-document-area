@@ -1,101 +1,215 @@
 # Regression Test Plan: Player Document Uploads
 
-## Purpose
-Verify that file and image uploads work correctly for Player Documents (both private and shared) without breaking existing Session Document upload functionality.
-
-## Preconditions
-- User must be logged in with Internet Identity
-- User must have joined or created a session
+## Test Environment
+- Browser: Chrome/Firefox/Safari
+- Device: Desktop and Mobile
+- User roles: Host and Player
 
 ## Test Cases
 
-### Test 1: Private Player Document - Image Upload
+### 1. Player Document Creation with Privacy Toggle
 **Steps:**
-1. Navigate to Player Documents section
-2. Create a new player document with "Private Document" toggle ON
-3. Open the newly created document
-4. Click "Upload image" button
-5. Select a valid image file (jpg, png, gif, or webp, under 10MB)
-6. Provide an optional title in the dialog
-7. Click "Upload" in the dialog
+1. Log in as a player
+2. Join a session
+3. Open player documents dialog
+4. Create a new document with "Private" toggle ON
+5. Create another document with "Private" toggle OFF
 
-**Expected Results:**
-- No "Document not found for file upload" error appears
-- Upload progress indicator shows during upload
-- Image marker `[FILE:id:filename.ext]` is inserted into document content
-- Image appears in the "Images" gallery section below the editor
-- Image can be downloaded via the direct URL
-- Preview mode renders the image inline at the marker position
+**Expected:**
+- Private document visible only to owner and host
+- Shared document visible to all session members
+- Both documents appear in owner's list
 
-### Test 2: Private Player Document - File Upload
+### 2. File Upload to Player Document (Owner)
 **Steps:**
-1. Open the same private player document from Test 1
-2. Click "Upload file" button
-3. Select a valid non-image file (pdf, txt, or md, under 10MB)
-4. Wait for upload to complete
+1. Create a player document
+2. Switch to Edit mode
+3. Upload a file (PDF, TXT, etc.)
+4. Verify upload button is disabled until document loads
+5. Save document
 
-**Expected Results:**
-- No error alert appears
-- File marker `[FILE:id:filename.ext]` is inserted into document content
-- File appears in the "File Attachments" section below the editor
-- File can be downloaded via the download button
-- Preview mode renders the file as a downloadable attachment
+**Expected:**
+- Upload button disabled during document load
+- File uploads successfully
+- File marker appears in content
+- File appears in attachments section
 
-### Test 3: Shared Player Document - Image Upload
+### 3. Image Upload to Player Document (Owner)
 **Steps:**
-1. Create a new player document with "Private Document" toggle OFF (shared)
-2. Open the document
-3. Upload an image following Test 1 steps 4-7
+1. Create a player document
+2. Switch to Edit mode
+3. Upload an image with a title
+4. Save document
+5. Switch to Preview mode
 
-**Expected Results:**
-- Same as Test 1 expected results
-- Other session members can see the document and uploaded image
+**Expected:**
+- Image uploads successfully
+- Image appears in gallery section
+- Image renders inline in preview at marker position
+- Title displays correctly
 
-### Test 4: Session/Shared Document - Image Upload (Regression Check)
+### 4. Upload Button Disabled States
 **Steps:**
-1. Navigate to Documents section (not Player Documents)
-2. Create or open a session document (host only)
-3. Click "Upload image" button
-4. Upload an image following Test 1 steps 5-7
+1. Open player document editor
+2. Observe upload buttons before document loads
+3. Wait for document to load
+4. Observe upload buttons after load
 
-**Expected Results:**
-- Upload works exactly as before (no regression)
-- Image marker is inserted and image appears in gallery
-- Preview mode renders correctly
+**Expected:**
+- Upload buttons disabled before document loads
+- Upload buttons enabled after document loads
+- No backend calls made with invalid document IDs
 
-### Test 5: Upload Button Disabled State
+### 5. File Upload Error Handling
 **Steps:**
-1. Navigate to Player Documents
-2. Click on a player document to open it
-3. Immediately try to click "Upload image" or "Upload file" before the document fully loads
+1. Attempt to upload file > 10MB
+2. Attempt to upload invalid file type
+3. Simulate network error during upload
 
-**Expected Results:**
-- Upload buttons are disabled (grayed out) until document is fully loaded
-- No backend calls are made while buttons are disabled
-- Once document loads, buttons become enabled
+**Expected:**
+- Clear error messages for each scenario
+- No partial uploads
+- UI remains responsive
 
-### Test 6: Error Handling - Invalid File
+### 6. Session Document Uploads (Regression)
 **Steps:**
-1. Open a player document
-2. Try to upload a file with unsupported extension (e.g., .exe, .zip)
+1. Log in as host
+2. Create session document
+3. Upload files and images
+4. Verify all upload functionality works
 
-**Expected Results:**
-- Clear error message appears: "Unsupported file type. Allowed: jpg, jpeg, png, gif, webp, pdf, txt, md"
-- No backend call is made
-- Document remains editable
+**Expected:**
+- Session document uploads work as before
+- No regression in existing functionality
+- Host-only upload restrictions maintained
 
-### Test 7: Error Handling - File Too Large
+### 7. Player Document Visibility Toggle
 **Steps:**
-1. Open a player document
-2. Try to upload a file larger than 10MB
+1. Create private player document
+2. Toggle visibility to shared
+3. Verify other players can see it
+4. Toggle back to private
+5. Verify other players cannot see it
 
-**Expected Results:**
-- Clear error message appears: "File is too large. Maximum size is 10MB."
-- No backend call is made
+**Expected:**
+- Visibility changes apply immediately
+- Host can always see all documents
+- Other players see only shared documents
+
+### 8. Mixed Content Preview
+**Steps:**
+1. Create document with text, images, and files
+2. Add file markers throughout text
+3. Switch to Preview mode
+
+**Expected:**
+- Text renders with line breaks preserved
+- Images render inline at marker positions
+- Files render as attachment rows at marker positions
+- All content displays in correct order
+
+## Regression Checks for Preview Markup
+
+### 9. Line Prefix Markup
+**Steps:**
+1. Create document with content:
+   ```
+   [C] This is centered text
+   [B] This is big text
+   # This is a heading
+   -# This is tiny text
+   Normal text
+   ```
+2. Switch to Preview mode
+
+**Expected:**
+- `[C]` line displays centered (prefix removed)
+- `[B]` line displays larger than normal
+- `#` line displays as extra-large heading
+- `-#` line displays as extra-small text
+- Normal text displays at default size
+- All prefixes removed in preview
+
+### 10. Inline Markup (Spoilers)
+**Steps:**
+1. Create document with: `This is ||hidden text|| and more text`
+2. Switch to Preview mode
+3. Click/tap on spoiler
+4. Use keyboard (Tab + Enter) on another spoiler
+
+**Expected:**
+- Spoiler text hidden by default (blacked out)
+- Click reveals spoiler text
+- Keyboard navigation works (focusable)
+- Enter/Space key reveals spoiler
+- Non-spoiler text unaffected
+
+### 11. Inline Markup (Underline)
+**Steps:**
+1. Create document with: `This is __underlined__ text`
+2. Create bullet: `- __underlined item__`
+3. Switch to Preview mode
+
+**Expected:**
+- Only wrapped text is underlined
+- Surrounding characters (like `- `) remain intact
+- Underline renders correctly in all contexts
+
+### 12. Markup Around File Markers
+**Steps:**
+1. Create document with:
+   ```
+   [C] Centered text before image
+   [FILE:1:image.jpg]
+   [B] Big text after image
+   ||spoiler|| and __underline__ near [FILE:2:doc.pdf]
+   ```
+2. Switch to Preview mode
+
+**Expected:**
+- Line prefixes apply to text segments
+- File markers render as images/attachments
+- Inline markup works in text around file markers
+- All markup renders correctly in mixed content
+
+### 13. Session Document Preview Markup
+**Steps:**
+1. Create session document with all markup types
+2. Switch to Preview mode
+3. Verify all markup renders
+
+**Expected:**
+- All markup features work in session documents
+- Same behavior as player documents
+- Host-only editing maintained
+
+### 14. Player Document Preview Markup
+**Steps:**
+1. Create player document with all markup types
+2. Switch to Preview mode
+3. Share document and view as another player
+
+**Expected:**
+- All markup features work in player documents
+- Markup renders correctly for all viewers
+- Owner-only editing maintained
+
+### 15. Edge Cases
+**Steps:**
+1. Test empty spoilers: `||||`
+2. Test empty underlines: `____`
+3. Test nested markup: `||__text__||\` (should not nest)
+4. Test incomplete markup: `||incomplete`
+5. Test multiple prefixes: `[C] [B] text`
+
+**Expected:**
+- Empty markup handled gracefully
+- Nested markup not supported (renders literally)
+- Incomplete markup renders as plain text
+- Only first prefix applies per line
 
 ## Notes
-- All tests should be performed in both light and dark mode
-- Verify that the marker format `[FILE:id:filename]` remains unchanged
-- Ensure comments section continues to work after uploads
-- Check that save functionality works after inserting file markers
-</markdown>
+- All tests should pass on both desktop and mobile
+- Test with both session and player documents
+- Verify no backend changes required
+- Ensure stored content remains unchanged (markup only in preview)

@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-post-deployment-runtime-error-that-prevents-the-app-from-loading-stuck-on-the-initializing-screen-so-the-app-reliably-renders-the-lobby-session-ui-and-does-not-fail-during-initialization",
-      "featureTitle": "Fix the post-deployment runtime error that prevents the app from loading (stuck on the \"Initializing...\" screen) so the app reliably renders the Lobby/Session UI and does not fail during initialization.",
+      "featureId": "feature-extend-the-document-preview-renderer-used-in-the-main-session-panel-selected-element-xpath-html-1-body-1-div-1-div-1-div-1-div-1-main-1-div-1-div-2-div-1-so-that-plain-text-content-renders-additional-lightweight-markup-patterns-in-preview-mode-without-altering-stored-content-c-text-renders-as-centered-text-in-preview-b-text-renders-as-large-text-in-preview-text-renders-as-extra-large-heading-text-in-preview-text-renders-as-extra-small-text-in-preview-text-renders-as-spoiler-hidden-text-that-can-be-clicked-tapped-to-reveal-in-preview-text-including-when-used-like-text-renders-as-underlined-text-in-preview-this-must-work-anywhere-text-is-rendered-inside-documentcontentpreview-including-when-mixed-with-existing-file-id-name-markers-and-should-apply-to-both-session-documents-and-player-documents-since-both-use-the-same-preview-component",
+      "featureTitle": "Extend the document preview renderer used in the main session panel (selected element XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/main[1]/div[1]/div[2]/div[1]) so that plain-text content renders additional lightweight markup patterns in preview mode (without altering stored content):\n- \"[C] text\" renders as centered text in preview\n- \"[B] text\" renders as large text in preview\n- \"# text\" renders as extra-large heading text in preview\n- \"-# text\" renders as extra-small text in preview\n- \"||text||\" renders as spoiler/hidden text that can be clicked/tapped to reveal in preview\n- \"__text__\" (including when used like \"- __text__\") renders as underlined text in preview\nThis must work anywhere text is rendered inside DocumentContentPreview (including when mixed with existing [FILE:id:name] markers), and should apply to both session documents and player documents since both use the same preview component.",
       "files": [
-        "frontend/src/components/app/AppErrorBoundary.tsx"
+        "frontend/docs/regression-test-plan-player-document-uploads.md",
+        "frontend/src/components/docs/DocumentContentPreview.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -18,69 +19,6 @@
       ],
       "testIds": [
         "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-the-channel-chat-layout-to-be-mobile-friendly-the-chat-view-must-fit-the-phone-screen-height-remain-in-place-no-unintended-page-level-scrolling-and-allow-scrolling-only-vertically-within-the-message-list-area",
-      "featureTitle": "Update the channel chat layout to be mobile-friendly: the chat view must fit the phone screen height, remain in place (no unintended page-level scrolling), and allow scrolling only vertically within the message list area.",
-      "files": [
-        "frontend/src/components/chat/ChannelChatView.tsx",
-        "frontend/src/index.css",
-        "frontend/src/pages/SessionPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-auto-scroll-to-bottom-behavior-for-channel-messages-with-a-user-controlled-toggle-button-placed-near-the-message-input-when-auto-scroll-is-off-new-incoming-messages-must-not-force-scroll-the-user-to-the-bottom",
-      "featureTitle": "Implement auto-scroll-to-bottom behavior for channel messages with a user-controlled toggle button placed near the message input. When auto-scroll is OFF, new incoming messages must not force-scroll the user to the bottom.",
-      "files": [
-        "frontend/src/components/chat/ChannelChatView.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-the-chat-layout-and-auto-scroll-changes-apply-consistently-to-every-channel-s-message-list-without-breaking-existing-channel-behavior-including-member-channels",
-      "featureTitle": "Ensure the chat layout and auto-scroll changes apply consistently to every channel’s message list without breaking existing channel behavior (including member channels).",
-      "files": [
-        "frontend/src/components/chat/ChannelChatView.tsx",
-        "frontend/src/pages/SessionPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
       ],
       "confidence": "high"
     }

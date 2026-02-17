@@ -1,7 +1,7 @@
 import { AlertTriangle, Download, FileText } from 'lucide-react';
-import { parseFileMarkers } from '../../lib/documentFileMarkers';
 import type { DocumentFileReference } from '../../backend';
 import { Button } from '../ui/button';
+import { tokenizeContent, renderTextSegment } from '../../lib/documentPreviewMarkup';
 
 type DocumentContentPreviewProps = {
   content: string;
@@ -12,57 +12,23 @@ export default function DocumentContentPreview({ content, documentFiles }: Docum
   // Create a map of file ID to file reference for quick lookup
   const fileMap = new Map(documentFiles.map((f) => [Number(f.id), f]));
 
-  // Parse file markers from content
-  const fileMarkers = parseFileMarkers(content);
-
-  // Split content into segments (text and file markers)
-  const segments: Array<{ type: 'text' | 'file'; content: string; fileId?: number; filename?: string }> = [];
-  let lastIndex = 0;
-
-  fileMarkers.forEach((marker) => {
-    // Add text before this marker
-    if (marker.position > lastIndex) {
-      segments.push({
-        type: 'text',
-        content: content.slice(lastIndex, marker.position),
-      });
-    }
-
-    // Add file marker
-    segments.push({
-      type: 'file',
-      content: '',
-      fileId: marker.fileId,
-      filename: marker.filename,
-    });
-
-    // Update lastIndex to skip the marker text
-    const markerText = `[FILE:${marker.fileId}:${marker.filename}]`;
-    lastIndex = marker.position + markerText.length;
-  });
-
-  // Add remaining text after last marker
-  if (lastIndex < content.length) {
-    segments.push({
-      type: 'text',
-      content: content.slice(lastIndex),
-    });
-  }
+  // Tokenize content into text and file markers
+  const tokens = tokenizeContent(content);
 
   return (
     <div className="space-y-4">
-      {segments.map((segment, index) => {
-        if (segment.type === 'text') {
-          // Render text with preserved line breaks
+      {tokens.map((token, index) => {
+        if (token.type === 'text') {
+          // Render text with line-aware markup
           return (
-            <div key={index} className="whitespace-pre-wrap text-sm leading-relaxed">
-              {segment.content}
+            <div key={index} className="text-sm whitespace-pre-wrap">
+              {renderTextSegment(token.content)}
             </div>
           );
         }
 
-        // Render file
-        const fileRef = fileMap.get(segment.fileId!);
+        // Render file marker
+        const fileRef = fileMap.get(token.fileId!);
 
         if (!fileRef) {
           return (
@@ -72,7 +38,7 @@ export default function DocumentContentPreview({ content, documentFiles }: Docum
             >
               <AlertTriangle className="h-5 w-5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground">File not found: {segment.filename}</p>
+                <p className="text-sm text-muted-foreground">File not found: {token.filename}</p>
               </div>
             </div>
           );

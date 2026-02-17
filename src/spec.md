@@ -1,13 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Restore reliable app startup after deployment and make the channel chat usable on mobile with constrained scrolling and an auto-scroll toggle.
+**Goal:** Enhance the existing document preview so it can display a few additional lightweight markup patterns (centering, sizing, spoiler reveal, underline) without changing stored document text.
 
 **Planned changes:**
-- Fix the post-deployment initialization/runtime error that leaves the app stuck on the “Initializing…” screen, ensuring the Lobby/Session UI renders and initialization failures surface via the existing recoverable error boundary.
-- Update the channel chat layout for mobile so it fits the phone viewport height, prevents unintended page-level scrolling, and restricts scrolling to the messages list (vertical only, no horizontal scroll), with the input anchored at the bottom.
-- Add an auto-scroll-to-bottom toggle near the message input (with an English label/tooltip and accessible aria-label).
-- When auto-scroll is ON, scroll to the newest message after send/receive and after switching channels; when OFF, preserve the user’s current scroll position as new messages arrive.
-- Ensure the layout/scroll behavior and toggle work consistently across all channel types (including member channels) without breaking existing channel selection or channel management flows.
+- Extend `DocumentContentPreview` rendering to recognize line-based prefixes: `[C] ` (center), `[B] ` (large), `# ` (extra-large heading), and `-# ` (extra-small).
+- Add inline parsing for `||spoiler||` segments that are hidden by default and reveal on click/tap with keyboard-accessible interaction.
+- Add inline parsing for `__underlined__` so only the wrapped text is underlined (including cases like `- __text__`), while preserving surrounding characters.
+- Ensure the new markup rendering works anywhere preview text appears, including when mixed with existing `[FILE:id:name]` markers, and keep file marker rendering behavior unchanged.
 
-**User-visible outcome:** The deployed app loads past “Initializing…” into the Lobby/Session UI, and on mobile the chat stays fixed to the screen with only the message list scrolling; users can toggle auto-scroll near the input to avoid being forced to the bottom while reading older messages.
+**User-visible outcome:** When viewing documents in the main session preview panel (and anywhere else `DocumentContentPreview` is used), users can type the specified patterns and immediately see centered/bigger/smaller/heading text, clickable spoilers, and underlined segments in preview—while the saved text remains exactly what they typed.

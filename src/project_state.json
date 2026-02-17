@@ -1,44 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Chat app with channel-based conversations; needs mobile-friendly chat layout and controllable auto-scroll without breaking channel behavior.",
-  "architectural_notes": [
-    "Chat UI changes must preserve existing channels behavior and apply per-channel message lists."
-  ],
-  "known_issues": [
-    "Post-deployment app fails to load due to an error (needs investigation/fix)."
-  ],
-  "isFixRequest": true,
+  "summary": "Project to add rich text/markup preview tools for centered, large, extra-large, extra-small, spoiler, and underlined text.",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-fix-the-post-deployment-runtime-error-that-prevents-the-app-from-loading-stuck-on-the-initializing-screen-so-the-app-reliably-renders-the-lobby-session-ui-and-does-not-fail-during-initialization",
-      "title": "Fix the post-deployment runtime error that prevents the app from loading (stuck on the \"Initializing...\" screen) so the app reliably renders the Lobby/Session UI and does not fail during initialization.",
+      "id": "feature-extend-the-document-preview-renderer-used-in-the-main-session-panel-selected-element-xpath-html-1-body-1-div-1-div-1-div-1-div-1-main-1-div-1-div-2-div-1-so-that-plain-text-content-renders-additional-lightweight-markup-patterns-in-preview-mode-without-altering-stored-content-c-text-renders-as-centered-text-in-preview-b-text-renders-as-large-text-in-preview-text-renders-as-extra-large-heading-text-in-preview-text-renders-as-extra-small-text-in-preview-text-renders-as-spoiler-hidden-text-that-can-be-clicked-tapped-to-reveal-in-preview-text-including-when-used-like-text-renders-as-underlined-text-in-preview-this-must-work-anywhere-text-is-rendered-inside-documentcontentpreview-including-when-mixed-with-existing-file-id-name-markers-and-should-apply-to-both-session-documents-and-player-documents-since-both-use-the-same-preview-component",
+      "title": "Extend the document preview renderer used in the main session panel (selected element XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/main[1]/div[1]/div[2]/div[1]) so that plain-text content renders additional lightweight markup patterns in preview mode (without altering stored content):\n- \"[C] text\" renders as centered text in preview\n- \"[B] text\" renders as large text in preview\n- \"# text\" renders as extra-large heading text in preview\n- \"-# text\" renders as extra-small text in preview\n- \"||text||\" renders as spoiler/hidden text that can be clicked/tapped to reveal in preview\n- \"__text__\" (including when used like \"- __text__\") renders as underlined text in preview\nThis must work anywhere text is rendered inside DocumentContentPreview (including when mixed with existing [FILE:id:name] markers), and should apply to both session documents and player documents since both use the same preview component.",
       "reqIds": [
         "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-channel-chat-layout-to-be-mobile-friendly-the-chat-view-must-fit-the-phone-screen-height-remain-in-place-no-unintended-page-level-scrolling-and-allow-scrolling-only-vertically-within-the-message-list-area",
-      "title": "Update the channel chat layout to be mobile-friendly: the chat view must fit the phone screen height, remain in place (no unintended page-level scrolling), and allow scrolling only vertically within the message list area.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-auto-scroll-to-bottom-behavior-for-channel-messages-with-a-user-controlled-toggle-button-placed-near-the-message-input-when-auto-scroll-is-off-new-incoming-messages-must-not-force-scroll-the-user-to-the-bottom",
-      "title": "Implement auto-scroll-to-bottom behavior for channel messages with a user-controlled toggle button placed near the message input. When auto-scroll is OFF, new incoming messages must not force-scroll the user to the bottom.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-chat-layout-and-auto-scroll-changes-apply-consistently-to-every-channel-s-message-list-without-breaking-existing-channel-behavior-including-member-channels",
-      "title": "Ensure the chat layout and auto-scroll changes apply consistently to every channel’s message list without breaking existing channel behavior (including member channels).",
-      "reqIds": [
-        "REQ-4"
       ],
       "version": 1
     }
@@ -46,24 +18,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Fix chat area layout on phones: fixed height that fits the screen, stretches appropriately, and allows vertical-only scrolling.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Add auto-scroll-to-bottom with a toggle button near the message input to enable/disable auto-scroll so users can read older messages.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Ensure chat layout/scroll changes apply to every channel’s message list without breaking existing channels behavior.",
+      "summary": "Add markup/formatting tools for preview: [C] centered, [B] large, # extra-large heading, -# extra-small, ||spoiler|| hidden text reveal, and __underlined__",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "RPG Collaboration",
+  "projectName": "Markup Preview Tools",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

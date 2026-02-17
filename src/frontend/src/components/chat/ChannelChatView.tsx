@@ -134,13 +134,6 @@ export default function ChannelChatView({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
   const handleLongPress = (message: Message) => {
     setReplyTarget(message);
   };
@@ -225,7 +218,6 @@ export default function ChannelChatView({
             placeholder={`Message #${channelName} or /roll 2d6+3`}
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
-            onKeyDown={handleKeyDown}
             disabled={isSending}
             className="min-h-[60px] max-h-[120px] resize-none"
           />

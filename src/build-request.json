@@ -1,99 +1,55 @@
 {
   "kind": "build_request",
-  "title": "Fix app load error and improve mobile chat scrolling with auto-scroll toggle",
-  "projectName": "RPG Collaboration",
-  "priority": "high",
+  "title": "Add markup preview tools for centered, sized, spoiler, and underlined text",
+  "projectName": "Markup Preview Tools",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the post-deployment runtime error that prevents the app from loading (stuck on the \"Initializing...\" screen) so the app reliably renders the Lobby/Session UI and does not fail during initialization.",
-      "target": "both",
+      "text": "Extend the document preview renderer used in the main session panel (selected element XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/main[1]/div[1]/div[2]/div[1]) so that plain-text content renders additional lightweight markup patterns in preview mode (without altering stored content):\n- \"[C] text\" renders as centered text in preview\n- \"[B] text\" renders as large text in preview\n- \"# text\" renders as extra-large heading text in preview\n- \"-# text\" renders as extra-small text in preview\n- \"||text||\" renders as spoiler/hidden text that can be clicked/tapped to reveal in preview\n- \"__text__\" (including when used like \"- __text__\") renders as underlined text in preview\nThis must work anywhere text is rendered inside DocumentContentPreview (including when mixed with existing [FILE:id:name] markers), and should apply to both session documents and player documents since both use the same preview component.",
+      "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "After being deployed the app doesn't seem to load because of an error fix it."
+          "Add those tools:\n\n [C] text  \n  → Centered text (in preview)\n\n [B] text  \n  → Large / big text (in preview)\n\n # text  \n  → Extra large text (very big, like a main heading) (in preview)\n\n -# text  \n  → Extra small text (very tiny) (in preview)\n\n ||text||  \n  → Spoiler / hidden text (click/tap to reveal) (in preview)\n\n- __text__  \n  → Underlined text (in preview)"
         ]
       },
       "acceptanceCriteria": [
-        "Opening the deployed app no longer results in a blank/stuck screen; the UI renders successfully.",
-        "If an initialization failure occurs (e.g., backend/identity issues), the app shows a recoverable error state (via the existing error boundary) rather than silently hanging.",
-        "No uncaught exceptions appear in the browser console during a normal load flow."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Update the channel chat layout to be mobile-friendly: the chat view must fit the phone screen height, remain in place (no unintended page-level scrolling), and allow scrolling only vertically within the message list area.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-10"
-        ],
-        "quotes": [
-          "the chat area to be fixed. fixed height fit on the phone screen on place and streched to fit the phone screen. and able to scroll only vertically."
-        ]
-      },
-      "acceptanceCriteria": [
-        "On a mobile-sized viewport, the channel chat view fits within the visible screen area without requiring the overall page to scroll.",
-        "Only the messages list scrolls vertically; horizontal scrolling is prevented.",
-        "The message input stays anchored at the bottom of the chat view while scrolling messages.",
-        "Switching channels still works as before (channel selection changes the message list without breaking layout)."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Implement auto-scroll-to-bottom behavior for channel messages with a user-controlled toggle button placed near the message input. When auto-scroll is OFF, new incoming messages must not force-scroll the user to the bottom.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-10",
-          "msg-13"
-        ],
-        "quotes": [
-          "And as for auto‑scroll to the bottom but add button to toggle it on or off so the user don't get annoyed trying to read previous conversations",
-          "Yes and yes and near the message input"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A toggle control is visible near the message input to enable/disable auto-scroll (English label/tooltip and accessible aria-label).",
-        "When auto-scroll is enabled, the message list scrolls to the newest message after sending/receiving messages and after switching channels.",
-        "When auto-scroll is disabled, the scroll position is preserved when new messages arrive (no forced jump to bottom).",
-        "Toggling auto-scroll does not break message sending, image uploading, reply selection, or channel switching."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Ensure the chat layout and auto-scroll changes apply consistently to every channel’s message list without breaking existing channel behavior (including member channels).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-11",
-          "msg-13"
-        ],
-        "quotes": [
-          "Yes but i want this implemented without ruining how channels works",
-          "Yes and yes and near the message input"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Channel list selection continues to determine which messages are fetched/rendered as before.",
-        "Layout/scroll behavior is consistent across all channels (regular channels and members channels).",
-        "No regressions in channel creation/rename/delete flows due to chat layout changes."
+        "Given document content containing lines starting with \"[C] \", the preview displays those lines centered (e.g., using Tailwind text-center) while preserving line breaks.",
+        "Given document content containing lines starting with \"[B] \", the preview displays those lines with noticeably larger font size than normal preview text.",
+        "Given document content containing lines starting with \"# \", the preview displays those lines as an extra-large heading style (largest of the provided options).",
+        "Given document content containing lines starting with \"-# \", the preview displays those lines as extra-small text (smaller than normal preview text).",
+        "Given document content containing \"||spoiler text||\", the preview hides the spoiler text by default and reveals it on click/tap; the interaction is accessible via keyboard (e.g., focusable + Enter/Space) and does not affect non-spoiler text.",
+        "Given document content containing \"__underlined__\" (including within a bullet like \"- __underlined__\"), the preview renders just the wrapped text underlined, leaving surrounding characters like \"- \" intact.",
+        "File marker rendering remains unchanged: images still render inline; non-image files still render as attachment rows; and text segments around file markers still apply the new markup rules where applicable.",
+        "No backend changes are required; the raw stored content remains exactly as typed, with markup applied only in preview rendering."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (Shadcn UI sources); compose them from app components instead.",
-    "Keep all Motoko logic in the single backend actor (backend/main.mo); only add a migration file if a stable-state upgrade is required."
+    "Apply the user-requested changes only to the preview rendering area associated with the selected element (i.e., implement within the document preview renderer used there, currently DocumentContentPreview).",
+    "Do not modify any paths listed in frontend immutablePaths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*).",
+    "Keep backend as a single-actor Motoko canister; no backend schema/state changes for this request."
   ],
   "nonGoals": [
-    "Do not redesign the channels feature or change how channels are created/managed.",
-    "Do not add real-time WebSocket features; continue using the existing polling approach.",
-    "Do not introduce third-party authentication beyond Internet Identity."
+    "Implementing a full Markdown parser or rich-text editor.",
+    "Changing how document content is stored or saved (no automatic rewriting/conversion of markup in persisted text).",
+    "Adding real-time collaboration or chat markup unless explicitly requested."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }
