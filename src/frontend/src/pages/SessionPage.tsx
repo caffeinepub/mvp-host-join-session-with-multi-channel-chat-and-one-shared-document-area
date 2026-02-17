@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useActor } from '../hooks/useActor';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useQuickChatProfile } from '../hooks/useQuickChatProfile';
 import { useSessionData } from '../hooks/useSessionData';
 import { useListPlayerDocuments } from '../hooks/usePlayerDocuments';
 import { useGetSessionDocument } from '../hooks/useSessionDocuments';
@@ -27,6 +28,7 @@ type ViewType = 'channel' | 'playerDocument' | 'sessionDocument';
 export default function SessionPage({ sessionContext, onLeaveSession, onLogout }: SessionPageProps) {
   const { actor } = useActor();
   const { identity } = useInternetIdentity();
+  const { profile: quickProfile } = useQuickChatProfile();
   const [viewType, setViewType] = useState<ViewType>('channel');
   const [selectedChannelId, setSelectedChannelId] = useState<bigint | null>(null);
   const [selectedPlayerDocumentId, setSelectedPlayerDocumentId] = useState<bigint | null>(null);
@@ -48,6 +50,9 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
 
   const { data: playerDocuments, refetch: refetchPlayerDocuments } = useListPlayerDocuments(sessionContext.sessionId);
   const { data: currentSessionDocument, refetch: refetchCurrentSessionDocument } = useGetSessionDocument(selectedSessionDocumentId);
+
+  // Derive effective nickname: use quick profile display name if set, otherwise session nickname
+  const effectiveNickname = quickProfile?.displayName || sessionContext.nickname;
 
   // Auto-select first channel on load
   useEffect(() => {
@@ -160,7 +165,7 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
                 membersChannels?.find((c) => c.id === selectedChannelId)?.name ||
                 ''
               }
-              nickname={sessionContext.nickname}
+              nickname={effectiveNickname}
               messages={messages || []}
               members={session?.members || []}
               onMessagesChanged={refetchMessages}

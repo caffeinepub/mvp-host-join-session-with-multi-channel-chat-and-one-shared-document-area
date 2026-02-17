@@ -1,89 +1,103 @@
 {
   "kind": "build_request",
-  "title": "Add sidebar settings control to adjust UI scale by percentage (mobile)",
-  "projectName": "Session Chat",
+  "title": "Add sidebar quick-profile button to locally edit chat username and avatar",
+  "projectName": "Quick Chat Profile",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a Settings control (button with popover/dialog) inside the Session sidebar header area at XPath /html[1]/body[1]/div[1]/div[1]/div[3]/div[1]/div[1]/aside[1]/div[1] that lets the user adjust overall UI size by percentage.",
+      "text": "Add an additional icon button (👨🏻‍🦱-style) to the Session sidebar top control row inside the existing sidebar header container (XPath: /html/body/div/div/div/div/aside/div[1]) without replacing existing controls (UI scale popover and collapse/expand). The new button must be visible when the sidebar is not collapsed and must include an English tooltip and accessible aria-label.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-5"
         ],
         "quotes": [
-          "Add settings button here to adjust the ui size by Percentage because this is how the app looks like for mobile"
+          "Add button here for members to switch their profile picture as well as username for the chat",
+          "I meant you add button here for members in the shape of 👨🏻‍🦱 to store quick load profiles changes Name and profile picture",
+          "Yes it's an additional button. Good you got it right. Please start"
         ]
       },
       "acceptanceCriteria": [
-        "A settings button is visible in the sidebar header row (same area as the existing collapse/expand button).",
-        "Activating the button opens a UI scale control expressed as a percentage (e.g., slider and/or preset buttons).",
-        "The scale control is usable on mobile (touch-friendly hit targets, readable labels)."
+        "When the sidebar is expanded, a new icon button appears in the top header row alongside existing controls without layout breakage.",
+        "Hovering/focusing the button shows an English tooltip (e.g., \"Quick profile\").",
+        "The button has an aria-label in English (e.g., \"Open quick profile\").",
+        "Existing UI scale popover and collapse/expand behavior remain unchanged."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Persist the selected UI scale percentage as a user preference in localStorage and restore it on app load.",
+      "text": "When the new sidebar button is clicked, open an in-app dialog/popover that allows the user to edit a locally-stored \"Quick Chat Profile\" consisting of: (1) chat display name (text input) and (2) profile picture (image picker with preview). Provide actions to Save, Cancel, and Clear (remove stored quick profile picture and reset stored quick display name). All user-facing text must be in English.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-5"
         ],
         "quotes": [
-          "adjust the ui size by Percentage"
+          "store quick load profiles changes Name and profile picture",
+          "Stored in the user phone"
         ]
       },
       "acceptanceCriteria": [
-        "UI scale preference is stored in the existing preferences storage (localStorage-backed) and survives page refresh.",
-        "On reload, the previously selected percentage is applied automatically without requiring user action.",
-        "A reasonable default is used when no preference exists (e.g., 100%)."
+        "Clicking the new button opens a dialog/popover containing a name input and an image picker with preview.",
+        "Save persists the quick profile locally and closes the dialog/popover.",
+        "Cancel closes the dialog/popover without changing the stored quick profile.",
+        "Clear removes the stored quick profile data and updates the UI accordingly.",
+        "All labels/buttons/help text are in English."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Apply the chosen UI scale percentage to the app UI so that the interface becomes smaller/larger consistently (not just the sidebar), without breaking scrolling/overflow in the Session page layout.",
+      "text": "Persist the \"Quick Chat Profile\" on the user device using browser storage (localStorage) so it survives reloads on the same device/browser, and load it on app start/session entry.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-5"
         ],
         "quotes": [
-          "adjust the ui size by Percentage"
+          "Stored in the user phone"
         ]
       },
       "acceptanceCriteria": [
-        "Changing the percentage immediately updates the perceived UI size across the Session page (sidebar, header, chat area, inputs).",
-        "The Session page remains usable after scaling: content remains reachable via scrolling and key controls (message input, send button, sidebar toggle) stay accessible.",
-        "The scale range is bounded to prevent unusable extremes (e.g., min/max limits)."
+        "After saving a quick profile, reloading the page retains the saved quick display name and profile picture preview.",
+        "Clearing the quick profile removes it from localStorage and it does not return after reload.",
+        "If localStorage is unavailable or contains invalid data, the app fails gracefully (no crash) and behaves as if no quick profile is set."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Apply the locally-stored \"Quick Chat Profile\" to the chat experience: (1) outgoing chat messages should use the quick display name as the nickname sent to the backend when posting messages, and (2) the current user's message avatar should display the locally-stored quick profile picture (when set) instead of the backend profile picture for that user.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-5"
+        ],
+        "quotes": [
+          "switch their profile picture as well as username for the chat",
+          "store quick load profiles changes Name and profile picture"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When a quick display name is saved, newly posted messages in chat use that display name as the author/nickname.",
+        "When a quick profile picture is saved, the current user's chat messages render with that local picture as the avatar.",
+        "Other users’ avatars/names are unaffected and continue to use existing backend-based profile lookups.",
+        "If no quick profile is set, chat behavior remains exactly as before."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (read-only UI component sources).",
-    "Do not modify immutable paths listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx).",
-    "Keep backend unchanged; UI scaling must be implemented entirely in the frontend.",
-    "Place the new Settings button only within the selected sidebar header element at XPath /html[1]/body[1]/div[1]/div[1]/div[3]/div[1]/div[1]/aside[1]/div[1] (i.e., the top sidebar header row area)."
+    "Do not edit files under frontend/src/components/ui (shadcn components are read-only).",
+    "Do not modify immutable frontend hook/bootstrapping paths listed in SYSTEM_CONTEXT (compose new hooks/components instead).",
+    "Store quick profile data locally on the device (browser localStorage); do not add backend persistence for this feature.",
+    "Respect the selected element scope by adding the new button within the sidebar header container at XPath /html/body/div/div/div/div/aside/div[1]."
   ],
   "nonGoals": [
-    "Adding new authentication methods or third-party settings sync.",
-    "Changing server-side/session data models for UI scale.",
-    "Redesigning the entire Session page layout beyond what is necessary to support scaling."
+    "Supporting multiple named quick profiles or profile slot management (only a single locally-stored quick profile is required).",
+    "Changing or removing existing sidebar controls (UI scale settings, collapse/expand).",
+    "Adding new backend canister methods or migrating backend state."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [
-      "Add a persisted UI scale percentage setting for better mobile readability/fit."
-    ],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

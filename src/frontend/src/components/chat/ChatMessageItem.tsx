@@ -4,6 +4,8 @@ import { formatTimestamp } from '../../lib/time';
 import { Badge } from '../ui/badge';
 import Avatar from '../profile/Avatar';
 import { useGetUserProfile } from '../../hooks/useUserProfile';
+import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { useQuickChatProfile } from '../../hooks/useQuickChatProfile';
 
 type ChatMessageItemProps = {
   message: Message;
@@ -20,15 +22,24 @@ export default function ChatMessageItem({
   messagesMap,
   onLongPress,
 }: ChatMessageItemProps) {
+  const { identity } = useInternetIdentity();
+  const { profile: quickProfile } = useQuickChatProfile();
   const isRoll = message.content.startsWith('🎲');
   const hasImage = !!message.image;
-  const isCurrentUser = message.author === currentNickname;
 
   // Find the member by nickname to get their principal
   const member = members.find((m) => m.nickname === message.author);
   const { data: userProfile } = useGetUserProfile(member?.id || null);
 
-  const avatarImageUrl = userProfile?.profilePicture?.getDirectURL();
+  // Determine if this message is from the current user by comparing principals
+  const isCurrentUser = identity && member?.id && member.id.toString() === identity.getPrincipal().toString();
+
+  // Override avatar and display name for current user if quick profile is set
+  const displayName = isCurrentUser && quickProfile?.displayName ? quickProfile.displayName : message.author;
+  const avatarImageUrl = isCurrentUser && quickProfile?.avatarDataUrl
+    ? quickProfile.avatarDataUrl
+    : userProfile?.profilePicture?.getDirectURL();
+
   const messageImageUrl = message.image?.getDirectURL();
 
   // Long-press detection
@@ -98,7 +109,7 @@ export default function ChatMessageItem({
     >
       <Avatar
         imageUrl={avatarImageUrl}
-        name={message.author}
+        name={displayName}
         size="sm"
         className="mt-1 shrink-0"
       />
@@ -127,7 +138,7 @@ export default function ChatMessageItem({
           } ${isRoll ? 'border-2 border-accent' : ''}`}
         >
           <div className="flex items-baseline gap-2 flex-wrap mb-1">
-            <span className="font-semibold text-xs">{message.author}</span>
+            <span className="font-semibold text-xs">{displayName}</span>
             <span className="text-xs opacity-70">
               {formatTimestamp(message.timestamp)}
             </span>

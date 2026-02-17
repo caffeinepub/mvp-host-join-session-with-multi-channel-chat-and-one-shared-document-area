@@ -1,54 +1,67 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T22:18:38.115Z",
+  "generatedAt": "2026-02-17T12:13:09.544Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a Settings control (button with popover/dialog) inside the Session sidebar header area at XPath /html[1]/body[1]/div[1]/div[1]/div[3]/div[1]/div[1]/aside[1]/div[1] that lets the user adjust overall UI size by percentage.",
+        "summary": "Add an additional icon button (👨🏻‍🦱-style) to the Session sidebar top control row inside the existing sidebar header container (XPath: /html/body/div/div/div/div/aside/div[1]) without replacing existing controls (UI scale popover and collapse/expand). The new button must be visible when the sidebar is not collapsed and must include an English tooltip and accessible aria-label.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/components/settings/UiScaleControl.tsx"
+          "frontend/src/components/session/SessionSidebar.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/components/settings/UiScaleControl.tsx"
+          "frontend/src/components/session/SessionSidebar.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Persist the selected UI scale percentage as a user preference in localStorage and restore it on app load.",
+        "summary": "When the new sidebar button is clicked, open an in-app dialog/popover that allows the user to edit a locally-stored \"Quick Chat Profile\" consisting of: (1) chat display name (text input) and (2) profile picture (image picker with preview). Provide actions to Save, Cancel, and Clear (remove stored quick profile picture and reset stored quick display name). All user-facing text must be in English.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/preferencesStorage.ts",
-          "frontend/src/context/PreferencesContext.tsx"
+          "frontend/src/components/profile/QuickChatProfileDialog.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/lib/preferencesStorage.ts",
-          "frontend/src/context/PreferencesContext.tsx"
+          "frontend/src/components/profile/QuickChatProfileDialog.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Apply the chosen UI scale percentage to the app UI so that the interface becomes smaller/larger consistently (not just the sidebar), without breaking scrolling/overflow in the Session page layout.",
+        "summary": "Persist the \"Quick Chat Profile\" on the user device using browser storage (localStorage) so it survives reloads on the same device/browser, and load it on app start/session entry.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/settings/UiScaleControl.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/index.css"
+          "frontend/src/lib/quickChatProfileStorage.ts",
+          "frontend/src/hooks/useQuickChatProfile.ts",
+          "frontend/src/lib/clearLocalAppData.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/settings/UiScaleControl.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/index.css"
+          "frontend/src/lib/quickChatProfileStorage.ts",
+          "frontend/src/hooks/useQuickChatProfile.ts",
+          "frontend/src/lib/clearLocalAppData.ts"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Apply the locally-stored \"Quick Chat Profile\" to the chat experience: (1) outgoing chat messages should use the quick display name as the nickname sent to the backend when posting messages, and (2) the current user's message avatar should display the locally-stored quick profile picture (when set) instead of the backend profile picture for that user.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/chat/ChannelChatView.tsx",
+          "frontend/src/components/chat/ChatMessageItem.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/SessionPage.tsx",
+          "frontend/src/components/chat/ChannelChatView.tsx",
+          "frontend/src/components/chat/ChatMessageItem.tsx"
         ]
       }
     ]
@@ -58,12 +71,14 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
+    "frontend/src/components/chat/ChannelChatView.tsx",
+    "frontend/src/components/chat/ChatMessageItem.tsx",
+    "frontend/src/components/profile/QuickChatProfileDialog.tsx",
     "frontend/src/components/session/SessionSidebar.tsx",
-    "frontend/src/components/settings/UiScaleControl.tsx",
-    "frontend/src/context/PreferencesContext.tsx",
-    "frontend/src/index.css",
-    "frontend/src/lib/preferencesStorage.ts",
+    "frontend/src/hooks/useQuickChatProfile.ts",
+    "frontend/src/lib/clearLocalAppData.ts",
+    "frontend/src/lib/quickChatProfileStorage.ts",
+    "frontend/src/pages/SessionPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -1,73 +1,98 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Sidebar Settings UI scale control (mobile) with localStorage persistence",
+  "title": "Sidebar quick-profile editor with locally stored chat name and avatar overrides",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a touch-friendly Settings button in the Session sidebar header that opens a popover/dialog to adjust UI scale percentage.",
+      "summary": "Add a new quick-profile icon button to the Session sidebar header control row (without replacing existing UI scale and collapse controls), with English tooltip and aria-label, visible only when expanded.",
       "acceptanceCriteria": [
-        "A settings button is visible in the sidebar header row (same area as the existing collapse/expand button).",
-        "Activating the button opens a UI scale control expressed as a percentage (e.g., slider and/or preset buttons).",
-        "The scale control is usable on mobile (touch-friendly hit targets, readable labels)."
+        "When the sidebar is expanded, a new icon button appears in the top header row alongside existing controls without layout breakage.",
+        "Hovering/focusing the button shows an English tooltip (e.g., \"Quick profile\").",
+        "The button has an aria-label in English (e.g., \"Open quick profile\").",
+        "Existing UI scale popover and collapse/expand behavior remain unchanged."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/session/SessionSidebar.tsx",
           "operation": "modify",
-          "description": "Add a Settings button within the existing sidebar header row container (same area as the collapse/expand button) and wire it to open a scale control UI. Use shadcn-ui components already used in this file (e.g., Button/Tooltip/DropdownMenu-style popover) to ensure consistent styling and mobile-friendly hit targets. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/settings/UiScaleControl.tsx",
-          "operation": "create",
-          "description": "Create a small Settings popover/dialog content component that renders a UI scale control in percentage (e.g., slider and/or preset percentage buttons), calling preferences update on change. Prefer shadcn-ui primitives for popover/dialog, slider, buttons, and labels to ensure accessible/touch-friendly interaction. Verify the component's usage instructions before implementing."
+          "description": "Within the existing sidebar header container (the top control row in the aside header area), add an additional ghost icon button showing a 👨🏻‍🦱-style glyph that opens the Quick Chat Profile dialog; ensure it renders only when not collapsed, does not replace UIScaleSettingsPopover or collapse/expand button, and includes an English tooltip and aria-label."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Persist UI scale percentage in the existing localStorage-backed preferences and restore on app load.",
+      "summary": "Implement an in-app dialog/popover opened by the new sidebar button to edit a locally stored quick display name and avatar, with Save/Cancel/Clear actions in English.",
       "acceptanceCriteria": [
-        "UI scale preference is stored in the existing preferences storage (localStorage-backed) and survives page refresh.",
-        "On reload, the previously selected percentage is applied automatically without requiring user action.",
-        "A reasonable default is used when no preference exists (e.g., 100%)."
+        "Clicking the new button opens a dialog/popover containing a name input and an image picker with preview.",
+        "Save persists the quick profile locally and closes the dialog/popover.",
+        "Cancel closes the dialog/popover without changing the stored quick profile.",
+        "Clear removes the stored quick profile data and updates the UI accordingly.",
+        "All labels/buttons/help text are in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/preferencesStorage.ts",
-          "operation": "modify",
-          "description": "Extend the existing UserPreferences type and DEFAULT_PREFERENCES to include a UI scale percentage preference (default 100). Ensure loadPreferences merges stored values safely and savePreferences persists the new field."
+          "path": "frontend/src/components/profile/QuickChatProfileDialog.tsx",
+          "operation": "create",
+          "description": "Create a Quick Chat Profile dialog component (using existing shadcn/ui primitives from frontend/src/components/ui without modifying them) that provides: a text input for display name, an image file picker with preview, and Save/Cancel/Clear actions; on Save, write to the quick-profile storage utility; on Cancel, close without persisting; on Clear, remove stored values and update preview/state."
         },
         {
-          "path": "frontend/src/context/PreferencesContext.tsx",
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
           "operation": "modify",
-          "description": "Ensure the preferences provider applies/restores the stored UI scale preference on load by propagating it into a global CSS variable (or equivalent mechanism) alongside the existing theme application logic."
+          "description": "Wire the new quick-profile header button to open/close the new QuickChatProfileDialog and pass any needed callbacks/state so the dialog is fully reachable from the sidebar header (no orphan UI)."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Apply the selected UI scale across the entire Session app UI without breaking scrolling/overflow, with bounded min/max limits.",
+      "summary": "Persist and load the Quick Chat Profile in browser localStorage with validation and graceful failure handling.",
       "acceptanceCriteria": [
-        "Changing the percentage immediately updates the perceived UI size across the Session page (sidebar, header, chat area, inputs).",
-        "The Session page remains usable after scaling: content remains reachable via scrolling and key controls (message input, send button, sidebar toggle) stay accessible.",
-        "The scale range is bounded to prevent unusable extremes (e.g., min/max limits)."
+        "After saving a quick profile, reloading the page retains the saved quick display name and profile picture preview.",
+        "Clearing the quick profile removes it from localStorage and it does not return after reload.",
+        "If localStorage is unavailable or contains invalid data, the app fails gracefully (no crash) and behaves as if no quick profile is set."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/settings/UiScaleControl.tsx",
-          "operation": "modify",
-          "description": "Enforce bounded min/max scale values (e.g., 70–130%) and clamp any direct input/preset selection accordingly; update the preference immediately so the UI updates live. Prefer shadcn-ui controls for a consistent mobile UX. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/lib/quickChatProfileStorage.ts",
+          "operation": "create",
+          "description": "Add a small storage module for a single Quick Chat Profile record stored in localStorage (e.g., displayName string and avatar image data URL string), including load/validate helpers, save, and clear; handle JSON parse errors, missing fields, oversized/invalid values defensively, and treat failures as 'no quick profile'."
         },
         {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wrap the rendered application content in a single scaling container (e.g., a root wrapper div) that reads the global CSS scale variable so scaling applies consistently across Session layout (sidebar/header/chat/doc editors). Keep structure compatible with existing layout and error boundary/provider setup."
+          "path": "frontend/src/hooks/useQuickChatProfile.ts",
+          "operation": "create",
+          "description": "Create a React hook that loads the quick profile on mount, exposes current quick profile state, and provides save/clear actions backed by quickChatProfileStorage; ensure it tolerates localStorage errors and keeps the app stable."
         },
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/lib/clearLocalAppData.ts",
           "operation": "modify",
-          "description": "Add global styles to support whole-app scaling using a CSS variable (e.g., --ui-scale) with a safe default (1). Implement scaling in a way that preserves scroll/overflow usability (e.g., scale via transform/zoom plus compensating width/height rules on the app wrapper and appropriate transform-origin)."
+          "description": "Include the Quick Chat Profile localStorage key in the app's local data clearing list so users can fully reset local state via existing recovery flows."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Apply the locally stored Quick Chat Profile to chat by overriding the current user's displayed author name and avatar in the UI and using the quick display name for newly composed roll messages and current-user comparisons, without affecting other users.",
+      "acceptanceCriteria": [
+        "When a quick display name is saved, newly posted messages in chat use that display name as the author/nickname.",
+        "When a quick profile picture is saved, the current user's chat messages render with that local picture as the avatar.",
+        "Other users’ avatars/names are unaffected and continue to use existing backend-based profile lookups.",
+        "If no quick profile is set, chat behavior remains exactly as before."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/SessionPage.tsx",
+          "operation": "modify",
+          "description": "Load the quick profile via the new useQuickChatProfile hook and derive an 'effective nickname' (quick display name when set, otherwise sessionContext.nickname); pass this effective nickname into ChannelChatView so composing UI (including roll-message construction) uses the quick display name when present while preserving existing behavior when absent."
+        },
+        {
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "operation": "modify",
+          "description": "Use the provided nickname prop as the composing/display name for outgoing message composition where applicable (e.g., roll message text that currently embeds nickname) and ensure the UI continues to function identically when no quick profile is set."
+        },
+        {
+          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
+          "operation": "modify",
+          "description": "Integrate useQuickChatProfile and useInternetIdentity to (a) reliably detect whether a message belongs to the current user using principal comparison (not nickname string equality) and (b) override only the current user's displayed author name and Avatar imageUrl with the locally stored quick profile values when set; keep other users’ rendering based on existing backend profile lookups."
         }
       ]
     }

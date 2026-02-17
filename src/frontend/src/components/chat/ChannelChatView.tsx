@@ -50,10 +50,9 @@ export default function ChannelChatView({
   });
 
   const handleSendMessage = async () => {
-    if (!actor || !messageInput.trim() || isSending) return;
+    if (!actor || !messageInput.trim()) return;
 
     const content = messageInput.trim();
-    const replyToId = replyTarget?.id || null;
     setIsSending(true);
 
     try {
@@ -63,20 +62,17 @@ export default function ChannelChatView({
         const validation = parseRollCommand(pattern);
 
         if (!validation.valid) {
-          alert(validation.error);
+          alert(validation.error || 'Invalid roll command');
           setIsSending(false);
           return;
         }
 
-        // Execute roll
         const result = await actor.roll(sessionId, pattern);
-        
-        // Post roll result as message
-        const rollMessage = `🎲 ${nickname} rolled ${result.pattern}: ${result.rolls.map(r => r.toString()).join(', ')}${result.modifier !== 0n ? ` ${result.modifier > 0n ? '+' : ''}${result.modifier}` : ''} = **${result.total}**`;
-        await actor.postMessage(sessionId, channelId, rollMessage, null, replyToId);
+        const rollMessage = `🎲 **${nickname}** rolled ${result.pattern}: ${result.rolls.map((r) => r.toString()).join(', ')}${result.modifier !== 0n ? ` ${result.modifier > 0n ? '+' : ''}${result.modifier}` : ''} = **${result.total}**`;
+
+        await actor.postMessage(sessionId, channelId, rollMessage, null, replyTarget?.id || null);
       } else {
-        // Regular message
-        await actor.postMessage(sessionId, channelId, content, null, replyToId);
+        await actor.postMessage(sessionId, channelId, content, null, replyTarget?.id || null);
       }
 
       setMessageInput('');
@@ -84,26 +80,23 @@ export default function ChannelChatView({
       onMessagesChanged();
     } catch (error) {
       console.error('Failed to send message:', error);
-      alert('Failed to send message. Please try again.');
+      alert('Failed to send message');
     } finally {
       setIsSending(false);
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file || !actor) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file.');
+      alert('Please select an image file');
       return;
     }
 
-    // Validate file size (10MB limit)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      alert('Image size must not exceed 10MB.');
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be smaller than 5MB');
       return;
     }
 
@@ -111,158 +104,144 @@ export default function ChannelChatView({
     setUploadProgress(0);
 
     try {
-      // Read file as bytes
       const arrayBuffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-
-      // Create ExternalBlob with upload progress tracking
-      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((percentage) => {
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const blob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((percentage) => {
         setUploadProgress(percentage);
       });
 
-      // Post message with image attachment
-      const content = messageInput.trim() || '📷 Image';
-      const replyToId = replyTarget?.id || null;
-      await actor.postMessage(sessionId, channelId, content, blob, replyToId);
+      const caption = messageInput.trim() || '';
+      await actor.postMessage(sessionId, channelId, caption, blob, replyTarget?.id || null);
 
-      // Clear input and reset state
       setMessageInput('');
       setReplyTarget(null);
-      setUploadProgress(null);
       onMessagesChanged();
-
-      // Reset file input
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      alert('Failed to upload image');
+    } finally {
+      setIsSending(false);
+      setUploadProgress(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error) {
-      console.error('Failed to upload image:', error);
-      alert('Failed to upload image. Please try again.');
-      setUploadProgress(null);
-    } finally {
-      setIsSending(false);
     }
   };
 
-  const handleImageButtonClick = () => {
-    fileInputRef.current?.click();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   const handleLongPress = (message: Message) => {
     setReplyTarget(message);
   };
 
-  const clearReplyTarget = () => {
+  const handleCancelReply = () => {
     setReplyTarget(null);
-  };
-
-  const truncateText = (text: string, maxLength: number = 60): string => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
   };
 
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Channel Header */}
-      <div className="border-b border-border px-6 py-4">
-        <h2 className="text-xl font-semibold">#{channelName}</h2>
-        <p className="text-sm text-muted-foreground">
-          {messages.length} messages
-        </p>
+      <div className="border-b border-border bg-card px-4 py-3">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <span className="text-muted-foreground">#</span>
+          {channelName}
+        </h2>
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 px-6 py-4">
-        <div ref={scrollRef} className="space-y-4">
-          {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <p>No messages yet. Start the conversation!</p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <ChatMessageItem
-                key={message.id.toString()}
-                message={message}
-                members={members}
-                currentNickname={nickname}
-                messagesMap={messagesMap}
-                onLongPress={handleLongPress}
-              />
-            ))
-          )}
+      {/* Messages Area */}
+      <ScrollArea className="flex-1 px-4">
+        <div ref={scrollRef} className="py-4 space-y-4">
+          {messages.map((message) => (
+            <ChatMessageItem
+              key={message.id.toString()}
+              message={message}
+              members={members}
+              currentNickname={nickname}
+              messagesMap={messagesMap}
+              onLongPress={handleLongPress}
+            />
+          ))}
         </div>
       </ScrollArea>
 
-      {/* Message Input */}
-      <div className="border-t border-border px-6 py-4">
-        {/* Reply Preview */}
-        {replyTarget && (
-          <div className="mb-3 bg-muted/50 rounded-lg p-3 flex items-start gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-muted-foreground mb-1">You replied</p>
-              <p className="text-sm text-foreground line-clamp-2">
-                {truncateText(replyTarget.content || '📷 Image')}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 shrink-0"
-              onClick={clearReplyTarget}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+      {/* Reply Preview */}
+      {replyTarget && (
+        <div className="px-4 py-2 bg-muted/50 border-t border-border flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-muted-foreground">
+              Replying to {replyTarget.author}
+            </p>
+            <p className="text-sm truncate">
+              {replyTarget.content || '📷 Image'}
+            </p>
           </div>
-        )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCancelReply}
+            className="ml-2"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
+      {/* Input Area */}
+      <div className="border-t border-border bg-card p-4">
         <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSending}
+          >
+            <Image className="h-4 w-4" />
+          </Button>
           <Textarea
+            placeholder={`Message #${channelName} or /roll 2d6+3`}
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
-            placeholder="Type a message... (Use /roll d20 for dice)"
-            className="resize-none"
-            rows={2}
+            onKeyDown={handleKeyDown}
             disabled={isSending}
+            className="min-h-[60px] max-h-[120px] resize-none"
           />
-          <div className="flex flex-col gap-2">
-            <Button
-              onClick={handleImageButtonClick}
-              disabled={isSending}
-              size="icon"
-              variant="outline"
-              title="Upload image"
-            >
-              {uploadProgress !== null ? (
-                <span className="text-xs font-medium">{Math.round(uploadProgress)}%</span>
-              ) : (
-                <Image className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              onClick={handleSendMessage}
-              disabled={!messageInput.trim() || isSending}
-              size="icon"
-              className="self-end"
-            >
-              {isSending && uploadProgress === null ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={handleSendMessage}
+            disabled={isSending || !messageInput.trim()}
+            size="icon"
+          >
+            {isSending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Use the Send button to send your message or the image button to upload a picture
-        </p>
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-        />
+        {uploadProgress !== null && (
+          <div className="mt-2">
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className="bg-primary h-2 rounded-full transition-all"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Uploading: {uploadProgress}%
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

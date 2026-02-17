@@ -1,28 +1,61 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T22:18:38.112Z",
-  "summary": "Implemented a UI scale settings popover in the Session sidebar header, added a localStorage-backed uiScale preference with default 100%, and applied the scale across the app via a CSS variable and transform-based wrapper. One notable gap is that the Settings control is hidden when the sidebar is collapsed.",
+  "generatedAt": "2026-02-17T12:13:09.540Z",
+  "summary": "Diff adds a locally-stored Quick Chat Profile (name + avatar) with a sidebar header button, a dialog component, localStorage persistence helpers, and uses the quick profile to override the current user’s displayed name/avatar in chat UI. However, some acceptance-criteria details (dialog actions UI and applying nickname to backend posts) are not clearly evidenced in the provided truncated diff.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "A settings button is visible in the sidebar header row (same area as the existing collapse/expand button).",
-      "reason": "The Settings control is conditionally rendered only when the sidebar is not collapsed, so it is not visible in the sidebar header row while collapsed.",
+      "id": "REQ-2",
+      "requirement": "Dialog/popover must provide actions to Save, Cancel, and Clear, with Cancel closing without changing stored quick profile and Clear removing stored data and updating UI.",
+      "reason": "QuickChatProfileDialog.tsx is truncated; the diff shows save/clear handlers but does not show rendered Save/Cancel/Clear buttons (or a Cancel action) in the UI, so the required actions cannot be verified from the evidence provided.",
       "evidence": [
-        "frontend/src/components/session/SessionSidebar.tsx (\"{!isCollapsed && <UiScaleControl />}\" in header)"
+        "frontend/src/components/profile/QuickChatProfileDialog.tsx (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Outgoing chat messages should use the quick display name as the nickname sent to the backend when posting messages.",
+      "reason": "ChannelChatView.tsx shows actor.postMessage(...) calls that do not include a nickname parameter, and the diff does not show any other backend submission path where quickProfile.displayName is sent as the author/nickname. SessionPage derives an effectiveNickname, but the truncated diff does not prove it is used in the backend posting path as required.",
+      "evidence": [
+        "frontend/src/components/chat/ChannelChatView.tsx (truncated)",
+        "frontend/src/pages/SessionPage.tsx (truncated)"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.74,
+  "hallucinated_features": [
+    {
+      "description": "Expanded clearLocalAppData to remove 'rpg_quick_chat_profile' key when clearing local app data.",
+      "reason": "BuildRequest does not mention updating the app-wide local data clearing utility; this is additional behavior beyond the specified quick-profile feature UI/storage/use in chat.",
+      "evidence": [
+        "frontend/src/lib/clearLocalAppData.ts"
+      ]
+    },
+    {
+      "description": "Changed /roll command handling to use validation.valid property and updated roll error flow.",
+      "reason": "BuildRequest is about quick profile editing/persistence and applying name/avatar; changes to roll command validation appear unrelated to requested requirements.",
+      "evidence": [
+        "frontend/src/components/chat/ChannelChatView.tsx (truncated)"
+      ]
+    },
+    {
+      "description": "Enforced that both display name and profile picture are required to Save a quick profile (errors if either missing).",
+      "reason": "Requirements specify editing a profile with name + picture and providing Save/Cancel/Clear, but do not state that both fields must be mandatory to save; this is a stricter UX rule not requested.",
+      "evidence": [
+        "frontend/src/components/profile/QuickChatProfileDialog.tsx (truncated)"
+      ]
+    }
+  ],
+  "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
+    "frontend/src/components/chat/ChannelChatView.tsx",
+    "frontend/src/components/chat/ChatMessageItem.tsx",
+    "frontend/src/components/profile/QuickChatProfileDialog.tsx",
     "frontend/src/components/session/SessionSidebar.tsx",
-    "frontend/src/components/settings/UiScaleControl.tsx",
-    "frontend/src/context/PreferencesContext.tsx",
-    "frontend/src/index.css",
-    "frontend/src/lib/preferencesStorage.ts",
+    "frontend/src/hooks/useQuickChatProfile.ts",
+    "frontend/src/lib/clearLocalAppData.ts",
+    "frontend/src/lib/quickChatProfileStorage.ts",
+    "frontend/src/pages/SessionPage.tsx",
     "project_state.json"
   ]
 }

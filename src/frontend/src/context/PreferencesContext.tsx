@@ -28,12 +28,6 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     }
   }, [preferences.themeMode]);
 
-  // Apply UI scale changes immediately to document
-  useEffect(() => {
-    const scale = preferences.uiScale / 100;
-    document.documentElement.style.setProperty('--ui-scale', scale.toString());
-  }, [preferences.uiScale]);
-
   const updatePreferences = (updates: Partial<UserPreferences>) => {
     const newPreferences = { ...preferences, ...updates };
     savePreferences(newPreferences);

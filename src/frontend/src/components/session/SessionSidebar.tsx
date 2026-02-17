@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { useQuickChatProfile } from '../../hooks/useQuickChatProfile';
 import type { Channel, MembersChannel } from '../../backend';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
-import { Hash, Plus, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Hash, Plus, MoreVertical, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +15,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import ChannelManagementDialogs from './ChannelManagementDialogs';
 import MembersChannelManagementDialogs from './MembersChannelManagementDialogs';
-import UiScaleControl from '../settings/UiScaleControl';
+import UIScaleSettingsPopover from '../settings/UIScaleSettingsPopover';
+import QuickChatProfileDialog from '../profile/QuickChatProfileDialog';
 
 type SessionSidebarProps = {
   sessionId: bigint;
@@ -40,15 +42,50 @@ export default function SessionSidebar({
   onMembersChannelsChanged,
 }: SessionSidebarProps) {
   const { identity } = useInternetIdentity();
+  const { profile: quickProfile, save: saveQuickProfile, clear: clearQuickProfile } = useQuickChatProfile();
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [showCreateMembersChannel, setShowCreateMembersChannel] = useState(false);
+  const [showQuickProfileDialog, setShowQuickProfileDialog] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <aside className={`border-r border-border bg-card flex flex-col transition-all duration-300 ${isCollapsed ? 'w-14' : 'w-64'}`}>
-      {/* Header with Toggle and Settings */}
-      <div className={`flex items-center gap-1 ${isCollapsed ? 'justify-center' : 'justify-between'} p-2 border-b border-border`}>
-        {!isCollapsed && <UiScaleControl />}
+      {/* Toggle Button and Settings */}
+      <div className={`flex items-center gap-1 ${isCollapsed ? 'justify-center' : 'justify-end'} p-2 border-b border-border`}>
+        {!isCollapsed && (
+          <>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setShowQuickProfileDialog(true)}
+                    aria-label="Open quick profile"
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  Quick profile
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <UIScaleSettingsPopover />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  UI Scale Settings
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </>
+        )}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -194,6 +231,15 @@ export default function SessionSidebar({
         open={showCreateMembersChannel}
         onOpenChange={setShowCreateMembersChannel}
         onSuccess={onMembersChannelsChanged}
+      />
+
+      {/* Quick Chat Profile Dialog */}
+      <QuickChatProfileDialog
+        open={showQuickProfileDialog}
+        onOpenChange={setShowQuickProfileDialog}
+        currentProfile={quickProfile}
+        onSave={saveQuickProfile}
+        onClear={clearQuickProfile}
       />
     </aside>
   );

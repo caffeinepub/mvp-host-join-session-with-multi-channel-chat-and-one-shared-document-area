@@ -89,6 +89,9 @@ function AppInner() {
     queryClient.clear();
   };
 
+  // Calculate scale factor
+  const scaleFactor = preferences.uiScalePercent / 100;
+
   // Loading state - only show while truly initializing
   if (isInitializing || (isAuthenticated && actorFetching)) {
     return (
@@ -223,9 +226,17 @@ function AppInner() {
     );
   }
 
-  // Main app content with scaling wrapper
+  // Authenticated and profile exists
   return (
-    <div className="app-scale-wrapper">
+    <div 
+      className="app-scale-root"
+      style={{
+        transform: `scale(${scaleFactor})`,
+        transformOrigin: 'top left',
+        width: `${100 / scaleFactor}%`,
+        height: `${100 / scaleFactor}%`,
+      }}
+    >
       {sessionContext ? (
         <SessionPage
           sessionContext={sessionContext}

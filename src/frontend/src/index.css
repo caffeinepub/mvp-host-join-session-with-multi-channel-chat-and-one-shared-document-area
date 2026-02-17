@@ -4,52 +4,58 @@
 
 @layer base {
   :root {
-    /* UI Scale variable - default to 1 (100%) */
-    --ui-scale: 1;
-
-    /* Color system using OKLCH - warm green accent palette */
-    --background: 98% 0.01 120;
-    --foreground: 20% 0.02 120;
-    --card: 100% 0 0;
-    --card-foreground: 20% 0.02 120;
-    --popover: 100% 0 0;
-    --popover-foreground: 20% 0.02 120;
+    --background: 96% 0.01 106;
+    --foreground: 20% 0.01 106;
+    --card: 98% 0.01 106;
+    --card-foreground: 20% 0.01 106;
+    --popover: 98% 0.01 106;
+    --popover-foreground: 20% 0.01 106;
     --primary: 45% 0.15 145;
     --primary-foreground: 98% 0.01 145;
-    --secondary: 92% 0.03 145;
-    --secondary-foreground: 25% 0.03 145;
-    --muted: 94% 0.02 120;
-    --muted-foreground: 50% 0.03 120;
-    --accent: 88% 0.08 145;
-    --accent-foreground: 25% 0.03 145;
-    --destructive: 55% 0.22 25;
+    --secondary: 92% 0.02 106;
+    --secondary-foreground: 20% 0.01 106;
+    --muted: 94% 0.02 106;
+    --muted-foreground: 50% 0.01 106;
+    --accent: 50% 0.12 145;
+    --accent-foreground: 98% 0.01 145;
+    --destructive: 55% 0.20 25;
     --destructive-foreground: 98% 0.01 25;
-    --border: 88% 0.02 120;
-    --input: 88% 0.02 120;
+    --border: 88% 0.02 106;
+    --input: 88% 0.02 106;
     --ring: 45% 0.15 145;
     --radius: 0.5rem;
+    --chart-1: 60% 0.15 145;
+    --chart-2: 65% 0.12 180;
+    --chart-3: 55% 0.18 120;
+    --chart-4: 70% 0.10 200;
+    --chart-5: 50% 0.20 160;
   }
 
   .dark {
-    --background: 15% 0.02 120;
-    --foreground: 95% 0.01 120;
-    --card: 18% 0.02 120;
-    --card-foreground: 95% 0.01 120;
-    --popover: 18% 0.02 120;
-    --popover-foreground: 95% 0.01 120;
-    --primary: 55% 0.18 145;
-    --primary-foreground: 15% 0.02 145;
-    --secondary: 25% 0.03 145;
-    --secondary-foreground: 92% 0.02 145;
-    --muted: 25% 0.03 120;
-    --muted-foreground: 65% 0.03 120;
-    --accent: 30% 0.08 145;
-    --accent-foreground: 95% 0.01 145;
+    --background: 15% 0.01 106;
+    --foreground: 95% 0.01 106;
+    --card: 18% 0.01 106;
+    --card-foreground: 95% 0.01 106;
+    --popover: 18% 0.01 106;
+    --popover-foreground: 95% 0.01 106;
+    --primary: 55% 0.15 145;
+    --primary-foreground: 15% 0.01 145;
+    --secondary: 25% 0.02 106;
+    --secondary-foreground: 95% 0.01 106;
+    --muted: 22% 0.02 106;
+    --muted-foreground: 65% 0.01 106;
+    --accent: 60% 0.12 145;
+    --accent-foreground: 15% 0.01 145;
     --destructive: 50% 0.20 25;
     --destructive-foreground: 95% 0.01 25;
-    --border: 25% 0.03 120;
-    --input: 25% 0.03 120;
-    --ring: 55% 0.18 145;
+    --border: 28% 0.02 106;
+    --input: 28% 0.02 106;
+    --ring: 55% 0.15 145;
+    --chart-1: 65% 0.15 145;
+    --chart-2: 70% 0.12 180;
+    --chart-3: 60% 0.18 120;
+    --chart-4: 75% 0.10 200;
+    --chart-5: 55% 0.20 160;
   }
 }
 
@@ -59,23 +65,13 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
   }
-}
-
-/* UI Scaling - applied to main app content */
-.app-scale-wrapper {
-  transform: scale(var(--ui-scale));
-  transform-origin: top left;
-  width: calc(100% / var(--ui-scale));
-  height: calc(100% / var(--ui-scale));
-  min-height: calc(100vh / var(--ui-scale));
 }
 
 /* Chat-specific utilities */
 @layer utilities {
   .reply-indicator {
-    @apply border-l-4 border-primary/50 pl-3 py-1 bg-primary/5 rounded-r;
+    @apply border-l-4 border-accent pl-2 py-1 bg-accent/10 rounded-r;
   }
   
   .line-clamp-2 {
@@ -84,4 +80,24 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+}
+
+/* Global UI scaling support */
+.app-scale-root {
+  min-height: 100vh;
+  min-width: 100vw;
+  overflow: auto;
+}
+
+/* Ensure proper scrolling behavior with scaling */
+html, body {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
