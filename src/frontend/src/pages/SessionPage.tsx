@@ -13,6 +13,7 @@ import PlayerDocumentEditorView from '../components/docs/PlayerDocumentEditorVie
 import DocumentEditorView from '../components/docs/DocumentEditorView';
 import PlayerDocumentsDialog from '../components/session/PlayerDocumentsDialog';
 import SessionDocumentsDialog from '../components/session/SessionDocumentsDialog';
+import CommunitiesHubPage from './CommunitiesHubPage';
 import { Button } from '../components/ui/button';
 import { LogOut, ArrowLeft, Users, FileText, FolderOpen } from 'lucide-react';
 import { Separator } from '../components/ui/separator';
@@ -35,6 +36,15 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
   const [selectedSessionDocumentId, setSelectedSessionDocumentId] = useState<bigint | null>(null);
   const [showPlayerDocuments, setShowPlayerDocuments] = useState(false);
   const [showSessionDocuments, setShowSessionDocuments] = useState(false);
+  const [showCommunitiesHub, setShowCommunitiesHub] = useState(false);
+
+  // Store previous view state for restoration
+  const [previousViewState, setPreviousViewState] = useState<{
+    viewType: ViewType;
+    channelId: bigint | null;
+    playerDocId: bigint | null;
+    sessionDocId: bigint | null;
+  } | null>(null);
 
   const {
     session,
@@ -98,7 +108,34 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
     setViewType('playerDocument');
   };
 
+  const handleShowCommunitiesHub = () => {
+    // Store current view state
+    setPreviousViewState({
+      viewType,
+      channelId: selectedChannelId,
+      playerDocId: selectedPlayerDocumentId,
+      sessionDocId: selectedSessionDocumentId,
+    });
+    setShowCommunitiesHub(true);
+  };
+
+  const handleBackToSession = () => {
+    setShowCommunitiesHub(false);
+    // Restore previous view state
+    if (previousViewState) {
+      setViewType(previousViewState.viewType);
+      setSelectedChannelId(previousViewState.channelId);
+      setSelectedPlayerDocumentId(previousViewState.playerDocId);
+      setSelectedSessionDocumentId(previousViewState.sessionDocId);
+    }
+  };
+
   const isHost = identity?.getPrincipal().toString() === session?.host.toString();
+
+  // Show Communities Hub if active
+  if (showCommunitiesHub) {
+    return <CommunitiesHubPage onBackToSession={handleBackToSession} />;
+  }
 
   return (
     <div className="session-page-container">
@@ -155,41 +192,51 @@ export default function SessionPage({ sessionContext, onLeaveSession, onLogout }
         />
 
         {/* Main Panel */}
-        <main className="flex-1 overflow-hidden">
-          {viewType === 'channel' && selectedChannelId && (
-            <ChannelChatView
-              sessionId={sessionContext.sessionId}
-              channelId={selectedChannelId}
-              channelName={
-                channels?.find((c) => c.id === selectedChannelId)?.name ||
-                membersChannels?.find((c) => c.id === selectedChannelId)?.name ||
-                ''
-              }
-              nickname={effectiveNickname}
-              messages={messages || []}
-              members={session?.members || []}
-              onMessagesChanged={refetchMessages}
-            />
-          )}
-          {viewType === 'playerDocument' && selectedPlayerDocumentId && (
-            <PlayerDocumentEditorView
-              documentId={selectedPlayerDocumentId}
-              onDocumentChanged={refetchPlayerDocuments}
-            />
-          )}
-          {viewType === 'sessionDocument' && selectedSessionDocumentId && currentSessionDocument && (
-            <DocumentEditorView
-              document={currentSessionDocument}
-              isHost={isHost}
-              sessionId={sessionContext.sessionId}
-              onDocumentChanged={refetchCurrentSessionDocument}
-            />
-          )}
-          {!selectedChannelId && !selectedPlayerDocumentId && !selectedSessionDocumentId && (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              <p>Select a channel or document to get started</p>
-            </div>
-          )}
+        <main className="flex-1 overflow-hidden flex flex-col">
+          {/* Communities Button Row */}
+          <div className="border-b border-border bg-card px-4 py-2 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={handleShowCommunitiesHub}>
+              Communities
+            </Button>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-1 overflow-hidden">
+            {viewType === 'channel' && selectedChannelId && (
+              <ChannelChatView
+                sessionId={sessionContext.sessionId}
+                channelId={selectedChannelId}
+                channelName={
+                  channels?.find((c) => c.id === selectedChannelId)?.name ||
+                  membersChannels?.find((c) => c.id === selectedChannelId)?.name ||
+                  ''
+                }
+                nickname={effectiveNickname}
+                messages={messages || []}
+                members={session?.members || []}
+                onMessagesChanged={refetchMessages}
+              />
+            )}
+            {viewType === 'playerDocument' && selectedPlayerDocumentId && (
+              <PlayerDocumentEditorView
+                documentId={selectedPlayerDocumentId}
+                onDocumentChanged={refetchPlayerDocuments}
+              />
+            )}
+            {viewType === 'sessionDocument' && selectedSessionDocumentId && currentSessionDocument && (
+              <DocumentEditorView
+                document={currentSessionDocument}
+                isHost={isHost}
+                sessionId={sessionContext.sessionId}
+                onDocumentChanged={refetchCurrentSessionDocument}
+              />
+            )}
+            {!selectedChannelId && !selectedPlayerDocumentId && !selectedSessionDocumentId && (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                <p>Select a channel or document to get started</p>
+              </div>
+            )}
+          </div>
         </main>
       </div>
 

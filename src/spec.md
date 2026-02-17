@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Enhance the existing document preview so it can display a few additional lightweight markup patterns (centering, sizing, spoiler reveal, underline) without changing stored document text.
+**Goal:** Let users remove communities from the “My Communities” section and keep those removals after reload.
 
 **Planned changes:**
-- Extend `DocumentContentPreview` rendering to recognize line-based prefixes: `[C] ` (center), `[B] ` (large), `# ` (extra-large heading), and `-# ` (extra-small).
-- Add inline parsing for `||spoiler||` segments that are hidden by default and reveal on click/tap with keyboard-accessible interaction.
-- Add inline parsing for `__underlined__` so only the wrapped text is underlined (including cases like `- __text__`), while preserving surrounding characters.
-- Ensure the new markup rendering works anywhere preview text appears, including when mixed with existing `[FILE:id:name]` markers, and keep file marker rendering behavior unchanged.
+- Add a clear, accessible remove action on each “My Communities” card that does not interfere with the existing “Open” button.
+- Add an English confirmation step before removing a community from “My Communities”.
+- Persist removed communities locally (e.g., localStorage) so they stay removed after refresh, and restore defaults when local persistence is cleared.
+- Ensure removal only affects “My Communities” and does not change the “Discover” section.
 
-**User-visible outcome:** When viewing documents in the main session preview panel (and anywhere else `DocumentContentPreview` is used), users can type the specified patterns and immediately see centered/bigger/smaller/heading text, clickable spoilers, and underlined segments in preview—while the saved text remains exactly what they typed.
+**User-visible outcome:** Users can remove communities from “My Communities” with a confirmation prompt, and removed items remain hidden after reloading the app while “Discover” stays unchanged.

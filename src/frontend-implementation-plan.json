@@ -1,36 +1,62 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add lightweight markup rendering to DocumentContentPreview",
+  "title": "Communities Hub: Remove (hide) My Communities with local persistence",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Extend DocumentContentPreview to render centered, sized, heading, tiny, spoiler, and underlined lightweight markup in preview mode (including around [FILE:id:name] markers) without changing stored content.",
+      "summary": "Add an accessible remove action with confirmation on each card in the \"My Communities\" grid and remove it immediately from the UI.",
       "acceptanceCriteria": [
-        "Given document content containing lines starting with \"[C] \", the preview displays those lines centered (e.g., using Tailwind text-center) while preserving line breaks.",
-        "Given document content containing lines starting with \"[B] \", the preview displays those lines with noticeably larger font size than normal preview text.",
-        "Given document content containing lines starting with \"# \", the preview displays those lines as an extra-large heading style (largest of the provided options).",
-        "Given document content containing lines starting with \"-# \", the preview displays those lines as extra-small text (smaller than normal preview text).",
-        "Given document content containing \"||spoiler text||\", the preview hides the spoiler text by default and reveals it on click/tap; the interaction is accessible via keyboard (e.g., focusable + Enter/Space) and does not affect non-spoiler text.",
-        "Given document content containing \"__underlined__\" (including within a bullet like \"- __underlined__\"), the preview renders just the wrapped text underlined, leaving surrounding characters like \"- \" intact.",
-        "File marker rendering remains unchanged: images still render inline; non-image files still render as attachment rows; and text segments around file markers still apply the new markup rules where applicable.",
-        "No backend changes are required; the raw stored content remains exactly as typed, with markup applied only in preview rendering."
+        "Each card in the \"My Communities\" grid provides a clear remove action (e.g., a remove button/menu) that is accessible and does not interfere with the existing \"Open\" button.",
+        "When the user triggers the remove action, the community is removed from the \"My Communities\" list immediately in the UI.",
+        "A confirmation step is shown before removal to prevent accidental deletes (user-facing text must be in English)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/documentPreviewMarkup.ts",
+          "path": "frontend/src/pages/CommunitiesHubPage.tsx",
+          "operation": "modify",
+          "description": "Add a per-card remove control (e.g., a small ghost/icon button with aria-label) in the \"My Communities\" cards that triggers an English confirmation step before hiding the card; update the rendered \"My Communities\" list immediately after confirmation without impacting the existing \"Open\" button layout/interaction. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Persist removed \"My Communities\" locally (localStorage) and restore/clear it via existing clear/reset local data flows.",
+      "acceptanceCriteria": [
+        "After removing one or more communities, reloading the app does not show the removed communities in \"My Communities\".",
+        "Persistence is implemented entirely on the frontend (e.g., localStorage) without requiring backend changes.",
+        "If local persistence is cleared (via existing clear/reset flows), the default \"My Communities\" list reappears."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/myCommunitiesHiddenStorage.ts",
           "operation": "create",
-          "description": "Add helper utilities to tokenize document preview content into line-aware tokens (text + file marker placeholders) and render lightweight preview markup for line prefixes ([C], [B], #, -#) and inline patterns (||spoiler||, __underline__) without mutating the original content."
+          "description": "Implement a small localStorage-backed helper for \"hidden my community ids\" (load/save/add/remove/clear) with basic JSON parsing guards and a dedicated storage key. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/docs/DocumentContentPreview.tsx",
+          "path": "frontend/src/pages/CommunitiesHubPage.tsx",
           "operation": "modify",
-          "description": "Update preview rendering to be line-aware across mixed text and [FILE:id:name] markers: render each line with appropriate Tailwind styling for [C]/[B]/#/-# prefixes (removing the prefix only in preview), and render inline spoiler (click/tap + keyboard accessible reveal) and underline spans within text while preserving existing inline image rendering and attachment-row rendering for file markers."
+          "description": "Wire the hidden-ids storage into the page: initialize hidden ids on mount/render, filter the hardcoded MY_COMMUNITIES list accordingly, and on successful confirmation persist the newly hidden id so it stays hidden across refresh/reload. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/docs/regression-test-plan-player-document-uploads.md",
+          "path": "frontend/src/lib/clearLocalAppData.ts",
           "operation": "modify",
-          "description": "Append manual regression checks for the new preview-only markup rules (center/big/heading/tiny/spoiler/underline) including cases where markup appears before/after [FILE:id:name] markers and in both session and player document preview modes."
+          "description": "Add the new hidden-my-communities localStorage key to the app's existing clear/reset local data list so \"Clear Local Data\" restores the default \"My Communities\" list. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Scope removal behavior to only affect the \"My Communities\" section and keep \"Discover\" unchanged.",
+      "acceptanceCriteria": [
+        "Removing a community from \"My Communities\" does not change the \"Discover\" grid.",
+        "The \"Discover\" list remains fully functional and renders the same items as before."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/CommunitiesHubPage.tsx",
+          "operation": "modify",
+          "description": "Ensure filtering/removal logic is applied only to the MY_COMMUNITIES rendering path (e.g., filter only that array) and leave DISCOVER_COMMUNITIES rendering untouched; confirm the Discover grid continues to render the original items and behavior. Verify the component's usage instructions before implementing."
         }
       ]
     }

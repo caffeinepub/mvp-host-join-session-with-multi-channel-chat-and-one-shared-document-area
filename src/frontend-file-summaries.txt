@@ -1,7 +1,7 @@
 {
-  "frontend/src/App.tsx": "Main application component with error boundary, preferences provider, authentication flow, profile setup, routing between Lobby and Session, and global UI scaling applied via CSS transform based on user preferences.",
+  "frontend/src/App.tsx": "Main application component with error boundary, preferences provider, authentication flow, profile setup, routing between Lobby and Session, startup failure detection and display, and global UI scaling applied via CSS transform based on user preferences.",
   "frontend/src/pages/LobbyPage.tsx": "Lobby page with Host/Join tabs, Settings navigation, template application on host, and nickname pre-filling from preferences.",
-  "frontend/src/pages/SessionPage.tsx": "Main session screen with mobile-friendly container layout using dynamic viewport height and flex-based overflow control for fixed-height chat areas.",
+  "frontend/src/pages/SessionPage.tsx": "Main session screen with mobile-friendly container layout, Communities button that navigates to CommunitiesHubPage while preserving session view state (channel/document selection), and Back to Session restoration logic that returns to the previous view without resetting context.",
   "frontend/src/components/session/SessionSidebar.tsx": "Session sidebar with collapsible toggle state, quick profile button, UI scale settings button in header control row, channel lists with selection state, and accessible tooltips for all header actions.",
   "frontend/src/components/session/ChannelManagementDialogs.tsx": "Reusable dialogs for creating, renaming, and deleting channels with backend integration and error handling.",
   "frontend/src/components/session/DocumentManagementDialogs.tsx": "Reusable dialogs for creating, renaming, locking/unlocking, and deleting documents with backend integration; now surfaces newly created document ID via onCreated callback for immediate selection.",
@@ -14,7 +14,7 @@
   "frontend/src/lib/sessionStorage.ts": "Helper functions for persisting and restoring session context in localStorage across page refreshes.",
   "frontend/src/lib/rollCommand.ts": "Dice roll command parser and validator for /roll syntax checking before backend submission.",
   "frontend/src/lib/time.ts": "Timestamp formatting utility converting bigint nanoseconds to human-readable time strings.",
-  "frontend/src/index.css": "Global styles with OKLCH color system, mobile-friendly session page and chat view layout classes using dynamic viewport height and flex-based overflow control for fixed-height scrollable areas.",
+  "frontend/src/index.css": "Global styles with OKLCH color system, mobile-friendly session page and chat view layout classes using dynamic viewport height, and new Communities Hub cosmic theme styles including background gradients, card styling, floating action button, and fixed bottom navigation with active state indicators.",
   "frontend/src/hooks/usePreferences.ts": "Re-exports usePreferences hook from PreferencesContext for backwards compatibility.",
   "frontend/src/lib/preferencesStorage.ts": "LocalStorage-backed persistence layer for user preferences including theme mode, background image, default nickname, and UI scale percentage (10-200%) with clamping validation.",
   "frontend/src/lib/templateHistoryStorage.ts": "LocalStorage helpers for saving, loading, clearing, and validating session template/history files for pre-lobby import.",
@@ -32,7 +32,7 @@
   "frontend/src/components/profile/ProfilePictureSection.tsx": "Profile picture management component with upload, preview, remove functionality, progress tracking, and validation for image files up to 5MB.",
   "frontend/src/main.tsx": "Application entry point wrapping App with QueryClientProvider and PreferencesProvider for reactive state management.",
   "frontend/src/components/app/AppErrorBoundary.tsx": "React error boundary component with enhanced messaging for initialization failures, network issues, and corrupted local data with reload and clear data recovery actions.",
-  "frontend/src/lib/clearLocalAppData.ts": "Utility function that clears all locally stored app data including preferences, session context, template history, and quick chat profile from localStorage and sessionStorage.",
+  "frontend/src/lib/clearLocalAppData.ts": "Utility function that clears all locally stored app data including preferences, session context, template history, quick chat profile, and hidden my communities from localStorage and sessionStorage.",
   "frontend/src/lib/documentFileMarkers.ts": "Utilities for creating, parsing, inserting, and removing file attachment markers in document content using [FILE:id:filename] format.",
   "frontend/src/hooks/useDocumentFiles.ts": "React Query hooks for listing document files, fetching file references, and uploading files to documents with proper cache invalidation; upload mutation now includes validation to prevent backend calls with invalid document IDs.",
   "frontend/src/components/session/MembersChannelManagementDialogs.tsx": "Reusable dialogs for creating, renaming, and deleting members' channels with backend integration, permission checks, and error handling.",
@@ -51,5 +51,9 @@
   "frontend/src/hooks/useQuickChatProfile.ts": "React hook for managing quick chat profile state with load, save, and clear operations backed by quickChatProfileStorage with error tolerance.",
   "frontend/src/components/profile/QuickChatProfileDialog.tsx": "Dialog component for editing quick chat profile with display name input, image file picker with preview, Save/Cancel/Clear actions, and validation for image files up to 5MB.",
   "frontend/src/hooks/useActor.ts": "Actor initialization hook with hardened error handling, disabled automatic retries, and defensive access control initialization to prevent initialization hangs.",
-  "frontend/src/lib/documentPreviewMarkup.tsx": "Utility module for parsing and rendering lightweight markup in document previews including line prefixes ([C], [B], #, -#), inline spoilers (||text||), and underlines (__text__) with React components for interactive spoiler reveals."
+  "frontend/src/lib/documentPreviewMarkup.tsx": "Utility module for parsing and rendering lightweight markup in document previews including line prefixes ([C], [B], #, -#), inline spoilers (||text||), and underlines (__text__) with React components for interactive spoiler reveals.",
+  "frontend/src/components/app/StartupFailureScreen.tsx": "Reusable component displaying a user-friendly startup failure state with error explanation and two recovery actions (Reload Page and Clear Local Data & Reload).",
+  "frontend/src/hooks/useActorStartupGuard.ts": "Hook that monitors actor initialization via React Query state and a 15-second timeout, exposing startupFailed and reason when the actor query errors or remains fetching beyond the timeout.",
+  "frontend/src/pages/CommunitiesHubPage.tsx": "Mobile-first Communities Hub screen with cosmic dark theme, search bar, My Communities grid with removable cards (X button with confirmation dialog), activity badges, Discover section with Request to Join buttons, floating Create button with placeholder dialog, and fixed bottom navigation with four tabs (Communities active, My Chats/Profile/Notifications placeholders).",
+  "frontend/src/lib/myCommunitiesHiddenStorage.ts": "LocalStorage-backed persistence layer for hidden community IDs with load, save, add, remove, and clear operations with JSON parsing guards and error handling."
 }

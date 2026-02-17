@@ -13,6 +13,8 @@ import { Button } from './components/ui/button';
 import { Alert, AlertDescription } from './components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useActorStartupGuard } from './hooks/useActorStartupGuard';
+import { StartupFailureScreen } from './components/app/StartupFailureScreen';
 
 export type SessionContext = {
   sessionId: bigint;
@@ -25,6 +27,7 @@ function AppInner() {
   const { actor, isFetching: actorFetching } = useActor();
   const { preferences } = usePreferences();
   const queryClient = useQueryClient();
+  const { startupFailed, reason } = useActorStartupGuard();
   const [sessionContext, setSessionContext] = useState<SessionContext | null>(null);
   const [profileName, setProfileName] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
@@ -91,6 +94,11 @@ function AppInner() {
 
   // Calculate scale factor
   const scaleFactor = preferences.uiScalePercent / 100;
+
+  // Show startup failure screen if actor initialization failed
+  if (isAuthenticated && startupFailed) {
+    return <StartupFailureScreen reason={reason} />;
+  }
 
   // Loading state - only show while truly initializing
   if (isInitializing || (isAuthenticated && actorFetching)) {

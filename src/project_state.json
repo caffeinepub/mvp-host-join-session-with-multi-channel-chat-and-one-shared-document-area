@@ -1,16 +1,32 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project to add rich text/markup preview tools for centered, large, extra-large, extra-small, spoiler, and underlined text.",
+  "summary": "New project",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-extend-the-document-preview-renderer-used-in-the-main-session-panel-selected-element-xpath-html-1-body-1-div-1-div-1-div-1-div-1-main-1-div-1-div-2-div-1-so-that-plain-text-content-renders-additional-lightweight-markup-patterns-in-preview-mode-without-altering-stored-content-c-text-renders-as-centered-text-in-preview-b-text-renders-as-large-text-in-preview-text-renders-as-extra-large-heading-text-in-preview-text-renders-as-extra-small-text-in-preview-text-renders-as-spoiler-hidden-text-that-can-be-clicked-tapped-to-reveal-in-preview-text-including-when-used-like-text-renders-as-underlined-text-in-preview-this-must-work-anywhere-text-is-rendered-inside-documentcontentpreview-including-when-mixed-with-existing-file-id-name-markers-and-should-apply-to-both-session-documents-and-player-documents-since-both-use-the-same-preview-component",
-      "title": "Extend the document preview renderer used in the main session panel (selected element XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/main[1]/div[1]/div[2]/div[1]) so that plain-text content renders additional lightweight markup patterns in preview mode (without altering stored content):\n- \"[C] text\" renders as centered text in preview\n- \"[B] text\" renders as large text in preview\n- \"# text\" renders as extra-large heading text in preview\n- \"-# text\" renders as extra-small text in preview\n- \"||text||\" renders as spoiler/hidden text that can be clicked/tapped to reveal in preview\n- \"__text__\" (including when used like \"- __text__\") renders as underlined text in preview\nThis must work anywhere text is rendered inside DocumentContentPreview (including when mixed with existing [FILE:id:name] markers), and should apply to both session documents and player documents since both use the same preview component.",
+      "id": "feature-in-the-communities-hub-page-allow-the-user-to-remove-hide-delete-an-existing-community-card-from-the-my-communities-section",
+      "title": "In the Communities Hub page, allow the user to remove (hide/delete) an existing community card from the \"My Communities\" section.",
       "reqIds": [
         "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-persist-the-user-s-removed-my-communities-state-locally-so-removed-communities-stay-removed-after-page-refresh-reload",
+      "title": "Persist the user’s removed \"My Communities\" state locally so removed communities stay removed after page refresh/reload.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-removal-behavior-only-affects-the-my-communities-section-and-does-not-remove-or-change-items-in-the-discover-section",
+      "title": "Ensure the removal behavior only affects the \"My Communities\" section and does not remove or change items in the \"Discover\" section.",
+      "reqIds": [
+        "REQ-3"
       ],
       "version": 1
     }
@@ -18,12 +34,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add markup/formatting tools for preview: [C] centered, [B] large, # extra-large heading, -# extra-small, ||spoiler|| hidden text reveal, and __underlined__",
+      "summary": "Allow user to remove/delete existing communities from 'My Communities'",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Markup Preview Tools",
+  "projectName": "Communities Hub",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

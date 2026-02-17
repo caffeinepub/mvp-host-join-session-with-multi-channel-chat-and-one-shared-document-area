@@ -3,6 +3,7 @@ const STORAGE_KEYS = [
   'rpg_session_context',
   'rpg_template_history',
   'rpg_quick_chat_profile',
+  'rpg_hidden_my_communities',
 ];
 
 export function clearLocalAppData(): void {
