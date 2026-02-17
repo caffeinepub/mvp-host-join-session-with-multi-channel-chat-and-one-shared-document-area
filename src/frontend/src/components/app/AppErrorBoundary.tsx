@@ -45,8 +45,7 @@ export class AppErrorBoundary extends Component<Props, State> {
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Something went wrong</AlertTitle>
               <AlertDescription>
-                The application encountered an unexpected error. You can try reloading the page, or
-                clear your local data if the problem persists.
+                The application encountered an unexpected error. This may be due to initialization failure, network issues, or corrupted local data.
               </AlertDescription>
             </Alert>
 
@@ -72,8 +71,7 @@ export class AppErrorBoundary extends Component<Props, State> {
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              If the problem continues, please try using a different browser or clearing your
-              browser cache.
+              If the problem continues, please check your internet connection, try using a different browser, or clear your browser cache.
             </p>
           </div>
         </div>

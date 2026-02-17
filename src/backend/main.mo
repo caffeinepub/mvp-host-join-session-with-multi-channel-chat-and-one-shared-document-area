@@ -14,8 +14,6 @@ import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 import AccessControl "authorization/access-control";
 
-
-
 actor {
   include MixinStorage();
 

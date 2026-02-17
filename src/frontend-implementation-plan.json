@@ -1,98 +1,37 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Sidebar quick-profile editor with locally stored chat name and avatar overrides",
+  "title": "Session header: mobile-safe layout and reduced height",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Add a new quick-profile icon button to the Session sidebar header control row (without replacing existing UI scale and collapse controls), with English tooltip and aria-label, visible only when expanded.",
+      "id": "REQ-5",
+      "summary": "Make the Session page header fully visible on phone screens with no clipping or horizontal overflow by changing only the SessionPage <header>.",
       "acceptanceCriteria": [
-        "When the sidebar is expanded, a new icon button appears in the top header row alongside existing controls without layout breakage.",
-        "Hovering/focusing the button shows an English tooltip (e.g., \"Quick profile\").",
-        "The button has an aria-label in English (e.g., \"Open quick profile\").",
-        "Existing UI scale popover and collapse/expand behavior remain unchanged."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/session/SessionSidebar.tsx",
-          "operation": "modify",
-          "description": "Within the existing sidebar header container (the top control row in the aside header area), add an additional ghost icon button showing a 👨🏻‍🦱-style glyph that opens the Quick Chat Profile dialog; ensure it renders only when not collapsed, does not replace UIScaleSettingsPopover or collapse/expand button, and includes an English tooltip and aria-label."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Implement an in-app dialog/popover opened by the new sidebar button to edit a locally stored quick display name and avatar, with Save/Cancel/Clear actions in English.",
-      "acceptanceCriteria": [
-        "Clicking the new button opens a dialog/popover containing a name input and an image picker with preview.",
-        "Save persists the quick profile locally and closes the dialog/popover.",
-        "Cancel closes the dialog/popover without changing the stored quick profile.",
-        "Clear removes the stored quick profile data and updates the UI accordingly.",
-        "All labels/buttons/help text are in English."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/profile/QuickChatProfileDialog.tsx",
-          "operation": "create",
-          "description": "Create a Quick Chat Profile dialog component (using existing shadcn/ui primitives from frontend/src/components/ui without modifying them) that provides: a text input for display name, an image file picker with preview, and Save/Cancel/Clear actions; on Save, write to the quick-profile storage utility; on Cancel, close without persisting; on Clear, remove stored values and update preview/state."
-        },
-        {
-          "path": "frontend/src/components/session/SessionSidebar.tsx",
-          "operation": "modify",
-          "description": "Wire the new quick-profile header button to open/close the new QuickChatProfileDialog and pass any needed callbacks/state so the dialog is fully reachable from the sidebar header (no orphan UI)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Persist and load the Quick Chat Profile in browser localStorage with validation and graceful failure handling.",
-      "acceptanceCriteria": [
-        "After saving a quick profile, reloading the page retains the saved quick display name and profile picture preview.",
-        "Clearing the quick profile removes it from localStorage and it does not return after reload.",
-        "If localStorage is unavailable or contains invalid data, the app fails gracefully (no crash) and behaves as if no quick profile is set."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/lib/quickChatProfileStorage.ts",
-          "operation": "create",
-          "description": "Add a small storage module for a single Quick Chat Profile record stored in localStorage (e.g., displayName string and avatar image data URL string), including load/validate helpers, save, and clear; handle JSON parse errors, missing fields, oversized/invalid values defensively, and treat failures as 'no quick profile'."
-        },
-        {
-          "path": "frontend/src/hooks/useQuickChatProfile.ts",
-          "operation": "create",
-          "description": "Create a React hook that loads the quick profile on mount, exposes current quick profile state, and provides save/clear actions backed by quickChatProfileStorage; ensure it tolerates localStorage errors and keeps the app stable."
-        },
-        {
-          "path": "frontend/src/lib/clearLocalAppData.ts",
-          "operation": "modify",
-          "description": "Include the Quick Chat Profile localStorage key in the app's local data clearing list so users can fully reset local state via existing recovery flows."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Apply the locally stored Quick Chat Profile to chat by overriding the current user's displayed author name and avatar in the UI and using the quick display name for newly composed roll messages and current-user comparisons, without affecting other users.",
-      "acceptanceCriteria": [
-        "When a quick display name is saved, newly posted messages in chat use that display name as the author/nickname.",
-        "When a quick profile picture is saved, the current user's chat messages render with that local picture as the avatar.",
-        "Other users’ avatars/names are unaffected and continue to use existing backend-based profile lookups.",
-        "If no quick profile is set, chat behavior remains exactly as before."
+        "On a narrow/mobile viewport, the entire header content (Leave button, session name/ID/host label, Documents/Player Documents buttons, members count, logout icon) is visible without being cut off.",
+        "Header content does not overflow horizontally; no element is partially off-screen.",
+        "No unintended page-level horizontal scrolling is introduced by the header."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/SessionPage.tsx",
           "operation": "modify",
-          "description": "Load the quick profile via the new useQuickChatProfile hook and derive an 'effective nickname' (quick display name when set, otherwise sessionContext.nickname); pass this effective nickname into ChannelChatView so composing UI (including roll-message construction) uses the quick display name when present while preserving existing behavior when absent."
-        },
+          "description": "Adjust ONLY the <header> markup/styles to be mobile-safe: restructure into a responsive layout (e.g., stacked rows on small screens), add min-w-0 and text truncation for the session title/metadata, ensure action area wraps instead of overflowing, and prevent horizontal overflow (e.g., w-full, flex-wrap, overflow-hidden where appropriate). Keep all existing controls present and usable (Leave, Documents, Player Documents, members count, Logout)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Reduce the Session page header vertical height on mobile to reclaim space for the chat, by adjusting only header spacing/typography/layout in SessionPage.tsx.",
+      "acceptanceCriteria": [
+        "Compared to the current UI, the header occupies less vertical space on mobile (visibly shorter).",
+        "The chat message list visibly gains vertical space equivalent to ~3 message bubbles (approximate, not pixel-perfect).",
+        "No functional regressions: header buttons still work (Leave, Documents, Player Documents, Logout)."
+      ],
+      "file_operations": [
         {
-          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "path": "frontend/src/pages/SessionPage.tsx",
           "operation": "modify",
-          "description": "Use the provided nickname prop as the composing/display name for outgoing message composition where applicable (e.g., roll message text that currently embeds nickname) and ensure the UI continues to function identically when no quick profile is set."
-        },
-        {
-          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
-          "operation": "modify",
-          "description": "Integrate useQuickChatProfile and useInternetIdentity to (a) reliably detect whether a message belongs to the current user using principal comparison (not nickname string equality) and (b) override only the current user's displayed author name and Avatar imageUrl with the locally stored quick profile values when set; keep other users’ rendering based on existing backend profile lookups."
+          "description": "Reduce ONLY the header’s vertical footprint via tighter spacing/typography in the <header>: decrease vertical padding, reduce gaps, use smaller font sizes/line-heights for the title/subtitle on small screens, and compress button sizing/spacing (while keeping labels/icons readable and all controls accessible). Ensure the header remains fully visible and does not introduce horizontal scrolling."
         }
       ]
     }

@@ -1,103 +1,73 @@
 {
   "kind": "build_request",
-  "title": "Add sidebar quick-profile button to locally edit chat username and avatar",
-  "projectName": "Quick Chat Profile",
-  "priority": "normal",
+  "title": "Make Session header fully visible and free space for more chat messages",
+  "projectName": "RPG Collaboration",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Add an additional icon button (👨🏻‍🦱-style) to the Session sidebar top control row inside the existing sidebar header container (XPath: /html/body/div/div/div/div/aside/div[1]) without replacing existing controls (UI scale popover and collapse/expand). The new button must be visible when the sidebar is not collapsed and must include an English tooltip and accessible aria-label.",
+      "id": "REQ-5",
+      "text": "Update the Session page header (/html/body/div/div/div/header) so it is fully visible on phone-sized screens without any clipping or horizontal overflow. This must be implemented by changing ONLY the SessionPage header markup/styles (the <header> in frontend/src/pages/SessionPage.tsx).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "msg-5",
+          "msg-9",
+          "msg-11"
         ],
         "quotes": [
-          "Add button here for members to switch their profile picture as well as username for the chat",
-          "I meant you add button here for members in the shape of 👨🏻‍🦱 to store quick load profiles changes Name and profile picture",
-          "Yes it's an additional button. Good you got it right. Please start"
+          "You see this i want the chat to be a big bigger seeing like 3 more messages and the header to be shown completely",
+          "Start now",
+          "Try again"
         ]
       },
       "acceptanceCriteria": [
-        "When the sidebar is expanded, a new icon button appears in the top header row alongside existing controls without layout breakage.",
-        "Hovering/focusing the button shows an English tooltip (e.g., \"Quick profile\").",
-        "The button has an aria-label in English (e.g., \"Open quick profile\").",
-        "Existing UI scale popover and collapse/expand behavior remain unchanged."
+        "On a narrow/mobile viewport, the entire header content (Leave button, session name/ID/host label, Documents/Player Documents buttons, members count, logout icon) is visible without being cut off.",
+        "Header content does not overflow horizontally; no element is partially off-screen.",
+        "No unintended page-level horizontal scrolling is introduced by the header."
       ]
     },
     {
-      "id": "REQ-2",
-      "text": "When the new sidebar button is clicked, open an in-app dialog/popover that allows the user to edit a locally-stored \"Quick Chat Profile\" consisting of: (1) chat display name (text input) and (2) profile picture (image picker with preview). Provide actions to Save, Cancel, and Clear (remove stored quick profile picture and reset stored quick display name). All user-facing text must be in English.",
+      "id": "REQ-6",
+      "text": "Reduce the vertical height of the Session page header (/html/body/div/div/div/header) to provide more vertical space to the main content (chat), targeting enough reclaimed space to show approximately ~3 additional chat messages in the visible message list on mobile. Implement this ONLY by adjusting the header’s spacing/typography/layout in frontend/src/pages/SessionPage.tsx (e.g., padding, gaps, font sizes, wrapping), without changing the chat component itself.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "msg-5",
+          "msg-9"
         ],
         "quotes": [
-          "store quick load profiles changes Name and profile picture",
-          "Stored in the user phone"
+          "Perfect now because this part don't show up completely i need you to slace the chat a bit more than this to line up",
+          "You see this i want the chat to be a big bigger seeing like 3 more messages and the header to be shown completely"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking the new button opens a dialog/popover containing a name input and an image picker with preview.",
-        "Save persists the quick profile locally and closes the dialog/popover.",
-        "Cancel closes the dialog/popover without changing the stored quick profile.",
-        "Clear removes the stored quick profile data and updates the UI accordingly.",
-        "All labels/buttons/help text are in English."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Persist the \"Quick Chat Profile\" on the user device using browser storage (localStorage) so it survives reloads on the same device/browser, and load it on app start/session entry.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-5"
-        ],
-        "quotes": [
-          "Stored in the user phone"
-        ]
-      },
-      "acceptanceCriteria": [
-        "After saving a quick profile, reloading the page retains the saved quick display name and profile picture preview.",
-        "Clearing the quick profile removes it from localStorage and it does not return after reload.",
-        "If localStorage is unavailable or contains invalid data, the app fails gracefully (no crash) and behaves as if no quick profile is set."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Apply the locally-stored \"Quick Chat Profile\" to the chat experience: (1) outgoing chat messages should use the quick display name as the nickname sent to the backend when posting messages, and (2) the current user's message avatar should display the locally-stored quick profile picture (when set) instead of the backend profile picture for that user.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-5"
-        ],
-        "quotes": [
-          "switch their profile picture as well as username for the chat",
-          "store quick load profiles changes Name and profile picture"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When a quick display name is saved, newly posted messages in chat use that display name as the author/nickname.",
-        "When a quick profile picture is saved, the current user's chat messages render with that local picture as the avatar.",
-        "Other users’ avatars/names are unaffected and continue to use existing backend-based profile lookups.",
-        "If no quick profile is set, chat behavior remains exactly as before."
+        "Compared to the current UI, the header occupies less vertical space on mobile (visibly shorter).",
+        "The chat message list visibly gains vertical space equivalent to ~3 message bubbles (approximate, not pixel-perfect).",
+        "No functional regressions: header buttons still work (Leave, Documents, Player Documents, Logout)."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (shadcn components are read-only).",
-    "Do not modify immutable frontend hook/bootstrapping paths listed in SYSTEM_CONTEXT (compose new hooks/components instead).",
-    "Store quick profile data locally on the device (browser localStorage); do not add backend persistence for this feature.",
-    "Respect the selected element scope by adding the new button within the sidebar header container at XPath /html/body/div/div/div/div/aside/div[1]."
+    "Apply changes ONLY to the selected element: the SessionPage header (<header> in frontend/src/pages/SessionPage.tsx).",
+    "Do not edit any files under frontend/src/components/ui or any immutable paths listed in SYSTEM_CONTEXT."
   ],
   "nonGoals": [
-    "Supporting multiple named quick profiles or profile slot management (only a single locally-stored quick profile is required).",
-    "Changing or removing existing sidebar controls (UI scale settings, collapse/expand).",
-    "Adding new backend canister methods or migrating backend state."
+    "Do not redesign the overall app theme or colors.",
+    "Do not modify chat scrolling/auto-scroll behavior as part of this change.",
+    "Do not change backend logic or data models."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

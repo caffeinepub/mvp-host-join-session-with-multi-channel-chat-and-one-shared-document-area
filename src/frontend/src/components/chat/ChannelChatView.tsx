@@ -5,9 +5,10 @@ import { ExternalBlob } from '../../backend';
 import ChatMessageItem from './ChatMessageItem';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Send, Loader2, Image, X } from 'lucide-react';
-import { ScrollArea } from '../ui/scroll-area';
+import { Send, Loader2, Image, X, ArrowDown } from 'lucide-react';
 import { parseRollCommand } from '../../lib/rollCommand';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
 
 type ChannelChatViewProps = {
   sessionId: bigint;
@@ -33,15 +34,20 @@ export default function ChannelChatView({
   const [isSending, setIsSending] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevChannelIdRef = useRef<bigint | null>(null);
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change or channel changes (only if enabled)
   useEffect(() => {
-    if (scrollRef.current) {
+    const channelChanged = prevChannelIdRef.current !== null && prevChannelIdRef.current !== channelId;
+    prevChannelIdRef.current = channelId;
+
+    if (scrollRef.current && (autoScroll || channelChanged)) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, channelId, autoScroll]);
 
   // Create a lookup map for messages
   const messagesMap = new Map<string, Message>();
@@ -143,10 +149,16 @@ export default function ChannelChatView({
     setReplyTarget(null);
   };
 
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  };
+
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="chat-view-container">
       {/* Channel Header */}
-      <div className="border-b border-border bg-card px-4 py-3">
+      <div className="border-b border-border bg-card px-4 py-3 flex-shrink-0">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="text-muted-foreground">#</span>
           {channelName}
@@ -154,8 +166,8 @@ export default function ChannelChatView({
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 px-4">
-        <div ref={scrollRef} className="py-4 space-y-4">
+      <div className="chat-messages-scroll" ref={scrollRef}>
+        <div className="py-4 px-4 space-y-4">
           {messages.map((message) => (
             <ChatMessageItem
               key={message.id.toString()}
@@ -167,11 +179,11 @@ export default function ChannelChatView({
             />
           ))}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Reply Preview */}
       {replyTarget && (
-        <div className="px-4 py-2 bg-muted/50 border-t border-border flex items-center justify-between">
+        <div className="px-4 py-2 bg-muted/50 border-t border-border flex items-center justify-between flex-shrink-0">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-muted-foreground">
               Replying to {replyTarget.author}
@@ -192,8 +204,8 @@ export default function ChannelChatView({
       )}
 
       {/* Input Area */}
-      <div className="border-t border-border bg-card p-4">
-        <div className="flex gap-2">
+      <div className="border-t border-border bg-card p-4 flex-shrink-0">
+        <div className="flex gap-2 mb-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -229,6 +241,34 @@ export default function ChannelChatView({
             )}
           </Button>
         </div>
+        
+        {/* Auto-scroll toggle and scroll to bottom button */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="auto-scroll"
+              checked={autoScroll}
+              onCheckedChange={setAutoScroll}
+              aria-label="Toggle auto-scroll"
+            />
+            <Label htmlFor="auto-scroll" className="text-xs text-muted-foreground cursor-pointer">
+              Auto-scroll
+            </Label>
+          </div>
+          
+          {!autoScroll && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={scrollToBottom}
+              className="text-xs"
+            >
+              <ArrowDown className="h-3 w-3 mr-1" />
+              Scroll to bottom
+            </Button>
+          )}
+        </div>
+
         {uploadProgress !== null && (
           <div className="mt-2">
             <div className="w-full bg-muted rounded-full h-2">

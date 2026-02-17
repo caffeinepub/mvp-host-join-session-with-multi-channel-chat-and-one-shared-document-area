@@ -1,42 +1,26 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Chat app UI with sidebar actions; add member profile quick-load controls for chat identity.",
-  "architectural_notes": [
-    "Store quick-load chat profile data (name + profile picture) locally on the user’s device/phone (client-side), not in backend storage."
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [
+    "Build/deployment failed: application generation did not complete successfully when starting build."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-add-an-additional-icon-button-style-to-the-session-sidebar-top-control-row-inside-the-existing-sidebar-header-container-xpath-html-body-div-div-div-div-aside-div-1-without-replacing-existing-controls-ui-scale-popover-and-collapse-expand-the-new-button-must-be-visible-when-the-sidebar-is-not-collapsed-and-must-include-an-english-tooltip-and-accessible-aria-label",
-      "title": "Add an additional icon button (👨🏻‍🦱-style) to the Session sidebar top control row inside the existing sidebar header container (XPath: /html/body/div/div/div/div/aside/div[1]) without replacing existing controls (UI scale popover and collapse/expand). The new button must be visible when the sidebar is not collapsed and must include an English tooltip and accessible aria-label.",
+      "id": "feature-update-the-session-page-header-html-body-div-div-div-header-so-it-is-fully-visible-on-phone-sized-screens-without-any-clipping-or-horizontal-overflow-this-must-be-implemented-by-changing-only-the-sessionpage-header-markup-styles-the-header-in-frontend-src-pages-sessionpage-tsx",
+      "title": "Update the Session page header (/html/body/div/div/div/header) so it is fully visible on phone-sized screens without any clipping or horizontal overflow. This must be implemented by changing ONLY the SessionPage header markup/styles (the <header> in frontend/src/pages/SessionPage.tsx).",
       "reqIds": [
-        "REQ-1"
+        "REQ-5"
       ],
       "version": 1
     },
     {
-      "id": "feature-when-the-new-sidebar-button-is-clicked-open-an-in-app-dialog-popover-that-allows-the-user-to-edit-a-locally-stored-quick-chat-profile-consisting-of-1-chat-display-name-text-input-and-2-profile-picture-image-picker-with-preview-provide-actions-to-save-cancel-and-clear-remove-stored-quick-profile-picture-and-reset-stored-quick-display-name-all-user-facing-text-must-be-in-english",
-      "title": "When the new sidebar button is clicked, open an in-app dialog/popover that allows the user to edit a locally-stored \"Quick Chat Profile\" consisting of: (1) chat display name (text input) and (2) profile picture (image picker with preview). Provide actions to Save, Cancel, and Clear (remove stored quick profile picture and reset stored quick display name). All user-facing text must be in English.",
+      "id": "feature-reduce-the-vertical-height-of-the-session-page-header-html-body-div-div-div-header-to-provide-more-vertical-space-to-the-main-content-chat-targeting-enough-reclaimed-space-to-show-approximately-3-additional-chat-messages-in-the-visible-message-list-on-mobile-implement-this-only-by-adjusting-the-header-s-spacing-typography-layout-in-frontend-src-pages-sessionpage-tsx-e-g-padding-gaps-font-sizes-wrapping-without-changing-the-chat-component-itself",
+      "title": "Reduce the vertical height of the Session page header (/html/body/div/div/div/header) to provide more vertical space to the main content (chat), targeting enough reclaimed space to show approximately ~3 additional chat messages in the visible message list on mobile. Implement this ONLY by adjusting the header’s spacing/typography/layout in frontend/src/pages/SessionPage.tsx (e.g., padding, gaps, font sizes, wrapping), without changing the chat component itself.",
       "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-persist-the-quick-chat-profile-on-the-user-device-using-browser-storage-localstorage-so-it-survives-reloads-on-the-same-device-browser-and-load-it-on-app-start-session-entry",
-      "title": "Persist the \"Quick Chat Profile\" on the user device using browser storage (localStorage) so it survives reloads on the same device/browser, and load it on app start/session entry.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-apply-the-locally-stored-quick-chat-profile-to-the-chat-experience-1-outgoing-chat-messages-should-use-the-quick-display-name-as-the-nickname-sent-to-the-backend-when-posting-messages-and-2-the-current-user-s-message-avatar-should-display-the-locally-stored-quick-profile-picture-when-set-instead-of-the-backend-profile-picture-for-that-user",
-      "title": "Apply the locally-stored \"Quick Chat Profile\" to the chat experience: (1) outgoing chat messages should use the quick display name as the nickname sent to the backend when posting messages, and (2) the current user's message avatar should display the locally-stored quick profile picture (when set) instead of the backend profile picture for that user.",
-      "reqIds": [
-        "REQ-4"
+        "REQ-6"
       ],
       "version": 1
     }
@@ -44,12 +28,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add an additional sidebar icon button (👨🏻‍🦱) for members to quickly load/update chat profile (username + profile picture) stored locally on the user’s phone/device.",
+      "summary": "Adjust UI layout so header is fully visible and chat area is larger (shows ~3 more messages).",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Quick Chat Profile",
+  "projectName": "RPG Collaboration",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

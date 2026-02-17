@@ -1,11 +1,11 @@
 {
-  "frontend/src/App.tsx": "Main application component with error boundary (passing clearLocalAppData callback), preferences provider, authentication flow, profile setup, routing between Lobby and Session, and global UI scaling applied via CSS transform based on user preferences.",
+  "frontend/src/App.tsx": "Main application component with error boundary, preferences provider, authentication flow, profile setup, routing between Lobby and Session, and global UI scaling applied via CSS transform based on user preferences.",
   "frontend/src/pages/LobbyPage.tsx": "Lobby page with Host/Join tabs, Settings navigation, template application on host, and nickname pre-filling from preferences.",
-  "frontend/src/pages/SessionPage.tsx": "Main session screen coordinating sidebar, chat view, player document editor, and session document editor with three view types and effective nickname derived from quick profile display name when set, otherwise session nickname.",
+  "frontend/src/pages/SessionPage.tsx": "Main session screen with mobile-optimized header layout (stacked rows, reduced padding/font sizes, text truncation, flex-wrap) and dynamic viewport height container for fixed-height chat areas.",
   "frontend/src/components/session/SessionSidebar.tsx": "Session sidebar with collapsible toggle state, quick profile button, UI scale settings button in header control row, channel lists with selection state, and accessible tooltips for all header actions.",
   "frontend/src/components/session/ChannelManagementDialogs.tsx": "Reusable dialogs for creating, renaming, and deleting channels with backend integration and error handling.",
   "frontend/src/components/session/DocumentManagementDialogs.tsx": "Reusable dialogs for creating, renaming, locking/unlocking, and deleting documents with backend integration; now surfaces newly created document ID via onCreated callback for immediate selection.",
-  "frontend/src/components/chat/ChannelChatView.tsx": "Channel chat interface with message list, compose box, /roll command support using validation.valid property, image upload with progress tracking, and reply-to-message feature using the effective nickname prop for outgoing messages.",
+  "frontend/src/components/chat/ChannelChatView.tsx": "Channel chat interface with fixed-height layout, vertical-only scrolling in messages area, auto-scroll toggle with switch control near message input, and scroll-to-bottom button when auto-scroll is disabled.",
   "frontend/src/components/chat/ChatMessageItem.tsx": "Individual chat message component with left/right bubble alignment based on principal comparison, long-press detection for reply selection, purple reply indicator, and quick profile override for current user's displayed name and avatar.",
   "frontend/src/components/docs/DocumentEditorView.tsx": "Session document editor with host-only file/image upload, Edit/Preview mode toggle, separate image gallery and file attachments sections in edit mode, inline preview rendering in preview mode, save functionality, and embedded comments section with host deletion privileges.",
   "frontend/src/hooks/useSessionData.ts": "Custom hook managing session-related data queries (session, channels, members' channels, messages) with React Query and configurable polling intervals, plus mutations for members' channel management.",
@@ -14,7 +14,7 @@
   "frontend/src/lib/sessionStorage.ts": "Helper functions for persisting and restoring session context in localStorage across page refreshes.",
   "frontend/src/lib/rollCommand.ts": "Dice roll command parser and validator for /roll syntax checking before backend submission.",
   "frontend/src/lib/time.ts": "Timestamp formatting utility converting bigint nanoseconds to human-readable time strings.",
-  "frontend/src/index.css": "Global styles with OKLCH color system using warm green accent palette, chat-specific utility classes, and global UI scaling support with proper overflow handling for scaled content.",
+  "frontend/src/index.css": "Global styles with OKLCH color system, mobile-friendly session page and chat view layout classes using dynamic viewport height and flex-based overflow control for fixed-height scrollable areas.",
   "frontend/src/hooks/usePreferences.ts": "Re-exports usePreferences hook from PreferencesContext for backwards compatibility.",
   "frontend/src/lib/preferencesStorage.ts": "LocalStorage-backed persistence layer for user preferences including theme mode, background image, default nickname, and UI scale percentage (10-200%) with clamping validation.",
   "frontend/src/lib/templateHistoryStorage.ts": "LocalStorage helpers for saving, loading, clearing, and validating session template/history files for pre-lobby import.",
@@ -31,7 +31,7 @@
   "frontend/src/components/profile/Avatar.tsx": "Reusable avatar component that displays profile pictures with fallback to initials, handles image load errors gracefully.",
   "frontend/src/components/profile/ProfilePictureSection.tsx": "Profile picture management component with upload, preview, remove functionality, progress tracking, and validation for image files up to 5MB.",
   "frontend/src/main.tsx": "Application entry point wrapping App with QueryClientProvider and PreferencesProvider for reactive state management.",
-  "frontend/src/components/app/AppErrorBoundary.tsx": "React error boundary component that catches render-time errors and displays a friendly fallback UI with reload and clear local data actions.",
+  "frontend/src/components/app/AppErrorBoundary.tsx": "React error boundary component with enhanced messaging for initialization failures, network issues, and corrupted local data with reload and clear data recovery actions.",
   "frontend/src/lib/clearLocalAppData.ts": "Utility function that clears all locally stored app data including preferences, session context, template history, and quick chat profile from localStorage and sessionStorage.",
   "frontend/src/lib/documentFileMarkers.ts": "Utilities for creating, parsing, inserting, and removing file attachment markers in document content using [FILE:id:filename] format.",
   "frontend/src/hooks/useDocumentFiles.ts": "React Query hooks for listing document files, fetching file references, and uploading files to documents with proper cache invalidation; upload mutation now includes validation to prevent backend calls with invalid document IDs.",
@@ -49,5 +49,6 @@
   "frontend/src/components/settings/UIScaleSettingsPopover.tsx": "Popover component for adjusting UI scale percentage (10-200%) with live-updating slider and numeric input, reset-to-100% action, and integration with PreferencesContext for persistence.",
   "frontend/src/lib/quickChatProfileStorage.ts": "LocalStorage-backed persistence layer for quick chat profile including display name and avatar data URL with validation, size checks, and graceful error handling.",
   "frontend/src/hooks/useQuickChatProfile.ts": "React hook for managing quick chat profile state with load, save, and clear operations backed by quickChatProfileStorage with error tolerance.",
-  "frontend/src/components/profile/QuickChatProfileDialog.tsx": "Dialog component for editing quick chat profile with display name input, image file picker with preview, Save/Cancel/Clear actions, and validation for image files up to 5MB."
+  "frontend/src/components/profile/QuickChatProfileDialog.tsx": "Dialog component for editing quick chat profile with display name input, image file picker with preview, Save/Cancel/Clear actions, and validation for image files up to 5MB.",
+  "frontend/src/hooks/useActor.ts": "Actor initialization hook with hardened error handling, disabled automatic retries, and defensive access control initialization to prevent initialization hangs."
 }

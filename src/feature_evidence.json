@@ -2,74 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-an-additional-icon-button-style-to-the-session-sidebar-top-control-row-inside-the-existing-sidebar-header-container-xpath-html-body-div-div-div-div-aside-div-1-without-replacing-existing-controls-ui-scale-popover-and-collapse-expand-the-new-button-must-be-visible-when-the-sidebar-is-not-collapsed-and-must-include-an-english-tooltip-and-accessible-aria-label",
-      "featureTitle": "Add an additional icon button (👨🏻‍🦱-style) to the Session sidebar top control row inside the existing sidebar header container (XPath: /html/body/div/div/div/div/aside/div[1]) without replacing existing controls (UI scale popover and collapse/expand). The new button must be visible when the sidebar is not collapsed and must include an English tooltip and accessible aria-label.",
+      "featureId": "feature-update-the-session-page-header-html-body-div-div-div-header-so-it-is-fully-visible-on-phone-sized-screens-without-any-clipping-or-horizontal-overflow-this-must-be-implemented-by-changing-only-the-sessionpage-header-markup-styles-the-header-in-frontend-src-pages-sessionpage-tsx",
+      "featureTitle": "Update the Session page header (/html/body/div/div/div/header) so it is fully visible on phone-sized screens without any clipping or horizontal overflow. This must be implemented by changing ONLY the SessionPage header markup/styles (the <header> in frontend/src/pages/SessionPage.tsx).",
       "files": [
-        "frontend/src/components/session/SessionSidebar.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-when-the-new-sidebar-button-is-clicked-open-an-in-app-dialog-popover-that-allows-the-user-to-edit-a-locally-stored-quick-chat-profile-consisting-of-1-chat-display-name-text-input-and-2-profile-picture-image-picker-with-preview-provide-actions-to-save-cancel-and-clear-remove-stored-quick-profile-picture-and-reset-stored-quick-display-name-all-user-facing-text-must-be-in-english",
-      "featureTitle": "When the new sidebar button is clicked, open an in-app dialog/popover that allows the user to edit a locally-stored \"Quick Chat Profile\" consisting of: (1) chat display name (text input) and (2) profile picture (image picker with preview). Provide actions to Save, Cancel, and Clear (remove stored quick profile picture and reset stored quick display name). All user-facing text must be in English.",
-      "files": [
-        "frontend/src/components/profile/QuickChatProfileDialog.tsx",
-        "frontend/src/components/session/SessionSidebar.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-persist-the-quick-chat-profile-on-the-user-device-using-browser-storage-localstorage-so-it-survives-reloads-on-the-same-device-browser-and-load-it-on-app-start-session-entry",
-      "featureTitle": "Persist the \"Quick Chat Profile\" on the user device using browser storage (localStorage) so it survives reloads on the same device/browser, and load it on app start/session entry.",
-      "files": [
-        "frontend/src/hooks/useQuickChatProfile.ts",
-        "frontend/src/lib/clearLocalAppData.ts",
-        "frontend/src/lib/quickChatProfileStorage.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-apply-the-locally-stored-quick-chat-profile-to-the-chat-experience-1-outgoing-chat-messages-should-use-the-quick-display-name-as-the-nickname-sent-to-the-backend-when-posting-messages-and-2-the-current-user-s-message-avatar-should-display-the-locally-stored-quick-profile-picture-when-set-instead-of-the-backend-profile-picture-for-that-user",
-      "featureTitle": "Apply the locally-stored \"Quick Chat Profile\" to the chat experience: (1) outgoing chat messages should use the quick display name as the nickname sent to the backend when posting messages, and (2) the current user's message avatar should display the locally-stored quick profile picture (when set) instead of the backend profile picture for that user.",
-      "files": [
-        "frontend/src/components/chat/ChannelChatView.tsx",
-        "frontend/src/components/chat/ChatMessageItem.tsx",
         "frontend/src/pages/SessionPage.tsx"
       ],
       "components": [
@@ -82,7 +17,27 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-4"
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-reduce-the-vertical-height-of-the-session-page-header-html-body-div-div-div-header-to-provide-more-vertical-space-to-the-main-content-chat-targeting-enough-reclaimed-space-to-show-approximately-3-additional-chat-messages-in-the-visible-message-list-on-mobile-implement-this-only-by-adjusting-the-header-s-spacing-typography-layout-in-frontend-src-pages-sessionpage-tsx-e-g-padding-gaps-font-sizes-wrapping-without-changing-the-chat-component-itself",
+      "featureTitle": "Reduce the vertical height of the Session page header (/html/body/div/div/div/header) to provide more vertical space to the main content (chat), targeting enough reclaimed space to show approximately ~3 additional chat messages in the visible message list on mobile. Implement this ONLY by adjusting the header’s spacing/typography/layout in frontend/src/pages/SessionPage.tsx (e.g., padding, gaps, font sizes, wrapping), without changing the chat component itself.",
+      "files": [
+        "frontend/src/pages/SessionPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
       ],
       "confidence": "high"
     }

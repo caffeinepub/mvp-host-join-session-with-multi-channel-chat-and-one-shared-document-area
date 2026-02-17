@@ -1,67 +1,35 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T12:13:09.544Z",
+  "generatedAt": "2026-02-17T14:00:25.173Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 4,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-1",
-        "summary": "Add an additional icon button (👨🏻‍🦱-style) to the Session sidebar top control row inside the existing sidebar header container (XPath: /html/body/div/div/div/div/aside/div[1]) without replacing existing controls (UI scale popover and collapse/expand). The new button must be visible when the sidebar is not collapsed and must include an English tooltip and accessible aria-label.",
+        "id": "REQ-5",
+        "summary": "Update the Session page header (/html/body/div/div/div/header) so it is fully visible on phone-sized screens without any clipping or horizontal overflow. This must be implemented by changing ONLY the SessionPage header markup/styles (the <header> in frontend/src/pages/SessionPage.tsx).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/session/SessionSidebar.tsx"
+          "frontend/src/pages/SessionPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/session/SessionSidebar.tsx"
+          "frontend/src/pages/SessionPage.tsx"
         ]
       },
       {
-        "id": "REQ-2",
-        "summary": "When the new sidebar button is clicked, open an in-app dialog/popover that allows the user to edit a locally-stored \"Quick Chat Profile\" consisting of: (1) chat display name (text input) and (2) profile picture (image picker with preview). Provide actions to Save, Cancel, and Clear (remove stored quick profile picture and reset stored quick display name). All user-facing text must be in English.",
+        "id": "REQ-6",
+        "summary": "Reduce the vertical height of the Session page header (/html/body/div/div/div/header) to provide more vertical space to the main content (chat), targeting enough reclaimed space to show approximately ~3 additional chat messages in the visible message list on mobile. Implement this ONLY by adjusting the header’s spacing/typography/layout in frontend/src/pages/SessionPage.tsx (e.g., padding, gaps, font sizes, wrapping), without changing the chat component itself.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/profile/QuickChatProfileDialog.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx"
+          "frontend/src/pages/SessionPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/profile/QuickChatProfileDialog.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Persist the \"Quick Chat Profile\" on the user device using browser storage (localStorage) so it survives reloads on the same device/browser, and load it on app start/session entry.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/lib/quickChatProfileStorage.ts",
-          "frontend/src/hooks/useQuickChatProfile.ts",
-          "frontend/src/lib/clearLocalAppData.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/lib/quickChatProfileStorage.ts",
-          "frontend/src/hooks/useQuickChatProfile.ts",
-          "frontend/src/lib/clearLocalAppData.ts"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Apply the locally-stored \"Quick Chat Profile\" to the chat experience: (1) outgoing chat messages should use the quick display name as the nickname sent to the backend when posting messages, and (2) the current user's message avatar should display the locally-stored quick profile picture (when set) instead of the backend profile picture for that user.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/SessionPage.tsx",
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/components/chat/ChatMessageItem.tsx"
+          "frontend/src/pages/SessionPage.tsx"
         ]
       }
     ]
@@ -71,13 +39,6 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/chat/ChannelChatView.tsx",
-    "frontend/src/components/chat/ChatMessageItem.tsx",
-    "frontend/src/components/profile/QuickChatProfileDialog.tsx",
-    "frontend/src/components/session/SessionSidebar.tsx",
-    "frontend/src/hooks/useQuickChatProfile.ts",
-    "frontend/src/lib/clearLocalAppData.ts",
-    "frontend/src/lib/quickChatProfileStorage.ts",
     "frontend/src/pages/SessionPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
