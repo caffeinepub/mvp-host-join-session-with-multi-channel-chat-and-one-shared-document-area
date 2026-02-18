@@ -1,177 +1,110 @@
 import { useState, useRef } from 'react';
-import { useGetCallerUserProfile, useSaveCallerUserProfile, useRemoveProfilePicture } from '../../hooks/useUserProfile';
-import { ExternalBlob } from '../../backend';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Loader2, Upload, X } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import Avatar from './Avatar';
+import { validateImageFile, fileToBytes, createPreviewUrl } from '../../lib/imageValidation';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+type ProfilePictureSectionProps = {
+  currentImageUrl?: string;
+  currentName: string;
+  onImageChange: (file: File | null, previewUrl: string | null) => void;
+  onRemove: () => void;
+  isUploading?: boolean;
+  uploadProgress?: number;
+};
 
-export default function ProfilePictureSection() {
-  const { data: profile, isLoading: profileLoading } = useGetCallerUserProfile();
-  const saveProfile = useSaveCallerUserProfile();
-  const removeProfilePicture = useRemoveProfilePicture();
-  const [error, setError] = useState('');
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+export default function ProfilePictureSection({
+  currentImageUrl,
+  currentName,
+  onImageChange,
+  onRemove,
+  isUploading = false,
+  uploadProgress = 0,
+}: ProfilePictureSectionProps) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setError('');
-    setUploadProgress(null);
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file (JPEG, PNG, GIF, etc.)');
-      return;
-    }
-
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      setError('Image file is too large. Maximum size is 5MB.');
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
       return;
     }
 
     try {
-      // Read file as bytes
-      const arrayBuffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-
-      // Create ExternalBlob with upload progress tracking
-      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((percentage) => {
-        setUploadProgress(percentage);
-      });
-
-      // Save profile with new picture
-      await saveProfile.mutateAsync({
-        name: profile?.name || '',
-        profilePicture: blob,
-      });
-
-      setUploadProgress(null);
-    } catch (err: any) {
-      console.error('Upload error:', err);
-      setError(err.message || 'Failed to upload profile picture');
-      setUploadProgress(null);
+      const url = createPreviewUrl(file);
+      setPreviewUrl(url);
+      onImageChange(file, url);
+    } catch (error) {
+      console.error('Failed to process image:', error);
+      alert('Failed to process image');
     }
+  };
 
-    // Reset input
+  const handleRemove = () => {
+    setPreviewUrl(null);
+    onRemove();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const handleRemove = async () => {
-    if (!confirm('Remove your profile picture?')) return;
-
-    setError('');
-    try {
-      await removeProfilePicture.mutateAsync();
-    } catch (err: any) {
-      console.error('Remove error:', err);
-      setError(err.message || 'Failed to remove profile picture');
-    }
-  };
-
-  if (profileLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  const currentImageUrl = profile?.profilePicture?.getDirectURL();
-  const isUploading = uploadProgress !== null;
-  const isRemoving = removeProfilePicture.isPending;
+  const displayUrl = previewUrl || currentImageUrl;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-6">
-        <div className="flex flex-col items-center gap-3">
-          <Avatar
-            imageUrl={currentImageUrl}
-            name={profile?.name || 'User'}
-            size="lg"
-          />
-          {isUploading && (
-            <div className="text-xs text-muted-foreground">
-              Uploading: {Math.round(uploadProgress)}%
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 space-y-3">
-          <div>
-            <Label className="text-base">Profile Picture</Label>
-            <p className="text-sm text-muted-foreground mt-1">
-              Upload a profile picture to personalize your account
-            </p>
-          </div>
-
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              disabled={isUploading || isRemoving}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  {currentImageUrl ? 'Change Picture' : 'Upload Picture'}
-                </>
-              )}
-            </Button>
-
-            {currentImageUrl && (
-              <Button
-                variant="outline"
-                disabled={isUploading || isRemoving}
-                onClick={handleRemove}
-              >
-                {isRemoving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Removing...
-                  </>
-                ) : (
-                  <>
-                    <X className="mr-2 h-4 w-4" />
-                    Remove
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-
+      <Label>Profile Picture</Label>
+      <div className="flex items-center gap-4">
+        <Avatar imageUrl={displayUrl} name={currentName} size="lg" />
+        <div className="flex flex-col gap-2">
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
-            className="hidden"
+            accept="image/png,image/jpeg"
             onChange={handleFileSelect}
+            className="hidden"
+            disabled={isUploading}
           />
-
-          <p className="text-xs text-muted-foreground">
-            Supported formats: JPEG, PNG, GIF. Maximum size: 5MB.
-          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="min-h-[44px]"
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading {uploadProgress}%
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Picture
+              </>
+            )}
+          </Button>
+          {displayUrl && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRemove}
+              disabled={isUploading}
+              className="min-h-[44px]"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Remove
+            </Button>
+          )}
         </div>
       </div>
+      <p className="text-sm text-muted-foreground">
+        PNG or JPG, max 5MB
+      </p>
     </div>
   );
 }

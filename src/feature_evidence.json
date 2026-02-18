@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-in-the-communities-hub-page-allow-the-user-to-remove-hide-delete-an-existing-community-card-from-the-my-communities-section",
-      "featureTitle": "In the Communities Hub page, allow the user to remove (hide/delete) an existing community card from the \"My Communities\" section.",
+      "featureId": "feature-make-the-chat-component-stretch-to-100-screen-width-on-mobile-and-android-devices",
+      "featureTitle": "Make the chat component stretch to 100% screen width on mobile and Android devices",
       "files": [
-        "frontend/src/pages/CommunitiesHubPage.tsx"
+        "frontend/src/components/chat/ChannelChatView.tsx",
+        "frontend/src/index.css"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,12 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-persist-the-user-s-removed-my-communities-state-locally-so-removed-communities-stay-removed-after-page-refresh-reload",
-      "featureTitle": "Persist the user’s removed \"My Communities\" state locally so removed communities stay removed after page refresh/reload.",
+      "featureId": "feature-make-the-chat-component-dynamically-resize-when-ui-dimensions-change-keyboard-opening-screen-rotation-panel-resizing",
+      "featureTitle": "Make the chat component dynamically resize when UI dimensions change (keyboard opening, screen rotation, panel resizing)",
       "files": [
-        "frontend/src/lib/clearLocalAppData.ts",
-        "frontend/src/lib/myCommunitiesHiddenStorage.ts",
-        "frontend/src/pages/CommunitiesHubPage.tsx"
+        "frontend/src/components/chat/ChannelChatView.tsx",
+        "frontend/src/hooks/useViewportHeight.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -44,10 +44,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-the-removal-behavior-only-affects-the-my-communities-section-and-does-not-remove-or-change-items-in-the-discover-section",
-      "featureTitle": "Ensure the removal behavior only affects the \"My Communities\" section and does not remove or change items in the \"Discover\" section.",
+      "featureId": "feature-fix-the-create-new-community-modal-dialog-shown-in-the-screenshot-so-content-is-fully-scrollable-on-mobile-devices",
+      "featureTitle": "Fix the Create New Community modal/dialog shown in the screenshot so content is fully scrollable on mobile devices",
       "files": [
-        "frontend/src/pages/CommunitiesHubPage.tsx"
+        "frontend/src/components/communities/CreateCommunityDialog.tsx",
+        "frontend/src/index.css"
       ],
       "components": [
         "authorization@4.0.0",
@@ -60,6 +61,30 @@
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-mobile-responsive-touch-target-sizing-and-spacing-throughout-the-ui-for-better-android-usability",
+      "featureTitle": "Apply mobile-responsive touch target sizing and spacing throughout the UI for better Android usability",
+      "files": [
+        "frontend/src/components/chat/ChatMessageItem.tsx",
+        "frontend/src/components/communities/fields/CommunityImagePickers.tsx",
+        "frontend/src/components/profile/ProfilePictureSection.tsx",
+        "frontend/src/components/session/SessionSidebar.tsx",
+        "frontend/src/index.css"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

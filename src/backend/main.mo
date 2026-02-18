@@ -1753,39 +1753,4 @@ actor {
 
     comments.add(commentId, newComment);
   };
-
-  public shared ({ caller }) func addPlayerImage(documentId : Nat, fileId : Text, title : Text, caption : Text, position : Int, size : Int) : async Nat {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can add images");
-    };
-    if (fileId == "") Runtime.trap("File Id of image cannot be empty");
-
-    // Only allow images for existing player documents
-    switch (playerDocumentsMap.get(documentId)) {
-      case (null) { Runtime.trap("Player document not found") };
-      case (?doc) {
-        if (not Principal.equal(doc.owner, caller)) {
-          Runtime.trap("Unauthorized: Only the owner can add images to this player document");
-        };
-      };
-    };
-
-    let newImage : ImageReference = {
-      id = nextImageId;
-      documentId;
-      fileId;
-      title;
-      caption;
-      position;
-      size;
-      createdBy = caller;
-      lastModified = Time.now();
-    };
-
-    imageReferences.add(nextImageId, newImage);
-
-    let imageId = nextImageId;
-    nextImageId += 1;
-    imageId;
-  };
 };

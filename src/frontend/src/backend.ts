@@ -298,7 +298,6 @@ export interface backendInterface {
     addComment(documentId: bigint, text: string): Promise<bigint>;
     addImageToDocument(sessionId: bigint, documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
     addImageToPlayerDocument(documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
-    addPlayerImage(documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createChannel(sessionId: bigint, name: string): Promise<StandardResponse>;
     createDocument(sessionId: bigint, name: string, content: string): Promise<CreateDocumentResponse>;
@@ -493,20 +492,6 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.addImageToPlayerDocument(arg0, arg1, arg2, arg3, arg4, arg5);
             return from_candid_AddImageToDocumentResponse_n8(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async addPlayerImage(arg0: bigint, arg1: string, arg2: string, arg3: string, arg4: bigint, arg5: bigint): Promise<bigint> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.addPlayerImage(arg0, arg1, arg2, arg3, arg4, arg5);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.addPlayerImage(arg0, arg1, arg2, arg3, arg4, arg5);
-            return result;
         }
     }
     async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {

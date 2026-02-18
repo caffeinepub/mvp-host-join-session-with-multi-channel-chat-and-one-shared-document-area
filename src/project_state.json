@@ -1,32 +1,47 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "summary": "Community-focused application with Android UI optimization needs",
+  "architectural_notes": [
+    "Community platform with custom places, privacy settings, theming, cover images, icons, and banners",
+    "Android-friendly UI requirements for mobile responsiveness"
+  ],
+  "known_issues": [
+    "Chat does not stretch to fit screen width on Android/mobile devices",
+    "UI does not resize properly when UI size changes (keyboard open, rotation, panel resize)",
+    "Tab/modal content cannot scroll down"
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-in-the-communities-hub-page-allow-the-user-to-remove-hide-delete-an-existing-community-card-from-the-my-communities-section",
-      "title": "In the Communities Hub page, allow the user to remove (hide/delete) an existing community card from the \"My Communities\" section.",
+      "id": "feature-make-the-chat-component-stretch-to-100-screen-width-on-mobile-and-android-devices",
+      "title": "Make the chat component stretch to 100% screen width on mobile and Android devices",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-persist-the-user-s-removed-my-communities-state-locally-so-removed-communities-stay-removed-after-page-refresh-reload",
-      "title": "Persist the user’s removed \"My Communities\" state locally so removed communities stay removed after page refresh/reload.",
+      "id": "feature-make-the-chat-component-dynamically-resize-when-ui-dimensions-change-keyboard-opening-screen-rotation-panel-resizing",
+      "title": "Make the chat component dynamically resize when UI dimensions change (keyboard opening, screen rotation, panel resizing)",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-the-removal-behavior-only-affects-the-my-communities-section-and-does-not-remove-or-change-items-in-the-discover-section",
-      "title": "Ensure the removal behavior only affects the \"My Communities\" section and does not remove or change items in the \"Discover\" section.",
+      "id": "feature-fix-the-create-new-community-modal-dialog-shown-in-the-screenshot-so-content-is-fully-scrollable-on-mobile-devices",
+      "title": "Fix the Create New Community modal/dialog shown in the screenshot so content is fully scrollable on mobile devices",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-mobile-responsive-touch-target-sizing-and-spacing-throughout-the-ui-for-better-android-usability",
+      "title": "Apply mobile-responsive touch target sizing and spacing throughout the UI for better Android usability",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
@@ -34,12 +49,24 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Allow user to remove/delete existing communities from 'My Communities'",
+      "summary": "Make chat stretch to fit screen width on Android/mobile",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Make chat stretch/resize when UI size changes (keyboard, rotation, panel resize)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Fix scrolling issue in tab/modal that cannot scroll down",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Communities Hub",
+  "projectName": "Make UI Android-friendly with responsive chat and scrollable modals",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

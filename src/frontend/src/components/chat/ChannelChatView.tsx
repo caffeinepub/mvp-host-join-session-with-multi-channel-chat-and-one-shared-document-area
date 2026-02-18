@@ -160,7 +160,7 @@ export default function ChannelChatView({
 
       {/* Messages Area */}
       <div className="chat-messages-scroll" ref={scrollRef}>
-        <div className="py-4 px-4 space-y-4">
+        <div className="py-4 px-2 md:px-4 space-y-4">
           {messages.map((message) => (
             <ChatMessageItem
               key={message.id.toString()}
@@ -176,7 +176,7 @@ export default function ChannelChatView({
 
       {/* Reply Preview */}
       {replyTarget && (
-        <div className="px-4 py-2 bg-muted/50 border-t border-border flex items-center justify-between flex-shrink-0">
+        <div className="px-2 md:px-4 py-2 bg-muted/50 border-t border-border flex items-center justify-between flex-shrink-0">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-muted-foreground">
               Replying to {replyTarget.author}
@@ -189,7 +189,7 @@ export default function ChannelChatView({
             variant="ghost"
             size="sm"
             onClick={handleCancelReply}
-            className="ml-2"
+            className="ml-2 min-h-[44px] min-w-[44px]"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -197,7 +197,7 @@ export default function ChannelChatView({
       )}
 
       {/* Input Area */}
-      <div className="border-t border-border bg-card p-4 flex-shrink-0">
+      <div className="border-t border-border bg-card p-2 md:p-4 flex-shrink-0">
         <div className="flex gap-2 mb-2">
           <input
             ref={fileInputRef}
@@ -211,6 +211,7 @@ export default function ChannelChatView({
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={isSending}
+            className="min-h-[44px] min-w-[44px] shrink-0"
           >
             <Image className="h-4 w-4" />
           </Button>
@@ -225,6 +226,7 @@ export default function ChannelChatView({
             onClick={handleSendMessage}
             disabled={isSending || !messageInput.trim()}
             size="icon"
+            className="min-h-[44px] min-w-[44px] shrink-0"
           >
             {isSending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -236,7 +238,7 @@ export default function ChannelChatView({
         
         {/* Auto-scroll toggle and scroll to bottom button */}
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-h-[44px]">
             <Switch
               id="auto-scroll"
               checked={autoScroll}
@@ -253,7 +255,7 @@ export default function ChannelChatView({
               variant="ghost"
               size="sm"
               onClick={scrollToBottom}
-              className="text-xs"
+              className="text-xs min-h-[44px]"
             >
               <ArrowDown className="h-3 w-3 mr-1" />
               Scroll to bottom

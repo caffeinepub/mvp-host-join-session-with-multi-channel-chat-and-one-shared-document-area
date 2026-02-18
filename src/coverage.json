@@ -1,62 +1,91 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T21:14:59.668Z",
+  "generatedAt": "2026-02-18T21:30:35.103Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "In the Communities Hub page, allow the user to remove (hide/delete) an existing community card from the \"My Communities\" section.",
+        "summary": "Make the chat component stretch to 100% screen width on mobile and Android devices",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/CommunitiesHubPage.tsx"
+          "frontend/src/components/chat/ChannelChatView.tsx",
+          "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/pages/CommunitiesHubPage.tsx"
+          "frontend/src/components/chat/ChannelChatView.tsx",
+          "frontend/src/index.css"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Persist the user’s removed \"My Communities\" state locally so removed communities stay removed after page refresh/reload.",
+        "summary": "Make the chat component dynamically resize when UI dimensions change (keyboard opening, screen rotation, panel resizing)",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/myCommunitiesHiddenStorage.ts",
-          "frontend/src/pages/CommunitiesHubPage.tsx",
-          "frontend/src/lib/clearLocalAppData.ts"
+          "frontend/src/components/chat/ChannelChatView.tsx",
+          "frontend/src/hooks/useViewportHeight.ts"
         ],
         "matchedFiles": [
-          "frontend/src/lib/myCommunitiesHiddenStorage.ts",
-          "frontend/src/pages/CommunitiesHubPage.tsx",
-          "frontend/src/lib/clearLocalAppData.ts"
+          "frontend/src/components/chat/ChannelChatView.tsx",
+          "frontend/src/hooks/useViewportHeight.ts"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Ensure the removal behavior only affects the \"My Communities\" section and does not remove or change items in the \"Discover\" section.",
+        "summary": "Fix the Create New Community modal/dialog shown in the screenshot so content is fully scrollable on mobile devices",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/CommunitiesHubPage.tsx"
+          "frontend/src/components/communities/CreateCommunityDialog.tsx",
+          "frontend/src/components/communities/CommunityForm.tsx",
+          "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/pages/CommunitiesHubPage.tsx"
+          "frontend/src/components/communities/CreateCommunityDialog.tsx",
+          "frontend/src/index.css"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Apply mobile-responsive touch target sizing and spacing throughout the UI for better Android usability",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/chat/ChatMessageItem.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx",
+          "frontend/src/components/communities/fields/CommunityImagePickers.tsx",
+          "frontend/src/components/profile/ProfilePictureSection.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/chat/ChatMessageItem.tsx",
+          "frontend/src/components/session/SessionSidebar.tsx",
+          "frontend/src/components/communities/fields/CommunityImagePickers.tsx",
+          "frontend/src/components/profile/ProfilePictureSection.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/lib/clearLocalAppData.ts",
-    "frontend/src/lib/myCommunitiesHiddenStorage.ts",
-    "frontend/src/pages/CommunitiesHubPage.tsx",
+    "frontend/src/components/chat/ChannelChatView.tsx",
+    "frontend/src/components/chat/ChatMessageItem.tsx",
+    "frontend/src/components/communities/CreateCommunityDialog.tsx",
+    "frontend/src/components/communities/fields/CommunityImagePickers.tsx",
+    "frontend/src/components/profile/ProfilePictureSection.tsx",
+    "frontend/src/components/session/SessionSidebar.tsx",
+    "frontend/src/components/settings/PreLobbySettingsView.tsx",
+    "frontend/src/hooks/useViewportHeight.ts",
+    "frontend/src/index.css",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

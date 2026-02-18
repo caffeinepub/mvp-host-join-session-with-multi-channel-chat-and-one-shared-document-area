@@ -1,85 +1,93 @@
 {
   "kind": "build_request",
-  "title": "Allow removing communities from My Communities",
-  "projectName": "Communities Hub",
+  "title": "Make UI Android-friendly with responsive chat and scrollable modals",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "In the Communities Hub page, allow the user to remove (hide/delete) an existing community card from the \"My Communities\" section.",
+      "text": "Make the chat component stretch to 100% screen width on mobile and Android devices",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "msg-last"
         ],
         "quotes": [
-          "Remove the communities that exists in my communities please"
+          "the chat strech to fix the screen"
         ]
       },
       "acceptanceCriteria": [
-        "Each card in the \"My Communities\" grid provides a clear remove action (e.g., a remove button/menu) that is accessible and does not interfere with the existing \"Open\" button.",
-        "When the user triggers the remove action, the community is removed from the \"My Communities\" list immediately in the UI.",
-        "A confirmation step is shown before removal to prevent accidental deletes (user-facing text must be in English)."
+        "Chat interface uses full screen width on mobile viewports",
+        "No horizontal overflow or unused margins on mobile devices",
+        "Chat remains properly contained within viewport boundaries"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Persist the user’s removed \"My Communities\" state locally so removed communities stay removed after page refresh/reload.",
+      "text": "Make the chat component dynamically resize when UI dimensions change (keyboard opening, screen rotation, panel resizing)",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "msg-last"
         ],
         "quotes": [
-          "Remove the communities that exists in my communities please"
+          "making it strech when changing the UI wize"
         ]
       },
       "acceptanceCriteria": [
-        "After removing one or more communities, reloading the app does not show the removed communities in \"My Communities\".",
-        "Persistence is implemented entirely on the frontend (e.g., localStorage) without requiring backend changes.",
-        "If local persistence is cleared (via existing clear/reset flows), the default \"My Communities\" list reappears."
+        "Chat adjusts height when mobile keyboard opens/closes",
+        "Chat reflows properly on device rotation",
+        "Chat responds to viewport size changes without layout breaking"
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Ensure the removal behavior only affects the \"My Communities\" section and does not remove or change items in the \"Discover\" section.",
+      "text": "Fix the Create New Community modal/dialog shown in the screenshot so content is fully scrollable on mobile devices",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "msg-last"
         ],
         "quotes": [
-          "Remove the communities that exists in my communities please"
+          "i have prompt for this tab:that I can't scroll down"
         ]
       },
       "acceptanceCriteria": [
-        "Removing a community from \"My Communities\" does not change the \"Discover\" grid.",
-        "The \"Discover\" list remains fully functional and renders the same items as before."
+        "User can scroll to see all form fields (Community Banner section and below)",
+        "Modal content scrolls smoothly without cut-off on Android devices",
+        "All interactive elements remain accessible via scrolling"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Apply mobile-responsive touch target sizing and spacing throughout the UI for better Android usability",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Make this app more Android-friendly UI"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Buttons and interactive elements meet minimum 44px touch target size",
+        "Form inputs have adequate spacing for touch interaction",
+        "UI remains usable on smaller Android screen sizes"
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (compose these components instead).",
-    "Do not edit any files in frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx (immutable paths).",
-    "Keep backend architecture as a single Motoko actor; no additional backend services."
+    "Do not modify backend/main.mo or any backend logic",
+    "Preserve all existing functionality while improving mobile responsiveness",
+    "Maintain compatibility with desktop layouts"
   ],
   "nonGoals": [
-    "Implementing real community backend CRUD (create/list/delete communities) in Motoko.",
-    "Adding \"My Chats\", \"Profile\", or \"Notifications\" functionality beyond the existing placeholders.",
-    "Changing the \"Open\" and \"Request to Join\" buttons to perform real navigation or network actions."
+    "Native Android app development",
+    "iOS-specific optimizations",
+    "Backend API changes"
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

@@ -60,7 +60,7 @@ export default function SessionSidebar({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0"
+                    className="h-10 w-10 p-0 min-h-[44px] min-w-[44px]"
                     onClick={() => setShowQuickProfileDialog(true)}
                     aria-label="Open quick profile"
                   >
@@ -92,7 +92,7 @@ export default function SessionSidebar({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-10 w-10 p-0 min-h-[44px] min-w-[44px]"
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
@@ -121,7 +121,7 @@ export default function SessionSidebar({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0"
+                    className="h-8 w-8 p-0 min-h-[44px] min-w-[44px]"
                     onClick={() => setShowCreateChannel(true)}
                   >
                     <Plus className="h-4 w-4" />
@@ -133,7 +133,7 @@ export default function SessionSidebar({
                   <button
                     key={channel.id.toString()}
                     onClick={() => onSelectChannel(channel)}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${
+                    className={`w-full flex items-center gap-2 px-2 py-2 rounded text-sm transition-colors min-h-[44px] ${
                       selectedChannelId === channel.id
                         ? 'bg-accent text-accent-foreground'
                         : 'hover:bg-accent/50'
@@ -155,7 +155,7 @@ export default function SessionSidebar({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0"
+                  className="h-8 w-8 p-0 min-h-[44px] min-w-[44px]"
                   onClick={() => setShowCreateMembersChannel(true)}
                 >
                   <Plus className="h-4 w-4" />
@@ -164,17 +164,16 @@ export default function SessionSidebar({
               <div className="space-y-1">
                 {membersChannels.map((channel) => {
                   const isCreator = identity && channel.createdBy.toString() === identity.getPrincipal().toString();
-                  const canManage = isCreator || isHost;
                   return (
                     <div
                       key={channel.id.toString()}
-                      className={`flex items-center gap-2 rounded ${
+                      className={`flex items-center gap-1 rounded ${
                         selectedChannelId === channel.id ? 'bg-accent' : ''
                       }`}
                     >
                       <button
                         onClick={() => onSelectMembersChannel(channel)}
-                        className={`flex-1 flex items-center gap-2 px-2 py-1.5 text-sm transition-colors ${
+                        className={`flex-1 flex items-center gap-2 px-2 py-2 text-sm transition-colors min-h-[44px] ${
                           selectedChannelId === channel.id
                             ? 'text-accent-foreground'
                             : 'hover:bg-accent/50'
@@ -183,16 +182,15 @@ export default function SessionSidebar({
                         <Hash className="h-4 w-4 flex-shrink-0" />
                         <span className="truncate">{channel.name}</span>
                       </button>
-                      {canManage && (
+                      {(isCreator || isHost) && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0 mr-1"
-                              onClick={(e) => e.stopPropagation()}
+                              className="h-8 w-8 p-0 mr-1 min-h-[44px] min-w-[44px]"
                             >
-                              <MoreVertical className="h-3 w-3" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -213,27 +211,23 @@ export default function SessionSidebar({
         </ScrollArea>
       )}
 
-      {/* Create Channel Dialog */}
-      {isHost && (
-        <ChannelManagementDialogs
-          sessionId={sessionId}
-          isCreateDialog
-          open={showCreateChannel}
-          onOpenChange={setShowCreateChannel}
-          onSuccess={onChannelsChanged}
-        />
-      )}
+      {/* Dialogs */}
+      <ChannelManagementDialogs
+        sessionId={sessionId}
+        isCreateDialog={true}
+        open={showCreateChannel}
+        onOpenChange={setShowCreateChannel}
+        onSuccess={onChannelsChanged}
+      />
 
-      {/* Create Members' Channel Dialog */}
       <MembersChannelManagementDialogs
         sessionId={sessionId}
-        isCreateDialog
+        isCreateDialog={true}
         open={showCreateMembersChannel}
         onOpenChange={setShowCreateMembersChannel}
         onSuccess={onMembersChannelsChanged}
       />
 
-      {/* Quick Chat Profile Dialog */}
       <QuickChatProfileDialog
         open={showQuickProfileDialog}
         onOpenChange={setShowQuickProfileDialog}

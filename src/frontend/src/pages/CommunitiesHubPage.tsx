@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Search, Plus, ArrowLeft, Users, Crown, X } from 'lucide-react';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { loadHiddenCommunityIds, addHiddenCommunityId } from '../lib/myCommunitiesHiddenStorage';
+import CreateCommunityDialog from '../components/communities/CreateCommunityDialog';
 
 type CommunitiesHubPageProps = {
   onBackToSession: () => void;
@@ -170,9 +171,13 @@ export default function CommunitiesHubPage({ onBackToSession }: CommunitiesHubPa
     if (tab === 'communities') {
       setActiveTab(tab);
     } else {
-      // Show placeholder for other tabs
       setActiveTab(tab);
     }
+  };
+
+  const handleCommunityCreated = (communityId: string) => {
+    // TODO: Navigate to the created community or refresh the list
+    console.log('Community created:', communityId);
   };
 
   return (
@@ -317,21 +322,11 @@ export default function CommunitiesHubPage({ onBackToSession }: CommunitiesHubPa
       </nav>
 
       {/* Create Community Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-card text-card-foreground">
-          <DialogHeader>
-            <DialogTitle>Create New Community</DialogTitle>
-            <DialogDescription>
-              Community creation flow coming soon! You'll be able to set up your own moderated space with custom places, privacy settings, and join approval options.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-              Close
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CreateCommunityDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onCommunityCreated={handleCommunityCreated}
+      />
 
       {/* Remove Confirmation Dialog */}
       <Dialog open={confirmRemoveId !== null} onOpenChange={(open) => !open && cancelRemove()}>

@@ -101,8 +101,9 @@
   min-height: 0; /* Important for flex children to respect overflow */
 }
 
-/* Chat view layout - fixed height, scrollable messages only */
+/* Chat view layout - full width on mobile, responsive height */
 .chat-view-container {
+  width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -120,21 +121,33 @@
 
 /* Chat message bubbles */
 .chat-bubble-left {
-  max-width: 75%;
+  max-width: 85%;
   background: oklch(var(--muted));
   padding: 0.75rem 1rem;
   border-radius: 1rem;
   border-top-left-radius: 0.25rem;
 }
 
+@media (min-width: 768px) {
+  .chat-bubble-left {
+    max-width: 75%;
+  }
+}
+
 .chat-bubble-right {
-  max-width: 75%;
+  max-width: 85%;
   background: oklch(var(--primary));
   color: oklch(var(--primary-foreground));
   padding: 0.75rem 1rem;
   border-radius: 1rem;
   border-top-right-radius: 0.25rem;
   margin-left: auto;
+}
+
+@media (min-width: 768px) {
+  .chat-bubble-right {
+    max-width: 75%;
+  }
 }
 
 .chat-bubble-reply-indicator {
@@ -145,10 +158,50 @@
   opacity: 0.8;
 }
 
+.chat-reply-indicator {
+  background: oklch(var(--accent));
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.chat-reply-indicator:hover {
+  opacity: 0.9;
+}
+
 /* Ensure proper touch scrolling on mobile */
 @supports (-webkit-touch-callout: none) {
   .chat-messages-scroll {
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Mobile touch target sizing */
+@media (max-width: 768px) {
+  /* Ensure minimum touch target size for interactive elements */
+  button, a, input[type="button"], input[type="submit"], .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Form inputs */
+  input, select, textarea {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Increase spacing between interactive elements */
+  .space-y-1 > * + * {
+    margin-top: 0.5rem;
+  }
+  
+  .space-y-2 > * + * {
+    margin-top: 0.75rem;
   }
 }
 
@@ -186,6 +239,7 @@
   padding: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: transform 0.2s, background 0.2s;
+  min-height: 44px;
 }
 
 .community-card:hover {
@@ -199,6 +253,8 @@
   right: 1.5rem;
   width: 3.5rem;
   height: 3.5rem;
+  min-width: 56px;
+  min-height: 56px;
   border-radius: 9999px;
   background: oklch(var(--communities-accent));
   color: white;
@@ -228,37 +284,58 @@
   right: 0;
   height: 4rem;
   background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(10px);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 0.5rem 0;
   z-index: 50;
+  padding: 0 1rem;
 }
 
 .communities-nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.6);
-  transition: color 0.2s;
-  background: none;
-  border: none;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
   cursor: pointer;
-  padding: 0.25rem 1rem;
-  min-width: 4rem;
+  color: rgba(255, 255, 255, 0.6);
+  min-height: 44px;
+  min-width: 44px;
+  justify-content: center;
 }
 
 .communities-nav-item:hover {
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .communities-nav-item.active {
   color: oklch(var(--communities-accent));
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .communities-nav-item svg {
-  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.communities-nav-item span {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Dialog scrollable content for mobile */
+@media (max-width: 768px) {
+  [role="dialog"] {
+    max-height: 90dvh;
+  }
+  
+  .dialog-scrollable-content {
+    max-height: calc(90dvh - 8rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }

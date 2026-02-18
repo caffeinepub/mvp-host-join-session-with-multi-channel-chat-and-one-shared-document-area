@@ -205,7 +205,6 @@ export interface backendInterface {
     addComment(documentId: bigint, text: string): Promise<bigint>;
     addImageToDocument(sessionId: bigint, documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
     addImageToPlayerDocument(documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
-    addPlayerImage(documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createChannel(sessionId: bigint, name: string): Promise<StandardResponse>;
     createDocument(sessionId: bigint, name: string, content: string): Promise<CreateDocumentResponse>;

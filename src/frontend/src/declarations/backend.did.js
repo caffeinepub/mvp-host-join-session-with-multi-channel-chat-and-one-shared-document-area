@@ -232,11 +232,6 @@ export const idlService = IDL.Service({
       [AddImageToDocumentResponse],
       [],
     ),
-  'addPlayerImage' : IDL.Func(
-      [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
-      [IDL.Nat],
-      [],
-    ),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createChannel' : IDL.Func([IDL.Nat, IDL.Text], [StandardResponse], []),
   'createDocument' : IDL.Func(
@@ -593,11 +588,6 @@ export const idlFactory = ({ IDL }) => {
     'addImageToPlayerDocument' : IDL.Func(
         [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
         [AddImageToDocumentResponse],
-        [],
-      ),
-    'addPlayerImage' : IDL.Func(
-        [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int],
-        [IDL.Nat],
         [],
       ),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),

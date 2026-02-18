@@ -208,10 +208,6 @@ export interface _SERVICE {
     [bigint, string, string, string, bigint, bigint],
     AddImageToDocumentResponse
   >,
-  'addPlayerImage' : ActorMethod<
-    [bigint, string, string, string, bigint, bigint],
-    bigint
-  >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createChannel' : ActorMethod<[bigint, string], StandardResponse>,
   'createDocument' : ActorMethod<

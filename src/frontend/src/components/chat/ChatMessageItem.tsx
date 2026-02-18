@@ -100,7 +100,7 @@ export default function ChatMessageItem({
 
   return (
     <div
-      className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'}`}
+      className={`flex gap-2 md:gap-3 ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'}`}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerMove={handlePointerMove}
@@ -111,13 +111,13 @@ export default function ChatMessageItem({
         imageUrl={avatarImageUrl}
         name={displayName}
         size="sm"
-        className="mt-1 shrink-0"
+        className="mt-1 shrink-0 min-w-[32px] min-h-[32px]"
       />
-      <div className={`flex-1 flex flex-col gap-2 min-w-0 max-w-[70%] ${isCurrentUser ? 'items-end' : 'items-start'}`}>
+      <div className={`flex-1 flex flex-col gap-2 min-w-0 max-w-[85%] md:max-w-[70%] ${isCurrentUser ? 'items-end' : 'items-start'}`}>
         {/* Reply Indicator */}
         {replyToMessage && (
           <button
-            className="chat-reply-indicator"
+            className="chat-reply-indicator min-h-[44px]"
             onClick={() => {
               // Future: scroll to original message
             }}
@@ -131,7 +131,7 @@ export default function ChatMessageItem({
 
         {/* Message Bubble */}
         <div
-          className={`rounded-2xl px-4 py-2 ${
+          className={`rounded-2xl px-3 md:px-4 py-2 ${
             isCurrentUser
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-foreground'
@@ -155,7 +155,7 @@ export default function ChatMessageItem({
               href={messageImageUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block mt-2"
+              className="block mt-2 min-h-[44px]"
               onClick={(e) => e.stopPropagation()}
             >
               <img

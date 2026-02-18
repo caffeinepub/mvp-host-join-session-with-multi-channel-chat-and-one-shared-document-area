@@ -1,62 +1,109 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Communities Hub: Remove (hide) My Communities with local persistence",
+  "title": "Make UI Android-friendly with responsive chat and scrollable modals",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add an accessible remove action with confirmation on each card in the \"My Communities\" grid and remove it immediately from the UI.",
+      "summary": "Make the chat component stretch to 100% screen width on mobile and Android devices",
       "acceptanceCriteria": [
-        "Each card in the \"My Communities\" grid provides a clear remove action (e.g., a remove button/menu) that is accessible and does not interfere with the existing \"Open\" button.",
-        "When the user triggers the remove action, the community is removed from the \"My Communities\" list immediately in the UI.",
-        "A confirmation step is shown before removal to prevent accidental deletes (user-facing text must be in English)."
+        "Chat interface uses full screen width on mobile viewports",
+        "No horizontal overflow or unused margins on mobile devices",
+        "Chat remains properly contained within viewport boundaries"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/CommunitiesHubPage.tsx",
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
           "operation": "modify",
-          "description": "Add a per-card remove control (e.g., a small ghost/icon button with aria-label) in the \"My Communities\" cards that triggers an English confirmation step before hiding the card; update the rendered \"My Communities\" list immediately after confirmation without impacting the existing \"Open\" button layout/interaction. Verify the component's usage instructions before implementing."
+          "description": "Update container styling to use full viewport width on mobile devices. Replace fixed width classes with responsive classes that ensure 100% width on mobile (w-full md:w-auto). Remove or conditionally apply horizontal margins/padding that prevent full-width display on small screens. Ensure the chat container and message list elements use flex layout with appropriate mobile-first responsive classes."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add or update mobile-specific CSS rules for chat components to ensure full-width behavior. Target .chat-container or relevant chat-related classes with @media (max-width: 768px) rules that set width: 100%, remove horizontal margins, and ensure proper box-sizing. Remove any fixed max-width constraints that prevent mobile screens from using full available space."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Persist removed \"My Communities\" locally (localStorage) and restore/clear it via existing clear/reset local data flows.",
+      "summary": "Make the chat component dynamically resize when UI dimensions change (keyboard opening, screen rotation, panel resizing)",
       "acceptanceCriteria": [
-        "After removing one or more communities, reloading the app does not show the removed communities in \"My Communities\".",
-        "Persistence is implemented entirely on the frontend (e.g., localStorage) without requiring backend changes.",
-        "If local persistence is cleared (via existing clear/reset flows), the default \"My Communities\" list reappears."
+        "Chat adjusts height when mobile keyboard opens/closes",
+        "Chat reflows properly on device rotation",
+        "Chat responds to viewport size changes without layout breaking"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/myCommunitiesHiddenStorage.ts",
+          "path": "frontend/src/components/chat/ChannelChatView.tsx",
+          "operation": "modify",
+          "description": "Implement dynamic height calculation using viewport height units (dvh or vh) instead of fixed heights. Add useEffect hook with window resize and orientationchange event listeners to recalculate chat container dimensions. Use CSS calc() or JavaScript-based height calculation that accounts for dynamic viewport changes (e.g., height: calc(100dvh - headerHeight - inputHeight)). Ensure message list container uses flex-1 or dynamic height so it adjusts when keyboard appears. Add cleanup for event listeners in useEffect return function."
+        },
+        {
+          "path": "frontend/src/hooks/useViewportHeight.ts",
           "operation": "create",
-          "description": "Implement a small localStorage-backed helper for \"hidden my community ids\" (load/save/add/remove/clear) with basic JSON parsing guards and a dedicated storage key. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/CommunitiesHubPage.tsx",
-          "operation": "modify",
-          "description": "Wire the hidden-ids storage into the page: initialize hidden ids on mount/render, filter the hardcoded MY_COMMUNITIES list accordingly, and on successful confirmation persist the newly hidden id so it stays hidden across refresh/reload. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/lib/clearLocalAppData.ts",
-          "operation": "modify",
-          "description": "Add the new hidden-my-communities localStorage key to the app's existing clear/reset local data list so \"Clear Local Data\" restores the default \"My Communities\" list. Verify the component's usage instructions before implementing."
+          "description": "Create a custom hook that tracks dynamic viewport height changes and returns the current viewport height value. Use useState to store height, useEffect to attach resize and orientationchange listeners, and update state when viewport dimensions change. Export the hook for use in chat and other responsive components. This centralizes viewport tracking logic for reuse across components that need to respond to keyboard/rotation changes."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Scope removal behavior to only affect the \"My Communities\" section and keep \"Discover\" unchanged.",
+      "summary": "Fix the Create New Community modal/dialog shown in the screenshot so content is fully scrollable on mobile devices",
       "acceptanceCriteria": [
-        "Removing a community from \"My Communities\" does not change the \"Discover\" grid.",
-        "The \"Discover\" list remains fully functional and renders the same items as before."
+        "User can scroll to see all form fields (Community Banner section and below)",
+        "Modal content scrolls smoothly without cut-off on Android devices",
+        "All interactive elements remain accessible via scrolling"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/CommunitiesHubPage.tsx",
+          "path": "frontend/src/components/communities/CreateCommunityDialog.tsx",
           "operation": "modify",
-          "description": "Ensure filtering/removal logic is applied only to the MY_COMMUNITIES rendering path (e.g., filter only that array) and leave DISCOVER_COMMUNITIES rendering untouched; confirm the Discover grid continues to render the original items and behavior. Verify the component's usage instructions before implementing."
+          "description": "Update the dialog container to ensure scrollable content area on mobile. Set max-height constraint based on viewport height (e.g., max-h-[90dvh]) and add overflow-y-auto to the dialog content wrapper. Ensure the dialog uses a proper scrollable container pattern: fixed header/title, scrollable body, and fixed footer if present. Test that all form sections including Community Banner, Privacy Settings, Join Questions, and Sub-Places are accessible via scrolling on small screens."
+        },
+        {
+          "path": "frontend/src/components/communities/CommunityForm.tsx",
+          "operation": "modify",
+          "description": "Review and update form container layout to work within a scrollable parent. Remove any fixed height constraints that might prevent scrolling. Ensure all sections (CommunityImagePickers, AdvancedCustomizationSection, JoinQuestionsEditor, SubPlacesEditor) use relative sizing and proper spacing. Add mobile-responsive padding/margins that don't cause horizontal overflow. Verify that collapsible sections expand properly within the scrollable container without breaking layout."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add mobile-specific styles for dialog and modal containers to ensure proper scrolling behavior. Target dialog content wrappers with mobile media queries that set appropriate max-height (using dvh units), overflow-y-auto, and -webkit-overflow-scrolling: touch for smooth scrolling on iOS/Android. Add utility classes for scrollable modal content if needed (e.g., .dialog-scrollable-content). Ensure z-index layering is correct so scrollable content doesn't interfere with fixed headers/footers."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Apply mobile-responsive touch target sizing and spacing throughout the UI for better Android usability",
+      "acceptanceCriteria": [
+        "Buttons and interactive elements meet minimum 44px touch target size",
+        "Form inputs have adequate spacing for touch interaction",
+        "UI remains usable on smaller Android screen sizes"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add global mobile touch target rules ensuring minimum 44px height/width for interactive elements. Create utility classes or update existing button/input base styles with min-h-[44px] and min-w-[44px] on mobile viewports. Increase tap target padding for buttons, links, and icon buttons using @media (max-width: 768px) rules. Add touch-friendly spacing between adjacent interactive elements (e.g., min gap of 8px). Ensure form inputs, checkboxes, radio buttons, and select elements have adequate size and spacing for touch interaction."
+        },
+        {
+          "path": "frontend/src/components/chat/ChatMessageItem.tsx",
+          "operation": "modify",
+          "description": "Increase touch target sizes for message interaction elements (reply button, long-press area, image previews). Ensure avatar, timestamp, and any clickable message elements meet 44px minimum. Add responsive padding/margins that provide adequate spacing between messages on mobile. Verify that long-press interaction area is large enough for reliable touch detection on Android devices."
+        },
+        {
+          "path": "frontend/src/components/session/SessionSidebar.tsx",
+          "operation": "modify",
+          "description": "Update sidebar interactive elements (channel list items, member channel items, quick profile/settings controls) to meet 44px touch target minimum on mobile. Increase vertical spacing between list items for easier touch selection. Ensure collapse/expand controls have adequate touch target size. Add mobile-responsive padding that prevents accidental touches on adjacent items."
+        },
+        {
+          "path": "frontend/src/components/communities/fields/CommunityImagePickers.tsx",
+          "operation": "modify",
+          "description": "Ensure upload buttons, remove buttons, and image preview areas meet minimum touch target size of 44px. Increase spacing between upload controls and preview areas on mobile. Verify that all interactive elements (upload, remove, preview) are easily tappable on small Android screens without accidental activation of adjacent controls."
+        },
+        {
+          "path": "frontend/src/components/profile/ProfilePictureSection.tsx",
+          "operation": "modify",
+          "description": "Increase touch target size for upload and remove profile picture buttons to meet 44px minimum. Add mobile-responsive spacing around interactive elements. Ensure preview area and buttons have adequate separation to prevent accidental touches on mobile devices."
         }
       ]
     }
