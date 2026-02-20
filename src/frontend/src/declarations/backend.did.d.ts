@@ -89,6 +89,7 @@ export interface MembersChannel {
 }
 export interface Message {
   'id' : bigint,
+  'gif' : [] | [string],
   'content' : string,
   'channelId' : bigint,
   'author' : string,
@@ -149,6 +150,15 @@ export interface SessionMember {
 }
 export type StandardResponse = { 'ok' : string } |
   { 'error' : string };
+export interface Sticker {
+  'id' : bigint,
+  'channelId' : [] | [bigint],
+  'messageId' : [] | [bigint],
+  'name' : string,
+  'sender' : [] | [string],
+  'timestamp' : [] | [bigint],
+  'image' : ExternalBlob,
+}
 export type Time = bigint;
 export interface TurnOrder {
   'currentIndex' : bigint,
@@ -208,6 +218,7 @@ export interface _SERVICE {
     [bigint, string, string, string, bigint, bigint],
     AddImageToDocumentResponse
   >,
+  'addSticker' : ActorMethod<[ExternalBlob, string], [] | [bigint]>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createChannel' : ActorMethod<[bigint, string], StandardResponse>,
   'createDocument' : ActorMethod<
@@ -228,6 +239,7 @@ export interface _SERVICE {
   'editDocument' : ActorMethod<[bigint, string], StandardResponse>,
   'editPlayerDocument' : ActorMethod<[bigint, string], StandardResponse>,
   'exportSession' : ActorMethod<[bigint], [] | [SessionExport]>,
+  'getAllStickers' : ActorMethod<[], Array<Sticker>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getChannels' : ActorMethod<[bigint], Array<Channel>>,
@@ -245,6 +257,8 @@ export interface _SERVICE {
   'getMessages' : ActorMethod<[bigint, bigint], Array<Message>>,
   'getPlayerDocument' : ActorMethod<[bigint], [] | [PlayerDocument]>,
   'getSession' : ActorMethod<[bigint], [] | [Session]>,
+  'getSticker' : ActorMethod<[bigint], [] | [Sticker]>,
+  'getStickersByChannel' : ActorMethod<[bigint], Array<Sticker>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'importSession' : ActorMethod<[SessionExport], StandardResponse>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
@@ -260,7 +274,7 @@ export interface _SERVICE {
   'lockDocument' : ActorMethod<[bigint], StandardResponse>,
   'nextTurn' : ActorMethod<[bigint], StandardResponse>,
   'postMessage' : ActorMethod<
-    [bigint, bigint, string, [] | [ExternalBlob], [] | [bigint]],
+    [bigint, bigint, string, [] | [ExternalBlob], [] | [string], [] | [bigint]],
     StandardResponse
   >,
   'removeProfilePicture' : ActorMethod<[], undefined>,
@@ -273,6 +287,10 @@ export interface _SERVICE {
   'renamePlayerDocument' : ActorMethod<[bigint, string], StandardResponse>,
   'roll' : ActorMethod<[bigint, string], DiceRollResult>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'sendSticker' : ActorMethod<
+    [bigint, bigint, string, bigint, bigint],
+    boolean
+  >,
   'setPlayerDocumentVisibility' : ActorMethod<
     [bigint, boolean],
     StandardResponse

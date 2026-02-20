@@ -23,6 +23,7 @@ export const AddImageToDocumentResponse = IDL.Variant({
   'ok' : IDL.Nat,
   'error' : IDL.Text,
 });
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
@@ -108,9 +109,9 @@ export const Document = IDL.Record({
   'sessionId' : IDL.Nat,
   'revision' : IDL.Nat,
 });
-export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const Message = IDL.Record({
   'id' : IDL.Nat,
+  'gif' : IDL.Opt(IDL.Text),
   'content' : IDL.Text,
   'channelId' : IDL.Nat,
   'author' : IDL.Text,
@@ -137,6 +138,15 @@ export const SessionExport = IDL.Record({
   'session' : Session,
   'documentFiles' : IDL.Vec(DocumentFileReference),
   'images' : IDL.Vec(ImageReference),
+});
+export const Sticker = IDL.Record({
+  'id' : IDL.Nat,
+  'channelId' : IDL.Opt(IDL.Nat),
+  'messageId' : IDL.Opt(IDL.Nat),
+  'name' : IDL.Text,
+  'sender' : IDL.Opt(IDL.Text),
+  'timestamp' : IDL.Opt(IDL.Int),
+  'image' : ExternalBlob,
 });
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
@@ -232,6 +242,7 @@ export const idlService = IDL.Service({
       [AddImageToDocumentResponse],
       [],
     ),
+  'addSticker' : IDL.Func([ExternalBlob, IDL.Text], [IDL.Opt(IDL.Nat)], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createChannel' : IDL.Func([IDL.Nat, IDL.Text], [StandardResponse], []),
   'createDocument' : IDL.Func(
@@ -258,6 +269,7 @@ export const idlService = IDL.Service({
   'editDocument' : IDL.Func([IDL.Nat, IDL.Text], [StandardResponse], []),
   'editPlayerDocument' : IDL.Func([IDL.Nat, IDL.Text], [StandardResponse], []),
   'exportSession' : IDL.Func([IDL.Nat], [IDL.Opt(SessionExport)], ['query']),
+  'getAllStickers' : IDL.Func([], [IDL.Vec(Sticker)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getChannels' : IDL.Func([IDL.Nat], [IDL.Vec(Channel)], ['query']),
@@ -296,6 +308,8 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getSession' : IDL.Func([IDL.Nat], [IDL.Opt(Session)], ['query']),
+  'getSticker' : IDL.Func([IDL.Nat], [IDL.Opt(Sticker)], ['query']),
+  'getStickersByChannel' : IDL.Func([IDL.Nat], [IDL.Vec(Sticker)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -324,7 +338,14 @@ export const idlService = IDL.Service({
   'lockDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
   'nextTurn' : IDL.Func([IDL.Nat], [StandardResponse], []),
   'postMessage' : IDL.Func(
-      [IDL.Nat, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob), IDL.Opt(IDL.Nat)],
+      [
+        IDL.Nat,
+        IDL.Nat,
+        IDL.Text,
+        IDL.Opt(ExternalBlob),
+        IDL.Opt(IDL.Text),
+        IDL.Opt(IDL.Nat),
+      ],
       [StandardResponse],
       [],
     ),
@@ -347,6 +368,11 @@ export const idlService = IDL.Service({
     ),
   'roll' : IDL.Func([IDL.Nat, IDL.Text], [DiceRollResult], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'sendSticker' : IDL.Func(
+      [IDL.Nat, IDL.Nat, IDL.Text, IDL.Nat, IDL.Int],
+      [IDL.Bool],
+      [],
+    ),
   'setPlayerDocumentVisibility' : IDL.Func(
       [IDL.Nat, IDL.Bool],
       [StandardResponse],
@@ -384,6 +410,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'error' : IDL.Text,
   });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
@@ -466,9 +493,9 @@ export const idlFactory = ({ IDL }) => {
     'sessionId' : IDL.Nat,
     'revision' : IDL.Nat,
   });
-  const ExternalBlob = IDL.Vec(IDL.Nat8);
   const Message = IDL.Record({
     'id' : IDL.Nat,
+    'gif' : IDL.Opt(IDL.Text),
     'content' : IDL.Text,
     'channelId' : IDL.Nat,
     'author' : IDL.Text,
@@ -495,6 +522,15 @@ export const idlFactory = ({ IDL }) => {
     'session' : Session,
     'documentFiles' : IDL.Vec(DocumentFileReference),
     'images' : IDL.Vec(ImageReference),
+  });
+  const Sticker = IDL.Record({
+    'id' : IDL.Nat,
+    'channelId' : IDL.Opt(IDL.Nat),
+    'messageId' : IDL.Opt(IDL.Nat),
+    'name' : IDL.Text,
+    'sender' : IDL.Opt(IDL.Text),
+    'timestamp' : IDL.Opt(IDL.Int),
+    'image' : ExternalBlob,
   });
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
@@ -590,6 +626,7 @@ export const idlFactory = ({ IDL }) => {
         [AddImageToDocumentResponse],
         [],
       ),
+    'addSticker' : IDL.Func([ExternalBlob, IDL.Text], [IDL.Opt(IDL.Nat)], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createChannel' : IDL.Func([IDL.Nat, IDL.Text], [StandardResponse], []),
     'createDocument' : IDL.Func(
@@ -624,6 +661,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'exportSession' : IDL.Func([IDL.Nat], [IDL.Opt(SessionExport)], ['query']),
+    'getAllStickers' : IDL.Func([], [IDL.Vec(Sticker)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getChannels' : IDL.Func([IDL.Nat], [IDL.Vec(Channel)], ['query']),
@@ -662,6 +700,8 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getSession' : IDL.Func([IDL.Nat], [IDL.Opt(Session)], ['query']),
+    'getSticker' : IDL.Func([IDL.Nat], [IDL.Opt(Sticker)], ['query']),
+    'getStickersByChannel' : IDL.Func([IDL.Nat], [IDL.Vec(Sticker)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -690,7 +730,14 @@ export const idlFactory = ({ IDL }) => {
     'lockDocument' : IDL.Func([IDL.Nat], [StandardResponse], []),
     'nextTurn' : IDL.Func([IDL.Nat], [StandardResponse], []),
     'postMessage' : IDL.Func(
-        [IDL.Nat, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob), IDL.Opt(IDL.Nat)],
+        [
+          IDL.Nat,
+          IDL.Nat,
+          IDL.Text,
+          IDL.Opt(ExternalBlob),
+          IDL.Opt(IDL.Text),
+          IDL.Opt(IDL.Nat),
+        ],
         [StandardResponse],
         [],
       ),
@@ -713,6 +760,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'roll' : IDL.Func([IDL.Nat, IDL.Text], [DiceRollResult], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'sendSticker' : IDL.Func(
+        [IDL.Nat, IDL.Nat, IDL.Text, IDL.Nat, IDL.Int],
+        [IDL.Bool],
+        [],
+      ),
     'setPlayerDocumentVisibility' : IDL.Func(
         [IDL.Nat, IDL.Bool],
         [StandardResponse],

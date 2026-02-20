@@ -1,12 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Make the UI Android-friendly with responsive chat, scrollable modals, and mobile-optimized touch targets.
+**Goal:** Add GIF sharing capability to the chat feature by allowing users to paste direct .gif URLs.
 
 **Planned changes:**
-- Make chat component stretch to 100% screen width on mobile and Android devices
-- Make chat dynamically resize when keyboard opens/closes, screen rotates, or UI dimensions change
-- Fix Create New Community modal to be fully scrollable on mobile devices so all form fields are accessible
-- Apply mobile-responsive touch target sizing (minimum 44px) and spacing throughout the UI for better Android usability
+- Add support for pasting direct .gif URLs (from media.tenor.com, c.tenor.com, or any other direct .gif link) into the chat input
+- Validate that URLs end in .gif and provide feedback for invalid URLs
+- Render GIF URLs as animated images inline in chat messages
+- Update backend Message type to store and retrieve GIF URLs
+- Maintain GIF animation and ensure proper sizing within the chat layout
 
-**User-visible outcome:** Users on Android devices can use the chat interface at full screen width with proper keyboard handling, scroll through all fields in the Create New Community modal, and interact with touch-friendly UI elements throughout the app.
+**User-visible outcome:** Users can share animated GIFs in chat by pasting direct .gif URLs, which will display as animated images in the conversation alongside text, images, stickers, and dice rolls.

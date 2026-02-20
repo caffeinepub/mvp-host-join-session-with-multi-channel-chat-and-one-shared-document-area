@@ -26,6 +26,8 @@ export default function ChatMessageItem({
   const { profile: quickProfile } = useQuickChatProfile();
   const isRoll = message.content.startsWith('🎲');
   const hasImage = !!message.image;
+  const hasGif = !!message.gif;
+  const isSticker = message.content.startsWith('[STICKER:') && hasImage;
 
   // Find the member by nickname to get their principal
   const member = members.find((m) => m.nickname === message.author);
@@ -143,27 +145,56 @@ export default function ChatMessageItem({
               {formatTimestamp(message.timestamp)}
             </span>
             {isRoll && <Badge variant="secondary" className="text-xs">Roll</Badge>}
-            {hasImage && <Badge variant="outline" className="text-xs">📷</Badge>}
+            {isSticker && <Badge variant="outline" className="text-xs">🎨 Sticker</Badge>}
+            {hasGif && <Badge variant="outline" className="text-xs">🎬 GIF</Badge>}
+            {hasImage && !isSticker && !hasGif && <Badge variant="outline" className="text-xs">📷</Badge>}
           </div>
-          {message.content && (
-            <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-              {message.content.replace(/\*\*(.*?)\*\*/g, (_, text) => text)}
-            </div>
-          )}
-          {hasImage && messageImageUrl && (
-            <a
-              href={messageImageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block mt-2 min-h-[44px]"
-              onClick={(e) => e.stopPropagation()}
-            >
+          
+          {/* Sticker Display */}
+          {isSticker && messageImageUrl ? (
+            <div className="mt-1">
               <img
                 src={messageImageUrl}
-                alt="Uploaded image"
-                className="rounded-lg border border-border max-h-64 w-auto object-contain hover:opacity-90 transition-opacity cursor-pointer"
+                alt="Sticker"
+                className="w-32 h-32 object-contain"
               />
-            </a>
+            </div>
+          ) : (
+            <>
+              {message.content && !isSticker && (
+                <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {message.content.replace(/\*\*(.*?)\*\*/g, (_, text) => text)}
+                </div>
+              )}
+              
+              {/* GIF Display */}
+              {hasGif && message.gif && (
+                <div className="mt-2">
+                  <img
+                    src={message.gif}
+                    alt="GIF"
+                    className="rounded-lg border border-border max-w-full max-h-80 w-auto object-contain"
+                  />
+                </div>
+              )}
+              
+              {/* Image Display */}
+              {hasImage && messageImageUrl && !hasGif && (
+                <a
+                  href={messageImageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-2 min-h-[44px]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={messageImageUrl}
+                    alt="Uploaded image"
+                    className="rounded-lg border border-border max-h-64 w-auto object-contain hover:opacity-90 transition-opacity cursor-pointer"
+                  />
+                </a>
+              )}
+            </>
           )}
         </div>
       </div>

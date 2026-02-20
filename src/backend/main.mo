@@ -9,11 +9,13 @@ import Array "mo:core/Array";
 import Principal "mo:core/Principal";
 import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
+import Migration "migration";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 import AccessControl "authorization/access-control";
 
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -49,7 +51,18 @@ actor {
     content : Text;
     timestamp : Int;
     image : ?Storage.ExternalBlob;
+    gif : ?Text;
     replyToId : ?Nat;
+  };
+
+  public type Sticker = {
+    id : Nat;
+    image : Storage.ExternalBlob;
+    name : Text;
+    messageId : ?Nat;
+    sender : ?Text;
+    channelId : ?Nat;
+    timestamp : ?Int;
   };
 
   public type SessionMember = {
@@ -224,6 +237,7 @@ actor {
   var nextImageId : Nat = 1;
   var nextFileId : Nat = 1;
   var nextCommentId : Nat = 1;
+  var nextStickerId : Nat = 1;
 
   let sessions = Map.empty<Nat, Session>();
   let messages = Map.empty<Nat, List.List<Message>>();
@@ -234,6 +248,7 @@ actor {
   let imageReferences = Map.empty<Nat, ImageReference>();
   let documentFileReferences = Map.empty<Nat, DocumentFileReference>();
   let comments = Map.empty<Nat, DocumentComment>();
+  let stickers = Map.empty<Nat, Sticker>();
 
   func updateSessionActivity(sessionId : Nat) {
     switch (sessions.get(sessionId)) {
@@ -296,6 +311,20 @@ actor {
       return isSessionHost(doc.sessionId, caller);
     };
     isSessionMember(doc.sessionId, caller);
+  };
+
+  func getSessionIdForChannel(channelId : Nat) : ?Nat {
+    for ((sessionId, session) in sessions.entries()) {
+      let hasChannel = session.channels.find(func(ch) { ch.id == channelId }) != null;
+      if (hasChannel) {
+        return ?sessionId;
+      };
+      let hasMembersChannel = session.membersChannels.find(func(ch) { ch.id == channelId }) != null;
+      if (hasMembersChannel) {
+        return ?sessionId;
+      };
+    };
+    null;
   };
 
   let accessControlState = AccessControl.initState();
@@ -681,7 +710,7 @@ actor {
     };
   };
 
-  public shared ({ caller }) func postMessage(sessionId : Nat, channelId : Nat, content : Text, image : ?Storage.ExternalBlob, replyToId : ?Nat) : async StandardResponse {
+  public shared ({ caller }) func postMessage(sessionId : Nat, channelId : Nat, content : Text, image : ?Storage.ExternalBlob, gif : ?Text, replyToId : ?Nat) : async StandardResponse {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can post messages");
     };
@@ -700,6 +729,7 @@ actor {
           content;
           timestamp = Time.now();
           image;
+          gif;
           replyToId;
         };
         nextMessageId += 1;
@@ -1752,5 +1782,105 @@ actor {
     };
 
     comments.add(commentId, newComment);
+  };
+
+  // ------------------- Sticker API -------------------
+
+  public shared ({ caller }) func addSticker(image : Storage.ExternalBlob, name : Text) : async ?Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can add stickers");
+    };
+
+    let newSticker : Sticker = {
+      id = nextStickerId;
+      image;
+      name;
+      messageId = null;
+      sender = null;
+      channelId = null;
+      timestamp = null;
+    };
+
+    stickers.add(nextStickerId, newSticker);
+    let stickerId = nextStickerId;
+    nextStickerId += 1;
+    ?stickerId;
+  };
+
+  public shared ({ caller }) func sendSticker(stickerId : Nat, channelId : Nat, sender : Text, messageId : Nat, timestamp : Int) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can send stickers");
+    };
+
+    switch (getSessionIdForChannel(channelId)) {
+      case (null) {
+        Runtime.trap("Channel not found");
+      };
+      case (?sessionId) {
+        if (not isSessionMember(sessionId, caller)) {
+          Runtime.trap("Unauthorized: Only session members can send stickers to this channel");
+        };
+
+        switch (stickers.get(stickerId)) {
+          case (null) { false };
+          case (?sticker) {
+            let updatedSticker = {
+              sticker with
+              messageId = ?messageId;
+              sender = ?sender;
+              channelId = ?channelId;
+              timestamp = ?timestamp;
+            };
+
+            stickers.add(stickerId, updatedSticker);
+            updateSessionActivity(sessionId);
+            true;
+          };
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func getSticker(stickerId : Nat) : async ?Sticker {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view stickers");
+    };
+
+    stickers.get(stickerId);
+  };
+
+  public query ({ caller }) func getAllStickers() : async [Sticker] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view stickers");
+    };
+
+    stickers.values().toArray();
+  };
+
+  public query ({ caller }) func getStickersByChannel(channelId : Nat) : async [Sticker] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view stickers");
+    };
+
+    switch (getSessionIdForChannel(channelId)) {
+      case (null) {
+        Runtime.trap("Channel not found");
+      };
+      case (?sessionId) {
+        if (not isSessionMember(sessionId, caller)) {
+          Runtime.trap("Unauthorized: Only session members can view stickers for this channel");
+        };
+
+        let allStickers = stickers.values().toArray();
+        allStickers.filter(
+          func(sticker) {
+            switch (sticker.channelId) {
+              case (null) { false };
+              case (?id) { id == channelId };
+            };
+          }
+        );
+      };
+    };
   };
 };

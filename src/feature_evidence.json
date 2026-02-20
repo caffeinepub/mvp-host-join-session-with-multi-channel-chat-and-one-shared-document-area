@@ -2,11 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-make-the-chat-component-stretch-to-100-screen-width-on-mobile-and-android-devices",
-      "featureTitle": "Make the chat component stretch to 100% screen width on mobile and Android devices",
+      "featureId": "feature-add-support-for-users-to-send-gif-images-in-chat-by-pasting-direct-gif-urls-from-media-tenor-com-c-tenor-com-or-any-other-direct-gif-link",
+      "featureTitle": "Add support for users to send GIF images in chat by pasting direct .gif URLs (from media.tenor.com, c.tenor.com, or any other direct .gif link)",
       "files": [
         "frontend/src/components/chat/ChannelChatView.tsx",
-        "frontend/src/index.css"
+        "frontend/src/components/chat/ChatMessageItem.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,11 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-make-the-chat-component-dynamically-resize-when-ui-dimensions-change-keyboard-opening-screen-rotation-panel-resizing",
-      "featureTitle": "Make the chat component dynamically resize when UI dimensions change (keyboard opening, screen rotation, panel resizing)",
+      "featureId": "feature-validate-that-pasted-urls-are-direct-image-links-ending-in-gif-and-display-appropriate-feedback-if-invalid-urls-are-provided",
+      "featureTitle": "Validate that pasted URLs are direct image links ending in .gif and display appropriate feedback if invalid URLs are provided",
       "files": [
         "frontend/src/components/chat/ChannelChatView.tsx",
-        "frontend/src/hooks/useViewportHeight.ts"
+        "frontend/src/lib/gifUrlValidation.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -44,11 +44,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-the-create-new-community-modal-dialog-shown-in-the-screenshot-so-content-is-fully-scrollable-on-mobile-devices",
-      "featureTitle": "Fix the Create New Community modal/dialog shown in the screenshot so content is fully scrollable on mobile devices",
+      "featureId": "feature-extend-the-message-content-display-in-chatmessageitem-to-render-gif-urls-as-animated-images-with-proper-sizing-and-layout",
+      "featureTitle": "Extend the message content display in ChatMessageItem to render GIF URLs as animated images with proper sizing and layout",
       "files": [
-        "frontend/src/components/communities/CreateCommunityDialog.tsx",
-        "frontend/src/index.css"
+        "frontend/src/components/chat/ChatMessageItem.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -61,30 +60,6 @@
       ],
       "testIds": [
         "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-apply-mobile-responsive-touch-target-sizing-and-spacing-throughout-the-ui-for-better-android-usability",
-      "featureTitle": "Apply mobile-responsive touch target sizing and spacing throughout the UI for better Android usability",
-      "files": [
-        "frontend/src/components/chat/ChatMessageItem.tsx",
-        "frontend/src/components/communities/fields/CommunityImagePickers.tsx",
-        "frontend/src/components/profile/ProfilePictureSection.tsx",
-        "frontend/src/components/session/SessionSidebar.tsx",
-        "frontend/src/index.css"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
       ],
       "confidence": "high"
     }

@@ -5,10 +5,16 @@ import { ExternalBlob } from '../../backend';
 import ChatMessageItem from './ChatMessageItem';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Send, Loader2, Image, X, ArrowDown } from 'lucide-react';
+import { Send, Loader2, Image, X, ArrowDown, Smile, Settings } from 'lucide-react';
 import { parseRollCommand } from '../../lib/rollCommand';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
+import StickerPickerPanel from './StickerPickerPanel';
+import StickerManagementPanel from './StickerManagementPanel';
+import { dataUrlToUint8Array } from '../../lib/stickerImageProcessor';
+import type { StickerData } from '../../lib/stickerStorage';
+import { validateGifUrl, extractGifUrl } from '../../lib/gifUrlValidation';
+import { toast } from 'sonner';
 
 type ChannelChatViewProps = {
   sessionId: bigint;
@@ -35,6 +41,8 @@ export default function ChannelChatView({
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const [showStickerManager, setShowStickerManager] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const prevChannelIdRef = useRef<bigint | null>(null);
@@ -62,13 +70,35 @@ export default function ChannelChatView({
     setIsSending(true);
 
     try {
+      // Check if message contains a GIF URL
+      const gifUrl = extractGifUrl(content);
+      
+      if (gifUrl) {
+        const validation = validateGifUrl(gifUrl);
+        
+        if (validation.valid) {
+          // Send message with GIF URL
+          await actor.postMessage(sessionId, channelId, content, null, gifUrl, replyTarget?.id || null);
+          setMessageInput('');
+          setReplyTarget(null);
+          onMessagesChanged();
+          setIsSending(false);
+          return;
+        } else {
+          // Show error for invalid GIF URL
+          toast.error(validation.error || 'Invalid GIF URL');
+          setIsSending(false);
+          return;
+        }
+      }
+
       // Check if it's a roll command
       if (content.startsWith('/roll ')) {
         const pattern = content.substring(6).trim();
         const validation = parseRollCommand(pattern);
 
         if (!validation.valid) {
-          alert(validation.error || 'Invalid roll command');
+          toast.error(validation.error || 'Invalid roll command');
           setIsSending(false);
           return;
         }
@@ -76,9 +106,9 @@ export default function ChannelChatView({
         const result = await actor.roll(sessionId, pattern);
         const rollMessage = `🎲 **${nickname}** rolled ${result.pattern}: ${result.rolls.map((r) => r.toString()).join(', ')}${result.modifier !== 0n ? ` ${result.modifier > 0n ? '+' : ''}${result.modifier}` : ''} = **${result.total}**`;
 
-        await actor.postMessage(sessionId, channelId, rollMessage, null, replyTarget?.id || null);
+        await actor.postMessage(sessionId, channelId, rollMessage, null, null, replyTarget?.id || null);
       } else {
-        await actor.postMessage(sessionId, channelId, content, null, replyTarget?.id || null);
+        await actor.postMessage(sessionId, channelId, content, null, null, replyTarget?.id || null);
       }
 
       setMessageInput('');
@@ -86,7 +116,7 @@ export default function ChannelChatView({
       onMessagesChanged();
     } catch (error) {
       console.error('Failed to send message:', error);
-      alert('Failed to send message');
+      toast.error('Failed to send message');
     } finally {
       setIsSending(false);
     }
@@ -97,12 +127,12 @@ export default function ChannelChatView({
     if (!file || !actor) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      toast.error('Please select an image file');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be smaller than 5MB');
+      toast.error('Image must be smaller than 5MB');
       return;
     }
 
@@ -117,20 +147,69 @@ export default function ChannelChatView({
       });
 
       const caption = messageInput.trim() || '';
-      await actor.postMessage(sessionId, channelId, caption, blob, replyTarget?.id || null);
+      await actor.postMessage(sessionId, channelId, caption, blob, null, replyTarget?.id || null);
 
       setMessageInput('');
       setReplyTarget(null);
       onMessagesChanged();
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to upload image');
+      toast.error('Failed to upload image');
     } finally {
       setIsSending(false);
       setUploadProgress(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  const handleStickerSelect = async (sticker: StickerData) => {
+    if (!actor) return;
+
+    setIsSending(true);
+    setUploadProgress(0);
+
+    try {
+      // Convert data URL to Uint8Array with proper ArrayBuffer type
+      const bytes = dataUrlToUint8Array(sticker.dataUrl);
+      
+      // Create ExternalBlob with upload progress
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((percentage) => {
+        setUploadProgress(percentage);
+      });
+
+      // Add sticker to backend storage
+      const stickerId = await actor.addSticker(blob, sticker.name);
+      
+      if (stickerId === null) {
+        throw new Error('Failed to add sticker to backend');
+      }
+
+      // Send sticker as message
+      const messageId = BigInt(Date.now());
+      const timestamp = BigInt(Date.now() * 1000000); // Convert to nanoseconds
+      
+      await actor.sendSticker(stickerId, channelId, nickname, messageId, timestamp);
+
+      // Post message with sticker reference
+      await actor.postMessage(
+        sessionId,
+        channelId,
+        `[STICKER:${sticker.name}]`,
+        blob,
+        null,
+        replyTarget?.id || null
+      );
+
+      setReplyTarget(null);
+      onMessagesChanged();
+    } catch (error) {
+      console.error('Failed to send sticker:', error);
+      toast.error('Failed to send sticker');
+    } finally {
+      setIsSending(false);
+      setUploadProgress(null);
     }
   };
 
@@ -197,7 +276,20 @@ export default function ChannelChatView({
       )}
 
       {/* Input Area */}
-      <div className="border-t border-border bg-card p-2 md:p-4 flex-shrink-0">
+      <div className="border-t border-border bg-card p-2 md:p-4 flex-shrink-0 relative">
+        {/* Sticker Panels */}
+        {showStickerPicker && (
+          <StickerPickerPanel
+            onClose={() => setShowStickerPicker(false)}
+            onStickerSelect={handleStickerSelect}
+          />
+        )}
+        {showStickerManager && (
+          <StickerManagementPanel
+            onClose={() => setShowStickerManager(false)}
+          />
+        )}
+
         <div className="flex gap-2 mb-2">
           <input
             ref={fileInputRef}
@@ -215,8 +307,32 @@ export default function ChannelChatView({
           >
             <Image className="h-4 w-4" />
           </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              setShowStickerManager(false);
+              setShowStickerPicker(!showStickerPicker);
+            }}
+            disabled={isSending}
+            className="min-h-[44px] min-w-[44px] shrink-0"
+          >
+            <Smile className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              setShowStickerPicker(false);
+              setShowStickerManager(!showStickerManager);
+            }}
+            disabled={isSending}
+            className="min-h-[44px] min-w-[44px] shrink-0"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
           <Textarea
-            placeholder={`Message #${channelName} or /roll 2d6+3`}
+            placeholder={`Message #${channelName}, paste GIF URL, or /roll 2d6+3`}
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             disabled={isSending}

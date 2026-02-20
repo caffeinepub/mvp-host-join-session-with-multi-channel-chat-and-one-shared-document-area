@@ -176,8 +176,18 @@ export interface SessionMember {
     nickname: string;
     joinedAt: bigint;
 }
+export interface Sticker {
+    id: bigint;
+    channelId?: bigint;
+    messageId?: bigint;
+    name: string;
+    sender?: string;
+    timestamp?: bigint;
+    image: ExternalBlob;
+}
 export interface Message {
     id: bigint;
+    gif?: string;
     content: string;
     channelId: bigint;
     author: string;
@@ -205,6 +215,7 @@ export interface backendInterface {
     addComment(documentId: bigint, text: string): Promise<bigint>;
     addImageToDocument(sessionId: bigint, documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
     addImageToPlayerDocument(documentId: bigint, fileId: string, title: string, caption: string, position: bigint, size: bigint): Promise<AddImageToDocumentResponse>;
+    addSticker(image: ExternalBlob, name: string): Promise<bigint | null>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createChannel(sessionId: bigint, name: string): Promise<StandardResponse>;
     createDocument(sessionId: bigint, name: string, content: string): Promise<CreateDocumentResponse>;
@@ -219,6 +230,7 @@ export interface backendInterface {
     editDocument(documentId: bigint, newContent: string): Promise<StandardResponse>;
     editPlayerDocument(documentId: bigint, newContent: string): Promise<StandardResponse>;
     exportSession(sessionId: bigint): Promise<SessionExport | null>;
+    getAllStickers(): Promise<Array<Sticker>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getChannels(sessionId: bigint): Promise<Array<Channel>>;
@@ -233,6 +245,8 @@ export interface backendInterface {
     getMessages(sessionId: bigint, channelId: bigint): Promise<Array<Message>>;
     getPlayerDocument(documentId: bigint): Promise<PlayerDocument | null>;
     getSession(sessionId: bigint): Promise<Session | null>;
+    getSticker(stickerId: bigint): Promise<Sticker | null>;
+    getStickersByChannel(channelId: bigint): Promise<Array<Sticker>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     importSession(exportData: SessionExport): Promise<StandardResponse>;
     isCallerAdmin(): Promise<boolean>;
@@ -244,7 +258,7 @@ export interface backendInterface {
     listSessions(): Promise<Array<Session>>;
     lockDocument(documentId: bigint): Promise<StandardResponse>;
     nextTurn(sessionId: bigint): Promise<StandardResponse>;
-    postMessage(sessionId: bigint, channelId: bigint, content: string, image: ExternalBlob | null, replyToId: bigint | null): Promise<StandardResponse>;
+    postMessage(sessionId: bigint, channelId: bigint, content: string, image: ExternalBlob | null, gif: string | null, replyToId: bigint | null): Promise<StandardResponse>;
     removeProfilePicture(): Promise<void>;
     renameChannel(sessionId: bigint, channelId: bigint, newName: string): Promise<StandardResponse>;
     renameDocument(documentId: bigint, newName: string): Promise<StandardResponse>;
@@ -252,6 +266,7 @@ export interface backendInterface {
     renamePlayerDocument(documentId: bigint, newName: string): Promise<StandardResponse>;
     roll(sessionId: bigint, pattern: string): Promise<DiceRollResult>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    sendSticker(stickerId: bigint, channelId: bigint, sender: string, messageId: bigint, timestamp: bigint): Promise<boolean>;
     setPlayerDocumentVisibility(documentId: bigint, isPrivate: boolean): Promise<StandardResponse>;
     setTurnOrder(sessionId: bigint, order: Array<string>): Promise<StandardResponse>;
     unlockDocument(documentId: bigint): Promise<StandardResponse>;

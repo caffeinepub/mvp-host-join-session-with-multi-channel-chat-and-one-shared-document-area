@@ -1,91 +1,75 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T21:30:35.103Z",
+  "generatedAt": "2026-02-18T23:18:54.672Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 4,
-    "implemented": 4,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Make the chat component stretch to 100% screen width on mobile and Android devices",
+        "summary": "Add support for users to send GIF images in chat by pasting direct .gif URLs (from media.tenor.com, c.tenor.com, or any other direct .gif link)",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/index.css"
+          "frontend/src/components/chat/ChatMessageItem.tsx"
         ],
         "matchedFiles": [
           "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/index.css"
+          "frontend/src/components/chat/ChatMessageItem.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Make the chat component dynamically resize when UI dimensions change (keyboard opening, screen rotation, panel resizing)",
+        "summary": "Validate that pasted URLs are direct image links ending in .gif and display appropriate feedback if invalid URLs are provided",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/hooks/useViewportHeight.ts"
+          "frontend/src/lib/gifUrlValidation.ts",
+          "frontend/src/components/chat/ChannelChatView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/chat/ChannelChatView.tsx",
-          "frontend/src/hooks/useViewportHeight.ts"
+          "frontend/src/lib/gifUrlValidation.ts",
+          "frontend/src/components/chat/ChannelChatView.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Fix the Create New Community modal/dialog shown in the screenshot so content is fully scrollable on mobile devices",
+        "summary": "Extend the message content display in ChatMessageItem to render GIF URLs as animated images with proper sizing and layout",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/communities/CreateCommunityDialog.tsx",
-          "frontend/src/components/communities/CommunityForm.tsx",
-          "frontend/src/index.css"
+          "frontend/src/components/chat/ChatMessageItem.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/communities/CreateCommunityDialog.tsx",
-          "frontend/src/index.css"
+          "frontend/src/components/chat/ChatMessageItem.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Apply mobile-responsive touch target sizing and spacing throughout the UI for better Android usability",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/components/chat/ChatMessageItem.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/components/communities/fields/CommunityImagePickers.tsx",
-          "frontend/src/components/profile/ProfilePictureSection.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/src/components/chat/ChatMessageItem.tsx",
-          "frontend/src/components/session/SessionSidebar.tsx",
-          "frontend/src/components/communities/fields/CommunityImagePickers.tsx",
-          "frontend/src/components/profile/ProfilePictureSection.tsx"
-        ]
+        "summary": "Update the backend Message type to support storing GIF URLs alongside existing text, image, and sticker content",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
     "frontend/src/components/chat/ChannelChatView.tsx",
     "frontend/src/components/chat/ChatMessageItem.tsx",
-    "frontend/src/components/communities/CreateCommunityDialog.tsx",
-    "frontend/src/components/communities/fields/CommunityImagePickers.tsx",
-    "frontend/src/components/profile/ProfilePictureSection.tsx",
-    "frontend/src/components/session/SessionSidebar.tsx",
-    "frontend/src/components/settings/PreLobbySettingsView.tsx",
-    "frontend/src/hooks/useViewportHeight.ts",
-    "frontend/src/index.css",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/lib/gifUrlValidation.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",
