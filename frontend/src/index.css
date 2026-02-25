@@ -1,0 +1,210 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Cinzel:wght@400;600;700&family=Exo+2:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Cosmic dark theme - OKLCH */
+    --background: oklch(0.10 0.02 270);
+    --foreground: oklch(0.95 0.01 270);
+
+    --card: oklch(0.14 0.03 270);
+    --card-foreground: oklch(0.95 0.01 270);
+
+    --popover: oklch(0.14 0.03 270);
+    --popover-foreground: oklch(0.95 0.01 270);
+
+    --primary: oklch(0.55 0.22 290);
+    --primary-foreground: oklch(0.98 0.005 270);
+
+    --secondary: oklch(0.20 0.04 270);
+    --secondary-foreground: oklch(0.90 0.01 270);
+
+    --muted: oklch(0.18 0.03 270);
+    --muted-foreground: oklch(0.60 0.04 270);
+
+    --accent: oklch(0.60 0.20 290);
+    --accent-foreground: oklch(0.98 0.005 270);
+
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(0.98 0.005 270);
+
+    --border: oklch(0.25 0.04 270);
+    --input: oklch(0.20 0.03 270);
+    --ring: oklch(0.55 0.22 290);
+
+    --success: oklch(0.60 0.18 145);
+    --warning: oklch(0.75 0.18 75);
+
+    --radius: 0.75rem;
+
+    /* Community-specific tokens */
+    --community-primary: #7c3aed;
+    --community-accent: #a78bfa;
+    --community-font: inherit;
+  }
+
+  .dark {
+    --background: oklch(0.10 0.02 270);
+    --foreground: oklch(0.95 0.01 270);
+    --card: oklch(0.14 0.03 270);
+    --card-foreground: oklch(0.95 0.01 270);
+    --popover: oklch(0.14 0.03 270);
+    --popover-foreground: oklch(0.95 0.01 270);
+    --primary: oklch(0.55 0.22 290);
+    --primary-foreground: oklch(0.98 0.005 270);
+    --secondary: oklch(0.20 0.04 270);
+    --secondary-foreground: oklch(0.90 0.01 270);
+    --muted: oklch(0.18 0.03 270);
+    --muted-foreground: oklch(0.60 0.04 270);
+    --accent: oklch(0.60 0.20 290);
+    --accent-foreground: oklch(0.98 0.005 270);
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(0.98 0.005 270);
+    --border: oklch(0.25 0.04 270);
+    --input: oklch(0.20 0.03 270);
+    --ring: oklch(0.55 0.22 290);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.35 0.08 270);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.45 0.12 290);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── Amino-style message bubbles ───────────────────────────────────────────── */
+.message-bubble {
+  @apply rounded-2xl px-3 py-2 max-w-xs break-words;
+  backdrop-filter: blur(8px);
+}
+
+.message-bubble-own {
+  @apply bg-primary/80 text-primary-foreground rounded-br-sm;
+}
+
+.message-bubble-other {
+  @apply bg-card/80 text-card-foreground rounded-bl-sm;
+  border: 1px solid oklch(0.25 0.04 270);
+}
+
+/* ─── Reaction badges ───────────────────────────────────────────────────────── */
+.reaction-badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all;
+  background: oklch(0.20 0.04 270 / 0.8);
+  border: 1px solid oklch(0.30 0.06 270);
+}
+
+.reaction-badge:hover {
+  background: oklch(0.25 0.06 290 / 0.8);
+  border-color: oklch(0.55 0.22 290 / 0.5);
+}
+
+.reaction-badge.own {
+  background: oklch(0.45 0.18 290 / 0.3);
+  border-color: oklch(0.55 0.22 290 / 0.6);
+}
+
+/* ─── Community cards ───────────────────────────────────────────────────────── */
+.community-card {
+  @apply rounded-2xl overflow-hidden transition-all duration-300;
+  box-shadow: 0 4px 24px oklch(0.10 0.02 270 / 0.6);
+}
+
+.community-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px oklch(0.10 0.02 270 / 0.8);
+}
+
+/* ─── Bottom navigation ─────────────────────────────────────────────────────── */
+.bottom-nav {
+  @apply fixed bottom-0 left-0 right-0 z-50;
+  background: oklch(0.12 0.03 270 / 0.95);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid oklch(0.25 0.04 270);
+}
+
+.bottom-nav-item {
+  @apply flex flex-col items-center gap-1 py-2 px-4 text-xs font-medium transition-colors min-h-[44px] min-w-[44px] justify-center;
+  color: oklch(0.55 0.04 270);
+}
+
+.bottom-nav-item.active {
+  color: oklch(0.60 0.20 290);
+}
+
+.bottom-nav-item:hover {
+  color: oklch(0.75 0.10 290);
+}
+
+/* ─── Touch targets ─────────────────────────────────────────────────────────── */
+.touch-target {
+  @apply min-h-[44px] min-w-[44px];
+}
+
+/* ─── Cosmic glow effects ───────────────────────────────────────────────────── */
+.cosmic-glow {
+  box-shadow: 0 0 20px oklch(0.55 0.22 290 / 0.3);
+}
+
+.cosmic-glow-sm {
+  box-shadow: 0 0 10px oklch(0.55 0.22 290 / 0.2);
+}
+
+/* ─── Animations ────────────────────────────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, oklch(0.55 0.22 290 / 0.1) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}

@@ -1,0 +1,105 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-25T18:54:43.440Z",
+  "summary": "The diff implements the majority of the requested community page features including the CommunityPage component, banner, stats bar, tabs with drag-and-drop, Home tab with post creation, Chat/Lore/Polls/Quizzes/Rules placeholder tabs, host-only edit controls, member permissions panel, and backend data model extensions. Most requirements appear well-covered, but there are a few gaps noted below.",
+  "missing_requirements": [
+    {
+      "requirement": "The required banner image asset must be named 'cosmic-banner-default.dim_1200x400.png' per the build request images section. The diff references 'cosmic-banner-bg.dim_1200x400.png' instead.",
+      "reason": "The build request specifies the image filename as 'cosmic-banner-default.dim_1200x400.png' but the diff consistently references 'cosmic-banner-bg.dim_1200x400.png' in CommunityBanner.tsx and CommunityCard.tsx. No file with the correct name appears to be added.",
+      "evidence": [
+        "frontend/src/components/communities/CommunityBanner.tsx",
+        "frontend/src/components/communities/CommunityCard.tsx"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "requirement": "Host can toggle layout options from the host controls panel and changes persist to the backend.",
+      "reason": "The HostControlsDialog hardcodes layoutOptions as null in the handleSave call. No UI controls for layout options are visible in the truncated dialog, meaning layout option changes are never captured or persisted.",
+      "evidence": [
+        "frontend/src/components/communities/HostControlsDialog.tsx"
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "requirement": "Backend returns posts for a given community sorted by timestamp descending.",
+      "reason": "The backend/main.mo file is truncated and the getCommunityPosts function implementation is not visible, so descending sort by timestamp cannot be confirmed.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "requirement": "Host principal is the only one authorized to update tab order and member permissions unless a member has been granted permission.",
+      "reason": "The backend/main.mo is truncated and the authorization logic inside reorderTabs and updateMemberTabReorderPermission cannot be verified from the visible diff.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Upload progress tracking UI (setUploadProgress state and withUploadProgress callback) is implemented for post image uploads and banner image uploads.",
+      "reason": "The build request does not mention upload progress indicators. The diff implements progress tracking state and callbacks in PostComposer and HostControlsDialog, which were not requested.",
+      "evidence": [
+        "frontend/src/components/communities/PostComposer.tsx",
+        "frontend/src/components/communities/HostControlsDialog.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.72,
+  "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/App.tsx",
+    "frontend/src/components/chat/ChannelChatView.tsx",
+    "frontend/src/components/chat/ChatMessageItem.tsx",
+    "frontend/src/components/communities/ChatTab.tsx",
+    "frontend/src/components/communities/CommunityBanner.tsx",
+    "frontend/src/components/communities/CommunityCard.tsx",
+    "frontend/src/components/communities/CommunityStatsBar.tsx",
+    "frontend/src/components/communities/CommunityTabs.tsx",
+    "frontend/src/components/communities/CreateCommunityDialog.tsx",
+    "frontend/src/components/communities/HomeTab.tsx",
+    "frontend/src/components/communities/HostControlsButton.tsx",
+    "frontend/src/components/communities/HostControlsDialog.tsx",
+    "frontend/src/components/communities/LoreTab.tsx",
+    "frontend/src/components/communities/MemberPermissionsPanel.tsx",
+    "frontend/src/components/communities/PollsTab.tsx",
+    "frontend/src/components/communities/PostComposer.tsx",
+    "frontend/src/components/communities/PostItem.tsx",
+    "frontend/src/components/communities/QuizzesTab.tsx",
+    "frontend/src/components/communities/RulesTab.tsx",
+    "frontend/src/components/docs/DocumentCommentsSection.tsx",
+    "frontend/src/components/docs/DocumentContentPreview.tsx",
+    "frontend/src/components/docs/DocumentEditorView.tsx",
+    "frontend/src/components/session/ChannelManagementDialogs.tsx",
+    "frontend/src/components/session/DocumentManagementDialogs.tsx",
+    "frontend/src/components/session/HostSessionSaveLoad.tsx",
+    "frontend/src/components/session/MembersChannelManagementDialogs.tsx",
+    "frontend/src/components/session/PlayerDocumentManagementDialogs.tsx",
+    "frontend/src/components/session/PlayerDocumentsDialog.tsx",
+    "frontend/src/components/session/SessionDocumentsDialog.tsx",
+    "frontend/src/components/session/SessionSidebar.tsx",
+    "frontend/src/hooks/useDocumentComments.ts",
+    "frontend/src/hooks/useDocumentFiles.ts",
+    "frontend/src/hooks/useDocumentImages.ts",
+    "frontend/src/hooks/usePlayerDocuments.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useSessionData.ts",
+    "frontend/src/hooks/useSessionDocuments.ts",
+    "frontend/src/hooks/useUserProfile.ts",
+    "frontend/src/index.css",
+    "frontend/src/lib/sessionExportFile.ts",
+    "frontend/src/lib/templateHistoryStorage.ts",
+    "frontend/src/lib/time.ts",
+    "frontend/src/pages/CommunitiesHubPage.tsx",
+    "frontend/src/pages/CommunityPage.tsx",
+    "frontend/src/pages/LobbyPage.tsx",
+    "frontend/src/pages/SessionPage.tsx",
+    "frontend/src/types/session.ts",
+    "frontend/tailwind.config.js",
+    "project_state.json"
+  ]
+}

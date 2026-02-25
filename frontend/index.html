@@ -1,0 +1,27 @@
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8' />
+        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+        <title>MVP: Host/Join session with multi-channel chat and one shared document area</title>
+        <script>
+            // Early theme initialization to prevent flash
+            (function() {
+                try {
+                    const stored = localStorage.getItem('rpg_user_preferences');
+                    if (stored) {
+                        const prefs = JSON.parse(stored);
+                        if (prefs.themeMode === 'dark') {
+                            document.documentElement.classList.add('dark');
+                        }
+                    }
+                } catch (e) {
+                    // Ignore errors
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <div id='root'></div>
+        <script type='module' src='/src/main.tsx'></script>
+    </body>
+</html>

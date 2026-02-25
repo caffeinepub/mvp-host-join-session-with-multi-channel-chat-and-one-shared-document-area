@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Community platform app with a detailed community page experience. Users can create communities and access them via an 'Open' button that navigates to a full community page. The page features a customizable dark cosmic/RPG-themed banner, stats bar, and draggable horizontal tabs (Home, Chat, Lore, Polls, Quizzes, Rules). Host-only edit controls allow customization of banner, colors, fonts, and layout from within the community page. Tab reordering is host-only by default with per-member permission toggles. Home tab has functional post creation; Chat tab is a placeholder for now. No RPG features in current scope.",
+  "architectural_notes": [
+    "Dark cosmic/RPG theme: deep navy, purple accents, star textures throughout community pages",
+    "No real-time WebSocket chat — Chat tab is a placeholder for now",
+    "Tab reordering is host-only by default; host can grant per-member reorder permission individually"
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Deep space cosmic nebula banner image with purple, blue, and dark teal gas clouds against a starfield background, suitable as a community page hero banner (cosmic-banner-default.dim_1200x400.png)",
+  "existing_features": [
+    {
+      "id": "feature-when-the-open-button-on-a-communitycard-xpath-html-1-body-1-div-1-div-1-div-1-div-1-div-1-div-1-div-1-section-1-div-1-div-1-div-2-button-1-is-clicked-navigate-the-user-to-a-full-communitypage-for-that-community-replacing-the-current-hub-view",
+      "title": "When the 'Open' button on a CommunityCard (XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/section[1]/div[1]/div[1]/div[2]/button[1]) is clicked, navigate the user to a full CommunityPage for that community, replacing the current hub view.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-communitypage-component-featuring-a-full-width-customizable-top-banner-displaying-the-community-s-banner-image-or-a-cosmic-gradient-fallback-the-community-name-in-large-typography-and-the-community-tagline-description-beneath-it-matching-the-dark-cosmic-rpg-aesthetic-shown-in-the-screenshot",
+      "title": "Build a CommunityPage component featuring a full-width customizable top banner displaying the community's banner image (or a cosmic gradient fallback), the community name in large typography, and the community tagline/description beneath it, matching the dark cosmic/RPG aesthetic shown in the screenshot.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-display-a-stats-bar-directly-below-the-banner-showing-member-count-e-g-active-adventurers-0-with-a-members-icon-styled-to-match-the-dark-cosmic-theme",
+      "title": "Display a stats bar directly below the banner showing member count (e.g., 'Active Adventurers: 0') with a members icon, styled to match the dark cosmic theme.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-horizontally-scrollable-draggable-reorderable-tabs-section-below-the-stats-bar-with-the-following-tabs-in-order-home-chat-lore-polls-quizzes-rules-tab-reordering-via-drag-and-drop-is-restricted-to-the-host-by-default-the-host-can-individually-toggle-per-member-permission-to-allow-specific-members-to-reorder-tabs-store-tab-order-and-per-member-reorder-permissions-persistently-in-the-backend-per-community",
+      "title": "Implement a horizontally scrollable, draggable/reorderable tabs section below the stats bar with the following tabs in order: Home, Chat, Lore, Polls, Quizzes, Rules. Tab reordering via drag-and-drop is restricted to the host by default. The host can individually toggle per-member permission to allow specific members to reorder tabs. Store tab order and per-member reorder permissions persistently in the backend per community.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-the-home-tab-content-area-with-functional-post-creation-users-can-compose-posts-with-text-and-optionally-attach-an-image-submitted-posts-are-saved-to-the-backend-under-the-community-and-displayed-in-a-feed-on-the-home-tab-in-reverse-chronological-order-each-post-shows-the-author-s-display-name-timestamp-text-content-and-image-if-attached",
+      "title": "Implement the Home tab content area with functional post creation. Users can compose posts with text and optionally attach an image. Submitted posts are saved to the backend under the community and displayed in a feed on the Home tab in reverse chronological order. Each post shows the author's display name, timestamp, text content, and image if attached.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-the-chat-tab-as-a-styled-placeholder-with-a-coming-soon-message-that-fits-the-dark-cosmic-theme-no-functional-chat-is-required",
+      "title": "Implement the Chat tab as a styled placeholder with a 'Coming Soon' message that fits the dark cosmic theme. No functional chat is required.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-lore-polls-quizzes-and-rules-tabs-as-styled-placeholder-content-areas-with-descriptive-placeholder-text-for-each-matching-the-dark-cosmic-theme",
+      "title": "Implement Lore, Polls, Quizzes, and Rules tabs as styled placeholder content areas with descriptive placeholder text for each, matching the dark cosmic theme.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-host-only-edit-controls-accessible-from-within-the-community-page-these-controls-allow-the-host-to-1-upload-or-change-the-community-banner-image-2-change-primary-and-accent-colors-3-change-the-community-font-4-toggle-layout-options-controls-are-only-visible-to-the-host-and-should-appear-as-an-edit-settings-button-e-g-a-pencil-or-gear-icon-in-the-top-corner-of-the-community-page-changes-persist-to-the-backend-community-record",
+      "title": "Add host-only edit controls accessible from within the community page. These controls allow the host to: (1) upload or change the community banner image, (2) change primary and accent colors, (3) change the community font, (4) toggle layout options. Controls are only visible to the host and should appear as an edit/settings button (e.g., a pencil or gear icon) in the top corner of the community page. Changes persist to the backend community record.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-host-only-member-permissions-panel-accessible-from-the-host-controls-where-the-host-can-view-the-list-of-community-members-and-individually-toggle-per-member-tab-reorder-permission-on-or-off-persist-these-permissions-in-the-backend",
+      "title": "Add a host-only member permissions panel (accessible from the host controls) where the host can view the list of community members and individually toggle per-member tab reorder permission on or off. Persist these permissions in the backend.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Open button navigates to full community page with banner, stats bar, and tabs",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Customizable top banner (image, colors, fonts, layout) editable by host only from within community page",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Stats bar showing member count and community info",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Draggable/reorderable horizontal tabs: Home, Chat, Lore, Polls, Quizzes, Rules — host-only reorder by default with per-member permission toggle",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Home tab with functional post creation (text + image uploads)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Chat tab as placeholder ('Coming Soon')",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Lore, Polls, Quizzes, Rules tabs as placeholder content areas",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Host-only edit controls for community page UI customization and member tab-reorder permissions",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Extend the backend data model to support community page data: (1) a CommunityPost type with fields for id, communityId, authorPrincipal, authorName, text content, optional image bytes, and timestamp; (2) tab order stored as an ordered list of tab names per community; (3) tab reorder permissions stored as a map of member principal to bool per community. Add backend functions to create/list posts per community, update tab order, and update member tab reorder permissions.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Cosmic Communities",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

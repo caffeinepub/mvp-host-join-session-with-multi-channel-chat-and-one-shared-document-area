@@ -1,0 +1,268 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Community Page with Banner, Stats Bar, Tabs, Posts, and Host Edit Controls",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Navigate from CommunityCard 'Open' button to dedicated CommunityPage for that community",
+      "acceptanceCriteria": [
+        "Clicking 'Open' on any community card navigates to that community's dedicated page",
+        "The community page shows the correct community's name, description, and images",
+        "A back navigation option returns the user to the Communities Hub"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/communities/CommunityCard.tsx",
+          "operation": "modify",
+          "description": "Update the 'Open' button onClick handler to navigate to the community page route with communityId. Preserve existing discover mode and remove button functionality."
+        },
+        {
+          "path": "frontend/src/pages/CommunityPage.tsx",
+          "operation": "create",
+          "description": "Create the main CommunityPage component that reads communityId from URL params, fetches community data from the backend, and renders the full community view with back navigation to CommunitiesHubPage."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add a route for /community/:communityId that renders the CommunityPage component. Ensure the route is accessible to authenticated users."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Build CommunityPage banner section with customizable top banner, community name, and tagline",
+      "acceptanceCriteria": [
+        "Banner spans full width of the community page",
+        "Community name is displayed in large bold white text over the banner",
+        "Community tagline/description appears beneath the name",
+        "If no banner image is set, a deep navy/purple cosmic gradient is used as fallback",
+        "Banner image is displayed as a cover background when available"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/communities/CommunityBanner.tsx",
+          "operation": "create",
+          "description": "Create a CommunityBanner component that displays the community banner image (using ExternalBlob's getDirectURL()) as a full-width cover background. If no banner image exists, render a deep navy/purple cosmic gradient fallback (linear-gradient(135deg, #1a0f3d, #2d1b5e, #1e0a3a)). Overlay the community name in large bold white typography (text-4xl or larger) and the community tagline/description beneath it in a lighter weight. Ensure the banner matches the dark cosmic/RPG aesthetic."
+        },
+        {
+          "path": "frontend/src/pages/CommunityPage.tsx",
+          "operation": "modify",
+          "description": "Import and render the CommunityBanner component at the top of the page, passing community data as props (name, description/tagline, bannerImage)."
+        },
+        {
+          "path": "frontend/public/assets/generated/cosmic-banner-default.dim_1200x400.png",
+          "operation": "create",
+          "description": "Wire the generated deep space cosmic nebula banner image (frontend/public/assets/generated/cosmic-banner-default.dim_1200x400.png) as a static fallback option in the CommunityBanner component if no custom banner is set."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Display stats bar below the banner showing member count with icon",
+      "acceptanceCriteria": [
+        "Stats bar is visible immediately below the banner",
+        "Shows member count with a people/group icon",
+        "Label and count are styled to match dark cosmic theme (deep navy background, white/purple text)"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/communities/CommunityStatsBar.tsx",
+          "operation": "create",
+          "description": "Create a CommunityStatsBar component that displays member count (e.g., 'Active Adventurers: 0') with a people/group icon from lucide-react (Users icon). Style with deep navy background (bg-slate-900 or similar), white/purple text, and padding. Accept memberCount as a prop."
+        },
+        {
+          "path": "frontend/src/pages/CommunityPage.tsx",
+          "operation": "modify",
+          "description": "Render the CommunityStatsBar component directly below the CommunityBanner, passing the member count from the community data. Fetch member count from backend if not included in the community object."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Implement draggable/reorderable tabs section with host-only and per-member permission controls",
+      "acceptanceCriteria": [
+        "Six tabs render horizontally and are scrollable on mobile: Home, Chat, Lore, Polls, Quizzes, Rules",
+        "Active tab is visually highlighted with an accent color",
+        "Host can drag and drop tabs to reorder them",
+        "Non-host members cannot reorder tabs unless explicitly granted permission by the host",
+        "Host can toggle per-member tab reorder permission from a host controls panel",
+        "Tab order is persisted per community in the backend",
+        "Tab reorder permissions per member are persisted per community in the backend"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/communities/CommunityTabs.tsx",
+          "operation": "create",
+          "description": "Create a CommunityTabs component that renders six tabs (Home, Chat, Lore, Polls, Quizzes, Rules) in horizontal, scrollable layout. Integrate @dnd-kit/core and @dnd-kit/sortable for drag-and-drop reordering. Fetch tab order from backend using getTabs(communityId). Enable drag-and-drop only if the user is the host or has been granted permission (check via backend canReorder method). On reorder, call backend reorderTabs method to persist the new order. Highlight the active tab with an accent color (purple/teal). Accept communityId, activeTab, and onTabChange as props."
+        },
+        {
+          "path": "frontend/src/pages/CommunityPage.tsx",
+          "operation": "modify",
+          "description": "Render the CommunityTabs component below the stats bar. Manage active tab state and pass it to CommunityTabs. Conditionally render tab content based on the active tab state."
+        },
+        {
+          "path": "frontend/src/hooks/useCommunityTabs.ts",
+          "operation": "create",
+          "description": "Create a custom hook that wraps backend calls for fetching tab order (getTabs), checking reorder permission (canReorder), and reordering tabs (reorderTabs). Use React Query for caching and automatic refetching. Return tab data, reorder permission status, and mutation functions."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Implement Home tab with functional post creation and feed display",
+      "acceptanceCriteria": [
+        "Home tab shows a post composer with a text area and optional image upload button",
+        "Submitting a post saves it to the backend associated with the community",
+        "Posts render in a feed in reverse chronological order",
+        "Each post displays author display name, relative/formatted timestamp, text body, and inline image if attached",
+        "Image uploads are validated (PNG/JPG/GIF/WEBP, max 5MB) before submission"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/communities/HomeTab.tsx",
+          "operation": "create",
+          "description": "Create the HomeTab component that renders a post composer at the top (textarea for text input, image upload button using ExternalBlob.fromBytes with validation) and a post feed below. Use the blob-storage component to handle image uploads with progress tracking (ExternalBlob.withUploadProgress). Fetch posts from backend using getCommunityPosts(communityId) and display in reverse chronological order. Each post should show author display name (fetched via useUserDisplayName hook), formatted timestamp (use existing time.ts utility), text content, and inline image if present (using ExternalBlob's getDirectURL()). Validate image uploads: PNG/JPG/GIF/WEBP, max 5MB. On submit, call createCommunityPost backend method with communityId, authorName, text, and optional image. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CommunityPage.tsx",
+          "operation": "modify",
+          "description": "Conditionally render the HomeTab component when the active tab is 'Home'. Pass communityId as a prop to HomeTab."
+        },
+        {
+          "path": "frontend/src/hooks/useCommunityPosts.ts",
+          "operation": "create",
+          "description": "Create a custom hook that provides React Query queries for fetching community posts (getCommunityPosts) and mutations for creating posts (createCommunityPost). Include automatic cache invalidation after successful post creation and optional polling (e.g., every 5 seconds) for the posts list."
+        },
+        {
+          "path": "frontend/src/components/communities/PostComposer.tsx",
+          "operation": "create",
+          "description": "Create a reusable PostComposer component with a textarea, image upload button, preview of selected image, and submit button. Handle validation, loading states, and errors. Accept onSubmit callback and communityId as props. Use ExternalBlob for image handling."
+        },
+        {
+          "path": "frontend/src/components/communities/PostItem.tsx",
+          "operation": "create",
+          "description": "Create a PostItem component that displays a single post with author display name, formatted timestamp, text content, and inline image (if attached). Use the useUserDisplayName hook to fetch and display the author's name. Use the time formatting utility from lib/time.ts for the timestamp. Style to match the dark cosmic theme."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Implement Chat tab as a styled 'Coming Soon' placeholder",
+      "acceptanceCriteria": [
+        "Chat tab displays a 'Coming Soon' placeholder message",
+        "Placeholder is styled consistently with the dark cosmic theme",
+        "No functional messaging is implemented"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/communities/ChatTab.tsx",
+          "operation": "create",
+          "description": "Create a ChatTab component that renders a 'Coming Soon' message centered on the page. Style with dark cosmic theme colors (deep navy/purple background, white/light purple text). Include a relevant icon (e.g., MessageCircle from lucide-react)."
+        },
+        {
+          "path": "frontend/src/pages/CommunityPage.tsx",
+          "operation": "modify",
+          "description": "Conditionally render the ChatTab component when the active tab is 'Chat'."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Implement Lore, Polls, Quizzes, and Rules tabs as styled placeholders",
+      "acceptanceCriteria": [
+        "Each of Lore, Polls, Quizzes, and Rules tabs renders a unique placeholder with the tab's name and a brief descriptive message",
+        "All placeholders are styled with the dark cosmic theme"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/communities/LoreTab.tsx",
+          "operation": "create",
+          "description": "Create a LoreTab component with a 'Lore' heading and descriptive placeholder text (e.g., 'Discover the rich history and stories of this community'). Style with dark cosmic theme. Include a Book icon from lucide-react."
+        },
+        {
+          "path": "frontend/src/components/communities/PollsTab.tsx",
+          "operation": "create",
+          "description": "Create a PollsTab component with a 'Polls' heading and descriptive placeholder text (e.g., 'Community polls and voting coming soon'). Style with dark cosmic theme. Include a BarChart icon from lucide-react."
+        },
+        {
+          "path": "frontend/src/components/communities/QuizzesTab.tsx",
+          "operation": "create",
+          "description": "Create a QuizzesTab component with a 'Quizzes' heading and descriptive placeholder text (e.g., 'Test your knowledge with community quizzes'). Style with dark cosmic theme. Include a HelpCircle icon from lucide-react."
+        },
+        {
+          "path": "frontend/src/components/communities/RulesTab.tsx",
+          "operation": "create",
+          "description": "Create a RulesTab component with a 'Rules' heading and descriptive placeholder text (e.g., 'Community guidelines and rules will appear here'). Style with dark cosmic theme. Include a Shield icon from lucide-react."
+        },
+        {
+          "path": "frontend/src/pages/CommunityPage.tsx",
+          "operation": "modify",
+          "description": "Conditionally render LoreTab, PollsTab, QuizzesTab, and RulesTab components based on the active tab state."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Add host-only edit controls for community customization (banner, colors, font, layout)",
+      "acceptanceCriteria": [
+        "An edit/settings icon button is visible on the community page only when the viewer is the community host",
+        "Tapping the edit button opens a host controls panel or modal",
+        "Host can upload a new banner image from the panel",
+        "Host can change primary and accent colors",
+        "Host can change the font for the community page",
+        "All customization changes are saved to the backend and reflected immediately on the community page",
+        "Non-host members do not see the edit button or host controls"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/communities/HostControlsButton.tsx",
+          "operation": "create",
+          "description": "Create a HostControlsButton component that renders a Settings or Edit icon button (e.g., Settings or Pencil icon from lucide-react) in the top-right corner of the community page. This button should only be visible when the current user's principal matches the community host principal. On click, open the HostControlsDialog."
+        },
+        {
+          "path": "frontend/src/components/communities/HostControlsDialog.tsx",
+          "operation": "create",
+          "description": "Create a HostControlsDialog modal component with sections for: (1) Banner image upload (using ExternalBlob with validation and progress tracking, verify blob-storage component usage instructions), (2) Primary and accent color pickers (using existing color contrast utilities for validation), (3) Font selector (dropdown with available fonts from communityTheme presets), (4) Layout options (if applicable). On save, call the backend updateCommunitySettings method to persist changes. Include form validation and error handling. After successful update, invalidate the community query to refresh the page."
+        },
+        {
+          "path": "frontend/src/pages/CommunityPage.tsx",
+          "operation": "modify",
+          "description": "Import and render the HostControlsButton component in the page header/top-right area. Pass communityId and host principal for authorization check. Apply community theme customizations (colors, font, banner) to the page using CSS variables or inline styles, similar to the existing communityTheme.ts utilities."
+        },
+        {
+          "path": "frontend/src/hooks/useUpdateCommunitySettings.ts",
+          "operation": "create",
+          "description": "Create a custom hook that wraps the backend updateCommunitySettings mutation. Use React Query's useMutation for optimistic updates and automatic cache invalidation. Accept communityId and return the mutation function and loading/error states."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Add host-only member permissions panel for per-member tab reorder permission management",
+      "acceptanceCriteria": [
+        "Host controls panel includes a 'Member Permissions' section listing community members",
+        "Each member entry has a toggle to enable/disable tab reorder permission for that member",
+        "Permission changes are saved to the backend",
+        "Members with reorder permission can drag tabs just like the host; others cannot"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/communities/MemberPermissionsPanel.tsx",
+          "operation": "create",
+          "description": "Create a MemberPermissionsPanel component that fetches the list of community members and their current tab reorder permissions using the backend getMemberTabReorderPermissions method. Display each member with their display name (using useUserDisplayName hook) and a toggle switch to enable/disable tab reorder permission. On toggle, call the backend updateMemberTabReorderPermission method to persist the change. Include loading and error states."
+        },
+        {
+          "path": "frontend/src/components/communities/HostControlsDialog.tsx",
+          "operation": "modify",
+          "description": "Add a 'Member Permissions' tab or section within the HostControlsDialog that renders the MemberPermissionsPanel component. Ensure this section is only accessible to the host."
+        },
+        {
+          "path": "frontend/src/hooks/useMemberPermissions.ts",
+          "operation": "create",
+          "description": "Create a custom hook that provides React Query queries for fetching member tab reorder permissions (getMemberTabReorderPermissions) and mutations for updating individual member permissions (updateMemberTabReorderPermission). Include automatic cache invalidation after updates."
+        }
+      ]
+    }
+  ]
+}

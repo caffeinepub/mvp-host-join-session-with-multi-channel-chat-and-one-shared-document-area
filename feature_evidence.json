@@ -1,0 +1,201 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-when-the-open-button-on-a-communitycard-xpath-html-1-body-1-div-1-div-1-div-1-div-1-div-1-div-1-div-1-section-1-div-1-div-1-div-2-button-1-is-clicked-navigate-the-user-to-a-full-communitypage-for-that-community-replacing-the-current-hub-view",
+      "featureTitle": "When the 'Open' button on a CommunityCard (XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/section[1]/div[1]/div[1]/div[2]/button[1]) is clicked, navigate the user to a full CommunityPage for that community, replacing the current hub view.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/communities/CommunityCard.tsx",
+        "frontend/src/pages/CommunityPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-communitypage-component-featuring-a-full-width-customizable-top-banner-displaying-the-community-s-banner-image-or-a-cosmic-gradient-fallback-the-community-name-in-large-typography-and-the-community-tagline-description-beneath-it-matching-the-dark-cosmic-rpg-aesthetic-shown-in-the-screenshot",
+      "featureTitle": "Build a CommunityPage component featuring a full-width customizable top banner displaying the community's banner image (or a cosmic gradient fallback), the community name in large typography, and the community tagline/description beneath it, matching the dark cosmic/RPG aesthetic shown in the screenshot.",
+      "files": [
+        "frontend/src/components/communities/CommunityBanner.tsx",
+        "frontend/src/pages/CommunityPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-display-a-stats-bar-directly-below-the-banner-showing-member-count-e-g-active-adventurers-0-with-a-members-icon-styled-to-match-the-dark-cosmic-theme",
+      "featureTitle": "Display a stats bar directly below the banner showing member count (e.g., 'Active Adventurers: 0') with a members icon, styled to match the dark cosmic theme.",
+      "files": [
+        "frontend/src/components/communities/CommunityStatsBar.tsx",
+        "frontend/src/pages/CommunityPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-a-horizontally-scrollable-draggable-reorderable-tabs-section-below-the-stats-bar-with-the-following-tabs-in-order-home-chat-lore-polls-quizzes-rules-tab-reordering-via-drag-and-drop-is-restricted-to-the-host-by-default-the-host-can-individually-toggle-per-member-permission-to-allow-specific-members-to-reorder-tabs-store-tab-order-and-per-member-reorder-permissions-persistently-in-the-backend-per-community",
+      "featureTitle": "Implement a horizontally scrollable, draggable/reorderable tabs section below the stats bar with the following tabs in order: Home, Chat, Lore, Polls, Quizzes, Rules. Tab reordering via drag-and-drop is restricted to the host by default. The host can individually toggle per-member permission to allow specific members to reorder tabs. Store tab order and per-member reorder permissions persistently in the backend per community.",
+      "files": [
+        "frontend/src/components/communities/CommunityTabs.tsx",
+        "frontend/src/pages/CommunityPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-the-home-tab-content-area-with-functional-post-creation-users-can-compose-posts-with-text-and-optionally-attach-an-image-submitted-posts-are-saved-to-the-backend-under-the-community-and-displayed-in-a-feed-on-the-home-tab-in-reverse-chronological-order-each-post-shows-the-author-s-display-name-timestamp-text-content-and-image-if-attached",
+      "featureTitle": "Implement the Home tab content area with functional post creation. Users can compose posts with text and optionally attach an image. Submitted posts are saved to the backend under the community and displayed in a feed on the Home tab in reverse chronological order. Each post shows the author's display name, timestamp, text content, and image if attached.",
+      "files": [
+        "frontend/src/components/communities/HomeTab.tsx",
+        "frontend/src/components/communities/PostComposer.tsx",
+        "frontend/src/components/communities/PostItem.tsx",
+        "frontend/src/pages/CommunityPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-the-chat-tab-as-a-styled-placeholder-with-a-coming-soon-message-that-fits-the-dark-cosmic-theme-no-functional-chat-is-required",
+      "featureTitle": "Implement the Chat tab as a styled placeholder with a 'Coming Soon' message that fits the dark cosmic theme. No functional chat is required.",
+      "files": [
+        "frontend/src/components/communities/ChatTab.tsx",
+        "frontend/src/pages/CommunityPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-lore-polls-quizzes-and-rules-tabs-as-styled-placeholder-content-areas-with-descriptive-placeholder-text-for-each-matching-the-dark-cosmic-theme",
+      "featureTitle": "Implement Lore, Polls, Quizzes, and Rules tabs as styled placeholder content areas with descriptive placeholder text for each, matching the dark cosmic theme.",
+      "files": [
+        "frontend/src/components/communities/LoreTab.tsx",
+        "frontend/src/components/communities/PollsTab.tsx",
+        "frontend/src/components/communities/QuizzesTab.tsx",
+        "frontend/src/components/communities/RulesTab.tsx",
+        "frontend/src/pages/CommunityPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-host-only-edit-controls-accessible-from-within-the-community-page-these-controls-allow-the-host-to-1-upload-or-change-the-community-banner-image-2-change-primary-and-accent-colors-3-change-the-community-font-4-toggle-layout-options-controls-are-only-visible-to-the-host-and-should-appear-as-an-edit-settings-button-e-g-a-pencil-or-gear-icon-in-the-top-corner-of-the-community-page-changes-persist-to-the-backend-community-record",
+      "featureTitle": "Add host-only edit controls accessible from within the community page. These controls allow the host to: (1) upload or change the community banner image, (2) change primary and accent colors, (3) change the community font, (4) toggle layout options. Controls are only visible to the host and should appear as an edit/settings button (e.g., a pencil or gear icon) in the top corner of the community page. Changes persist to the backend community record.",
+      "files": [
+        "frontend/src/components/communities/HostControlsButton.tsx",
+        "frontend/src/components/communities/HostControlsDialog.tsx",
+        "frontend/src/pages/CommunityPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-host-only-member-permissions-panel-accessible-from-the-host-controls-where-the-host-can-view-the-list-of-community-members-and-individually-toggle-per-member-tab-reorder-permission-on-or-off-persist-these-permissions-in-the-backend",
+      "featureTitle": "Add a host-only member permissions panel (accessible from the host controls) where the host can view the list of community members and individually toggle per-member tab reorder permission on or off. Persist these permissions in the backend.",
+      "files": [
+        "frontend/src/components/communities/HostControlsDialog.tsx",
+        "frontend/src/components/communities/MemberPermissionsPanel.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-9"
+      ],
+      "confidence": "high"
+    }
+  ]
+}
