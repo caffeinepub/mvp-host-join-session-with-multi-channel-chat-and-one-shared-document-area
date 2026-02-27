@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button } from '../ui/button';
+import { useActor } from '../../hooks/useActor';
+import { downloadExportFile, parseImportFile } from '../../lib/sessionExportFile';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,86 +17,137 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { Save, Upload, ChevronDown, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Button } from '../ui/button';
+import { Alert, AlertDescription } from '../ui/alert';
+import { Loader2, Save, Upload, MoreVertical } from 'lucide-react';
 
 type HostSessionSaveLoadProps = {
   sessionId: bigint;
   sessionName: string;
 };
 
-// NOTE: exportSession and importSession are not available in the current backend.
 export default function HostSessionSaveLoad({ sessionId, sessionName }: HostSessionSaveLoadProps) {
-  const [isExporting, setIsExporting] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [showImportConfirm, setShowImportConfirm] = useState(false);
-  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const { actor } = useActor();
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [confirmImport, setConfirmImport] = useState(false);
+  const [importData, setImportData] = useState<any>(null);
 
   const handleExport = async () => {
-    toast.info('Session export is not available in the current version.');
+    if (!actor) return;
+
+    setSaving(true);
+    setError('');
+
+    try {
+      const exportData = await (actor as any).exportSession(sessionId);
+
+      if (!exportData) {
+        throw new Error('Failed to export session');
+      }
+
+      downloadExportFile(exportData, sessionName);
+    } catch (err: any) {
+      console.error('Export error:', err);
+      setError(err.message || 'Failed to export session');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleImportFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPendingImportFile(file);
-    setShowImportConfirm(true);
+
+    setError('');
+
+    try {
+      const data = await parseImportFile(file);
+      setImportData(data);
+      setConfirmImport(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to parse import file');
+    }
+
     e.target.value = '';
   };
 
   const handleImportConfirm = async () => {
-    toast.info('Session import is not available in the current version.');
-    setShowImportConfirm(false);
-    setPendingImportFile(null);
+    if (!actor || !importData) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await (actor as any).importSession(importData);
+
+      if (result.__kind__ === 'error') {
+        throw new Error(result.error);
+      }
+
+      setConfirmImport(false);
+      setImportData(null);
+      alert('Session imported successfully! The page will reload.');
+      window.location.reload();
+    } catch (err: any) {
+      console.error('Import error:', err);
+      setError(err.message || 'Failed to import session');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
+      {error && (
+        <Alert variant="destructive" className="mb-2">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" disabled={isExporting || isImporting}>
-            {isExporting || isImporting ? (
+          <Button variant="outline" size="sm" className="min-h-[44px]">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleExport} disabled={saving}>
+            {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Save className="mr-2 h-4 w-4" />
             )}
-            Session
-            <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={handleExport} disabled={isExporting}>
-            <Save className="mr-2 h-4 w-4" />
             Export Session
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <Upload className="h-4 w-4" />
+            <label className="flex items-center cursor-pointer">
+              <Upload className="mr-2 h-4 w-4" />
               Import Session
               <input
                 type="file"
                 accept=".json"
+                onChange={handleImportSelect}
                 className="hidden"
-                onChange={handleImportFileSelect}
               />
             </label>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={showImportConfirm} onOpenChange={setShowImportConfirm}>
+      <AlertDialog open={confirmImport} onOpenChange={setConfirmImport}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Import Session</AlertDialogTitle>
             <AlertDialogDescription>
-              This will replace the current session data with the imported data. This action cannot
-              be undone. Are you sure you want to continue?
+              This will replace the current session data with the imported data. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingImportFile(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleImportConfirm} disabled={isImporting}>
-              {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleImportConfirm} disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Import
             </AlertDialogAction>
           </AlertDialogFooter>

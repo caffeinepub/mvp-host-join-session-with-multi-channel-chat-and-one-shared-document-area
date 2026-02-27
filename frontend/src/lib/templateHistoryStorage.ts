@@ -30,14 +30,13 @@ export function clearTemplate(): void {
   }
 }
 
-export function validateTemplate(data: unknown): data is SessionExport {
+export function validateTemplate(data: any): data is SessionExport {
   if (!data || typeof data !== 'object') return false;
-  const d = data as Record<string, unknown>;
-  if (!d.session || typeof d.session !== 'object') return false;
-  if (!Array.isArray(d.channels)) return false;
-  if (!Array.isArray(d.messages)) return false;
-  if (!Array.isArray(d.documents)) return false;
-  if (!Array.isArray(d.playerDocuments)) return false;
-  if (!Array.isArray(d.images)) return false;
+  if (!data.session || typeof data.session !== 'object') return false;
+  if (!Array.isArray(data.channels)) return false;
+  if (!Array.isArray(data.messages)) return false;
+  if (!Array.isArray(data.documents)) return false;
+  if (!Array.isArray(data.playerDocuments)) return false;
+  if (!Array.isArray(data.images)) return false;
   return true;
 }

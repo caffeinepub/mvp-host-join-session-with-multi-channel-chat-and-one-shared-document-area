@@ -1,22 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { DocumentComment, StandardResponse } from '../types/session';
-
-// NOTE: Document comment backend methods are not available in the current backend.
-// These hooks return empty/null data gracefully.
+import type { DocumentComment } from '../types/session';
 
 export function useGetDocumentComments(documentId: bigint | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+
   return useQuery<DocumentComment[]>({
     queryKey: ['documentComments', documentId?.toString()],
-    queryFn: async () => [],
-    enabled: false,
+    queryFn: async () => {
+      if (!actor || !documentId) return [];
+      return (actor as any).getComments(documentId);
+    },
+    enabled: !!actor && !actorFetching && !!documentId,
+    refetchInterval: 5000,
   });
 }
 
 export function useAddComment() {
+  const { actor } = useActor();
   const queryClient = useQueryClient();
-  return useMutation<StandardResponse, Error, { documentId: bigint; text: string }>({
-    mutationFn: async () => ({ __kind__: 'error' as const, error: 'Not available' }),
+
+  return useMutation({
+    mutationFn: async ({ documentId, text }: { documentId: bigint; text: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return (actor as any).addComment(documentId, text);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['documentComments', variables.documentId.toString()] });
     },
@@ -24,9 +32,14 @@ export function useAddComment() {
 }
 
 export function useDeleteComment() {
+  const { actor } = useActor();
   const queryClient = useQueryClient();
-  return useMutation<StandardResponse, Error, { commentId: bigint; documentId: bigint }>({
-    mutationFn: async () => ({ __kind__: 'error' as const, error: 'Not available' }),
+
+  return useMutation({
+    mutationFn: async ({ commentId, documentId }: { commentId: bigint; documentId: bigint }) => {
+      if (!actor) throw new Error('Actor not available');
+      return (actor as any).deleteComment(commentId);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['documentComments', variables.documentId.toString()] });
     },
@@ -34,9 +47,14 @@ export function useDeleteComment() {
 }
 
 export function useUpdateComment() {
+  const { actor } = useActor();
   const queryClient = useQueryClient();
-  return useMutation<StandardResponse, Error, { commentId: bigint; documentId: bigint; text: string }>({
-    mutationFn: async () => ({ __kind__: 'error' as const, error: 'Not available' }),
+
+  return useMutation({
+    mutationFn: async ({ commentId, documentId, text }: { commentId: bigint; documentId: bigint; text: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return (actor as any).updateComment(commentId, text);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['documentComments', variables.documentId.toString()] });
     },

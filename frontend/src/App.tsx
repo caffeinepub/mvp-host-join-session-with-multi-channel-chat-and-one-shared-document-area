@@ -4,27 +4,23 @@ import { useActor } from './hooks/useActor';
 import { useGetCallerUserProfile } from './hooks/useUserProfile';
 import LobbyPage from './pages/LobbyPage';
 import SessionPage from './pages/SessionPage';
-import CommunitiesHubPage from './pages/CommunitiesHubPage';
-import CommunityPage from './pages/CommunityPage';
 import { getSessionStorage, setSessionStorage, clearSessionStorage } from './lib/sessionStorage';
 import { usePreferences } from './hooks/usePreferences';
 import { PreferencesProvider } from './context/PreferencesContext';
 import { AppErrorBoundary } from './components/app/AppErrorBoundary';
-import { StartupFailureScreen } from './components/app/StartupFailureScreen';
 import { clearLocalAppData } from './lib/clearLocalAppData';
 import { Button } from './components/ui/button';
 import { Alert, AlertDescription } from './components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useActorStartupGuard } from './hooks/useActorStartupGuard';
+import { StartupFailureScreen } from './components/app/StartupFailureScreen';
 
 export type SessionContext = {
   sessionId: bigint;
   nickname: string;
   isHost: boolean;
 };
-
-type AppView = 'main' | 'communities' | 'community';
 
 function AppInner() {
   const { identity, login, clear, loginStatus, isInitializing } = useInternetIdentity();
@@ -35,15 +31,16 @@ function AppInner() {
   const [sessionContext, setSessionContext] = useState<SessionContext | null>(null);
   const [profileName, setProfileName] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
-  const [appView, setAppView] = useState<AppView>('main');
-  const [openCommunityId, setOpenCommunityId] = useState<bigint | null>(null);
 
   const isAuthenticated = !!identity;
 
+  // Use the user profile hook with proper loading state
   const { data: userProfile, isLoading: profileQueryLoading, isFetched } = useGetCallerUserProfile();
-
+  
+  // Determine if we should show profile setup
   const showProfileSetup = isAuthenticated && !actorFetching && !profileQueryLoading && isFetched && userProfile === null;
 
+  // Try to restore session from storage when profile is ready
   useEffect(() => {
     if (userProfile && !sessionContext) {
       const stored = getSessionStorage();
@@ -55,10 +52,15 @@ function AppInner() {
 
   const handleProfileSetup = async () => {
     if (!actor || !profileName.trim()) return;
+
     setProfileLoading(true);
     try {
       await actor.saveCallerUserProfile({ name: profileName.trim() });
+      
+      // Invalidate profile query to refetch
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      
+      // Try to restore session from storage
       const stored = getSessionStorage();
       if (stored) {
         setSessionContext(stored);
@@ -86,41 +88,30 @@ function AppInner() {
     setSessionContext(null);
     clearSessionStorage();
     setProfileName('');
+    // Clear all cached data on logout
     queryClient.clear();
   };
 
-  const handleNavigateToCommunities = () => {
-    setAppView('communities');
-  };
-
-  const handleBackFromCommunities = () => {
-    setAppView('main');
-  };
-
-  const handleOpenCommunity = (communityId: bigint) => {
-    setOpenCommunityId(communityId);
-    setAppView('community');
-  };
-
-  const handleBackFromCommunity = () => {
-    setOpenCommunityId(null);
-    setAppView('communities');
-  };
-
+  // Calculate scale factor
   const scaleFactor = preferences.uiScalePercent / 100;
 
+  // Show startup failure screen if actor initialization failed
   if (isAuthenticated && startupFailed) {
     return <StartupFailureScreen reason={reason} />;
   }
 
+  // Loading state - only show while truly initializing
   if (isInitializing || (isAuthenticated && actorFetching)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         {preferences.backgroundImage && (
           <>
-            <div
+            <div 
               className="fixed inset-0 z-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${preferences.backgroundImage})`, filter: 'blur(8px)' }}
+              style={{ 
+                backgroundImage: `url(${preferences.backgroundImage})`,
+                filter: 'blur(8px)',
+              }}
             />
             <div className="fixed inset-0 z-0 bg-background/80" />
           </>
@@ -133,14 +124,18 @@ function AppInner() {
     );
   }
 
+  // Profile setup screen
   if (showProfileSetup) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         {preferences.backgroundImage && (
           <>
-            <div
+            <div 
               className="fixed inset-0 z-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${preferences.backgroundImage})`, filter: 'blur(8px)' }}
+              style={{ 
+                backgroundImage: `url(${preferences.backgroundImage})`,
+                filter: 'blur(8px)',
+              }}
             />
             <div className="fixed inset-0 z-0 bg-background/80" />
           </>
@@ -150,9 +145,12 @@ function AppInner() {
             <h1 className="text-3xl font-bold tracking-tight">Welcome!</h1>
             <p className="text-muted-foreground">Please tell us your name to get started.</p>
           </div>
+          
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="profile-name" className="text-sm font-medium">Your Name</label>
+              <label htmlFor="profile-name" className="text-sm font-medium">
+                Your Name
+              </label>
               <input
                 id="profile-name"
                 type="text"
@@ -165,6 +163,7 @@ function AppInner() {
                 autoFocus
               />
             </div>
+            
             <Button
               onClick={handleProfileSetup}
               disabled={!profileName.trim() || profileLoading}
@@ -185,14 +184,18 @@ function AppInner() {
     );
   }
 
+  // Not authenticated - show login prompt
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         {preferences.backgroundImage && (
           <>
-            <div
+            <div 
               className="fixed inset-0 z-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${preferences.backgroundImage})`, filter: 'blur(8px)' }}
+              style={{ 
+                backgroundImage: `url(${preferences.backgroundImage})`,
+                filter: 'blur(8px)',
+              }}
             />
             <div className="fixed inset-0 z-0 bg-background/80" />
           </>
@@ -204,9 +207,13 @@ function AppInner() {
               A lightweight multiplayer chat and RPG tool for your gaming sessions.
             </p>
           </div>
+          
           <Alert>
-            <AlertDescription>Please log in to host or join a session.</AlertDescription>
+            <AlertDescription>
+              Please log in to host or join a session.
+            </AlertDescription>
           </Alert>
+          
           <Button
             onClick={login}
             disabled={loginStatus === 'logging-in'}
@@ -227,49 +234,9 @@ function AppInner() {
     );
   }
 
-  // Community page view
-  if (appView === 'community' && openCommunityId !== null) {
-    return (
-      <div
-        className="app-scale-root"
-        style={{
-          transform: `scale(${scaleFactor})`,
-          transformOrigin: 'top left',
-          width: `${100 / scaleFactor}%`,
-          height: `${100 / scaleFactor}%`,
-        }}
-      >
-        <CommunityPage
-          communityId={openCommunityId}
-          onBack={handleBackFromCommunity}
-        />
-      </div>
-    );
-  }
-
-  // Communities hub view
-  if (appView === 'communities') {
-    return (
-      <div
-        className="app-scale-root"
-        style={{
-          transform: `scale(${scaleFactor})`,
-          transformOrigin: 'top left',
-          width: `${100 / scaleFactor}%`,
-          height: `${100 / scaleFactor}%`,
-        }}
-      >
-        <CommunitiesHubPage
-          onBack={handleBackFromCommunities}
-          onOpenCommunity={handleOpenCommunity}
-        />
-      </div>
-    );
-  }
-
-  // Main view (lobby or session)
+  // Authenticated and profile exists
   return (
-    <div
+    <div 
       className="app-scale-root"
       style={{
         transform: `scale(${scaleFactor})`,
@@ -283,7 +250,6 @@ function AppInner() {
           sessionContext={sessionContext}
           onLeaveSession={handleLeaveSession}
           onLogout={handleLogout}
-          onNavigateToCommunities={handleNavigateToCommunities}
         />
       ) : (
         <LobbyPage

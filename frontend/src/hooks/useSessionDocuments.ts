@@ -1,30 +1,52 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { Document, StandardResponse, CreateDocumentResponse } from '../types/session';
-
-// NOTE: Session document backend methods are not available in the current backend.
-// These hooks return empty/null data gracefully.
+import type { Document } from '../types/session';
 
 export function useListSessionDocuments(sessionId: bigint | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+
   return useQuery<Document[]>({
     queryKey: ['sessionDocuments', sessionId?.toString()],
-    queryFn: async () => [],
-    enabled: false,
+    queryFn: async () => {
+      if (!actor || !sessionId) return [];
+      return (actor as any).listDocuments(sessionId);
+    },
+    enabled: !!actor && !actorFetching && !!sessionId,
+    refetchInterval: 5000,
   });
 }
 
 export function useGetSessionDocument(documentId: bigint | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+
   return useQuery<Document | null>({
     queryKey: ['sessionDocument', documentId?.toString()],
-    queryFn: async () => null,
-    enabled: false,
+    queryFn: async () => {
+      if (!actor || !documentId) return null;
+      return (actor as any).getDocument(documentId);
+    },
+    enabled: !!actor && !actorFetching && !!documentId,
+    refetchInterval: 5000,
   });
 }
 
 export function useCreateSessionDocument() {
+  const { actor } = useActor();
   const queryClient = useQueryClient();
-  return useMutation<CreateDocumentResponse, Error, { sessionId: bigint; name: string; content: string }>({
-    mutationFn: async () => ({ __kind__: 'error' as const, error: 'Not available' }),
+
+  return useMutation({
+    mutationFn: async ({
+      sessionId,
+      name,
+      content,
+    }: {
+      sessionId: bigint;
+      name: string;
+      content: string;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      return (actor as any).createDocument(sessionId, name, content);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sessionDocuments', variables.sessionId.toString()] });
     },
@@ -32,9 +54,14 @@ export function useCreateSessionDocument() {
 }
 
 export function useRenameSessionDocument() {
+  const { actor } = useActor();
   const queryClient = useQueryClient();
-  return useMutation<StandardResponse, Error, { documentId: bigint; newName: string }>({
-    mutationFn: async () => ({ __kind__: 'error' as const, error: 'Not available' }),
+
+  return useMutation({
+    mutationFn: async ({ documentId, newName }: { documentId: bigint; newName: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return (actor as any).renameDocument(documentId, newName);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sessionDocument', variables.documentId.toString()] });
       queryClient.invalidateQueries({ queryKey: ['sessionDocuments'] });
@@ -43,9 +70,14 @@ export function useRenameSessionDocument() {
 }
 
 export function useDeleteSessionDocument() {
+  const { actor } = useActor();
   const queryClient = useQueryClient();
-  return useMutation<StandardResponse, Error, bigint>({
-    mutationFn: async () => ({ __kind__: 'error' as const, error: 'Not available' }),
+
+  return useMutation({
+    mutationFn: async (documentId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      return (actor as any).deleteDocument(documentId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessionDocuments'] });
     },
@@ -53,9 +85,14 @@ export function useDeleteSessionDocument() {
 }
 
 export function useEditSessionDocument() {
+  const { actor } = useActor();
   const queryClient = useQueryClient();
-  return useMutation<StandardResponse, Error, { documentId: bigint; newContent: string }>({
-    mutationFn: async () => ({ __kind__: 'error' as const, error: 'Not available' }),
+
+  return useMutation({
+    mutationFn: async ({ documentId, newContent }: { documentId: bigint; newContent: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return (actor as any).editDocument(documentId, newContent);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sessionDocument', variables.documentId.toString()] });
       queryClient.invalidateQueries({ queryKey: ['sessionDocuments'] });

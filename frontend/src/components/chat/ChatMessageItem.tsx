@@ -30,7 +30,9 @@ export default function ChatMessageItem({
     setReactions((prev) => {
       const existing = prev.find((r) => r.emoji === emoji);
       if (existing) {
-        return prev.map((r) => (r.emoji === emoji ? { ...r, count: r.count + 1 } : r));
+        return prev.map((r) =>
+          r.emoji === emoji ? { ...r, count: r.count + 1 } : r
+        );
       }
       return [...prev, { emoji, count: 1 }];
     });
@@ -42,7 +44,7 @@ export default function ChatMessageItem({
   return (
     <div className="amino-message-bubble-container group">
       {showAvatar && (
-        <div className="shrink-0">
+        <div className="flex-shrink-0">
           <Avatar
             name={message.author}
             imageUrl={userProfilePicture}
@@ -53,7 +55,9 @@ export default function ChatMessageItem({
       )}
 
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-semibold text-white/80 mb-1 px-1">{message.author}</div>
+        <div className="text-xs font-semibold text-white/80 mb-1 px-1">
+          {message.author}
+        </div>
 
         <div className="amino-message-bubble">
           {isSticker ? (
@@ -70,10 +74,14 @@ export default function ChatMessageItem({
               style={{ maxHeight: '320px' }}
             />
           ) : (
-            <p className="text-sm text-white break-words whitespace-pre-wrap">{message.content}</p>
+            <p className="text-sm text-white break-words whitespace-pre-wrap">
+              {message.content}
+            </p>
           )}
 
-          <div className="text-xs text-white/50 mt-1">{formatTimestamp(message.timestamp)}</div>
+          <div className="text-xs text-white/50 mt-1">
+            {formatTimestamp(message.timestamp)}
+          </div>
         </div>
 
         {reactions.length > 0 && (

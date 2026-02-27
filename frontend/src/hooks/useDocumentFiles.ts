@@ -1,30 +1,49 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { DocumentFileReference, UploadFileRequest, UploadDocumentFileResponse } from '../types/session';
-
-// NOTE: Document file backend methods are not available in the current backend.
-// These hooks return empty/null data gracefully.
+import { ExternalBlob } from '../backend';
+import type { DocumentFileReference, UploadFileRequest } from '../types/session';
 
 export function useListDocumentFiles(documentId: bigint | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+
   return useQuery<DocumentFileReference[]>({
     queryKey: ['documentFiles', documentId?.toString()],
-    queryFn: async () => [],
-    enabled: false,
+    queryFn: async () => {
+      if (!actor || !documentId) return [];
+      return (actor as any).listDocumentFiles(documentId);
+    },
+    enabled: !!actor && !actorFetching && !!documentId,
   });
 }
 
 export function useGetDocumentFileReference(fileId: bigint | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+
   return useQuery<DocumentFileReference | null>({
     queryKey: ['documentFileReference', fileId?.toString()],
-    queryFn: async () => null,
-    enabled: false,
+    queryFn: async () => {
+      if (!actor || !fileId) return null;
+      return (actor as any).getDocumentFileReference(fileId);
+    },
+    enabled: !!actor && !actorFetching && !!fileId,
   });
 }
 
 export function useUploadDocumentFile() {
+  const { actor } = useActor();
   const queryClient = useQueryClient();
-  return useMutation<UploadDocumentFileResponse, Error, UploadFileRequest>({
-    mutationFn: async () => ({ __kind__: 'error' as const, error: 'Not available' }),
+
+  return useMutation({
+    mutationFn: async (request: UploadFileRequest) => {
+      if (!actor) throw new Error('Actor not available');
+
+      if (!request.documentId || request.documentId === BigInt(0)) {
+        throw new Error('Invalid document ID for file upload');
+      }
+
+      const result = await (actor as any).uploadDocumentFile(request);
+      return result;
+    },
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['documentFiles', variables.documentId.toString()],

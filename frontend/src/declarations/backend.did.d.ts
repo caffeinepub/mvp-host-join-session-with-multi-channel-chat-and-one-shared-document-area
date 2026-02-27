@@ -10,40 +10,15 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface Community {
-  'id' : bigint,
-  'font' : [] | [string],
-  'host' : Principal,
-  'primaryColor' : [] | [string],
-  'name' : string,
-  'accentColor' : [] | [string],
-  'layoutOptions' : [] | [string],
-  'bannerImage' : [] | [ExternalBlob],
-}
 export interface CommunityPost {
-  'id' : bigint,
-  'communityId' : bigint,
-  'text' : string,
-  'authorName' : string,
-  'timestamp' : Time,
-  'image' : [] | [ExternalBlob],
+  'id' : string,
+  'content' : string,
+  'communityId' : string,
+  'imageBlob' : [] | [Uint8Array],
+  'createdAt' : bigint,
   'authorPrincipal' : Principal,
 }
 export type ExternalBlob = Uint8Array;
-export type StandardResponse = { 'ok' : string } |
-  { 'error' : string };
-export type Tab = { 'chat' : null } |
-  { 'home' : null } |
-  { 'lore' : null } |
-  { 'polls' : null } |
-  { 'quizzes' : null } |
-  { 'rules' : null };
-export interface TabData {
-  'tab' : Tab,
-  'order' : bigint,
-  'canReorderMember' : boolean,
-}
-export type Time = bigint;
 export interface UserProfile {
   'name' : string,
   'profilePicture' : [] | [ExternalBlob],
@@ -80,44 +55,28 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'canReorder' : ActorMethod<[bigint, Principal], boolean>,
-  'createCommunity' : ActorMethod<
-    [string],
-    { 'ok' : bigint } |
-      { 'error' : string }
-  >,
-  'createCommunityPost' : ActorMethod<
-    [bigint, string, string, [] | [ExternalBlob]],
-    StandardResponse
+  'createPost' : ActorMethod<
+    [string, string, [] | [Uint8Array]],
+    [] | [string]
   >,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getCommunity' : ActorMethod<[bigint], [] | [Community]>,
-  'getCommunityPosts' : ActorMethod<[bigint], Array<CommunityPost>>,
-  'getMemberTabReorderPermissions' : ActorMethod<
-    [bigint],
-    Array<[Principal, boolean]>
-  >,
-  'getTabs' : ActorMethod<[bigint], Array<TabData>>,
+  'getPosts' : ActorMethod<[string], Array<CommunityPost>>,
+  'getTabOrder' : ActorMethod<[string], Array<string>>,
+  'getTabPermissions' : ActorMethod<[string], Array<Principal>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'grantTabReorderPermission' : ActorMethod<[string, Principal], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'reorderTabs' : ActorMethod<[bigint, Array<Tab>], StandardResponse>,
+  'isCommunityHost' : ActorMethod<[string, Principal], boolean>,
+  'isCommunityHostOrPermitted' : ActorMethod<[string, Principal], boolean>,
+  'removeProfilePicture' : ActorMethod<[], undefined>,
+  'revokeTabReorderPermission' : ActorMethod<[string, Principal], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'updateCommunitySettings' : ActorMethod<
-    [
-      bigint,
-      [] | [ExternalBlob],
-      [] | [string],
-      [] | [string],
-      [] | [string],
-      [] | [string],
-    ],
-    StandardResponse
+  'updateBannerSettings' : ActorMethod<
+    [string, [] | [Uint8Array], [] | [string], [] | [string], [] | [string]],
+    undefined
   >,
-  'updateMemberTabReorderPermission' : ActorMethod<
-    [bigint, Principal, boolean],
-    StandardResponse
-  >,
+  'updateTabOrder' : ActorMethod<[string, Array<string>], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

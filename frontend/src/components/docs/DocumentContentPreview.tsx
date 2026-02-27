@@ -1,86 +1,99 @@
+import React from 'react';
 import { renderTextSegment } from '../../lib/documentPreviewMarkup';
-import type { DocumentFileReference } from '../../types/session';
-import { parseFileMarkers } from '../../lib/documentFileMarkers';
-import { FileText, Download } from 'lucide-react';
+import { useListDocumentImages } from '../../hooks/useDocumentImages';
+import { useListDocumentFiles } from '../../hooks/useDocumentFiles';
 
 type DocumentContentPreviewProps = {
+  documentId: bigint;
   content: string;
-  documentFiles: DocumentFileReference[];
 };
 
-export default function DocumentContentPreview({ content, documentFiles }: DocumentContentPreviewProps) {
-  const fileMap = new Map(documentFiles.map((f) => [Number(f.id), f]));
-  const fileMarkers = parseFileMarkers(content);
+export default function DocumentContentPreview({ documentId, content }: DocumentContentPreviewProps) {
+  const { data: images = [] } = useListDocumentImages(documentId);
+  const { data: files = [] } = useListDocumentFiles(documentId);
 
-  // Split content into text segments and file markers
-  const segments: Array<
-    { type: 'text'; text: string } | { type: 'file'; fileId: number; filename: string }
-  > = [];
+  const imageMap = new Map(images.map((img) => [img.fileId, img]));
+  const fileMap = new Map(files.map((f) => [f.id.toString(), f]));
 
-  let remaining = content;
-  for (const marker of fileMarkers) {
-    const markerStr = `[FILE:${marker.fileId}:${marker.filename}]`;
-    const idx = remaining.indexOf(markerStr);
-    if (idx === -1) continue;
-    if (idx > 0) {
-      segments.push({ type: 'text', text: remaining.slice(0, idx) });
-    }
-    segments.push({ type: 'file', fileId: marker.fileId, filename: marker.filename });
-    remaining = remaining.slice(idx + markerStr.length);
-  }
-  if (remaining) {
-    segments.push({ type: 'text', text: remaining });
-  }
+  const segments = tokenizeContent(content);
 
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none">
-      {segments.map((seg, i) => {
-        if (seg.type === 'text') {
+    <div className="prose prose-sm max-w-none dark:prose-invert">
+      {segments.map((segment, index) => {
+        if (segment.type === 'image') {
+          const imageRef = imageMap.get(segment.id);
+          if (!imageRef) return null;
           return (
-            <div key={i} className="whitespace-pre-wrap break-words">
-              {renderTextSegment(seg.text)}
-            </div>
-          );
-        }
-
-        const fileRef = fileMap.get(seg.fileId);
-        if (!fileRef) {
-          return (
-            <div key={i} className="text-muted-foreground text-sm italic">
-              [File not found: {seg.filename}]
-            </div>
-          );
-        }
-
-        const url = fileRef.file.getDirectURL();
-        const isImage = fileRef.mimeType.startsWith('image/');
-
-        if (isImage) {
-          return (
-            <div key={i} className="my-4">
+            <div key={index} className="my-4">
               <img
-                src={url}
-                alt={fileRef.filename}
-                className="max-w-full rounded-lg border border-border"
+                src={imageRef.fileId}
+                alt={imageRef.title || imageRef.caption}
+                className="max-w-full rounded-lg"
               />
-              <p className="text-xs text-muted-foreground mt-1">{fileRef.filename}</p>
+              {(imageRef.title || imageRef.caption) && (
+                <p className="text-xs text-muted-foreground mt-1 text-center">
+                  {imageRef.title || imageRef.caption}
+                </p>
+              )}
+            </div>
+          );
+        }
+
+        if (segment.type === 'file') {
+          const fileRef = fileMap.get(segment.id);
+          if (!fileRef) return null;
+          return (
+            <div key={index} className="my-2 p-2 border border-border rounded-md flex items-center gap-2">
+              <span className="text-sm font-medium">{fileRef.filename}</span>
+              <span className="text-xs text-muted-foreground">({fileRef.mimeType})</span>
             </div>
           );
         }
 
         return (
-          <div
-            key={i}
-            className="my-2 flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/30"
-          >
-            <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-            <span className="flex-1 text-sm truncate">{fileRef.filename}</span>
-            <a href={url} download={fileRef.filename} className="shrink-0">
-              <Download className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-            </a>
+          <div key={index}>
+            {renderTextSegment(segment.text)}
           </div>
         );
       })}
     </div>
   );
+}
+
+type Segment =
+  | { type: 'text'; text: string }
+  | { type: 'image'; id: string }
+  | { type: 'file'; id: string };
+
+function tokenizeContent(content: string): Segment[] {
+  const segments: Segment[] = [];
+  const imagePattern = /\[IMAGE:([^\]]+)\]/g;
+  const filePattern = /\[FILE:([^\]]+)\]/g;
+
+  const allMatches: { index: number; length: number; type: 'image' | 'file'; id: string }[] = [];
+
+  let match;
+  while ((match = imagePattern.exec(content)) !== null) {
+    allMatches.push({ index: match.index, length: match[0].length, type: 'image', id: match[1] });
+  }
+  while ((match = filePattern.exec(content)) !== null) {
+    allMatches.push({ index: match.index, length: match[0].length, type: 'file', id: match[1] });
+  }
+
+  allMatches.sort((a, b) => a.index - b.index);
+
+  let lastIndex = 0;
+  for (const m of allMatches) {
+    if (m.index > lastIndex) {
+      segments.push({ type: 'text', text: content.slice(lastIndex, m.index) });
+    }
+    segments.push({ type: m.type, id: m.id });
+    lastIndex = m.index + m.length;
+  }
+
+  if (lastIndex < content.length) {
+    segments.push({ type: 'text', text: content.slice(lastIndex) });
+  }
+
+  return segments;
 }

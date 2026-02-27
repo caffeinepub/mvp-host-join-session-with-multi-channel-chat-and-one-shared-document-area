@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useActor } from '../hooks/useActor';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useQuickChatProfile } from '../hooks/useQuickChatProfile';
 import { useSessionData } from '../hooks/useSessionData';
@@ -12,25 +13,21 @@ import PlayerDocumentEditorView from '../components/docs/PlayerDocumentEditorVie
 import DocumentEditorView from '../components/docs/DocumentEditorView';
 import PlayerDocumentsDialog from '../components/session/PlayerDocumentsDialog';
 import SessionDocumentsDialog from '../components/session/SessionDocumentsDialog';
+import CommunitiesHubPage from './CommunitiesHubPage';
 import { Button } from '../components/ui/button';
-import { LogOut, ArrowLeft, FileText, FolderOpen, Globe } from 'lucide-react';
+import { LogOut, ArrowLeft, Users, FileText, FolderOpen } from 'lucide-react';
 import { Separator } from '../components/ui/separator';
 
 type SessionPageProps = {
   sessionContext: SessionContext;
   onLeaveSession: () => void;
   onLogout: () => void;
-  onNavigateToCommunities: () => void;
 };
 
 type ViewType = 'channel' | 'playerDocument' | 'sessionDocument';
 
-export default function SessionPage({
-  sessionContext,
-  onLeaveSession,
-  onLogout,
-  onNavigateToCommunities,
-}: SessionPageProps) {
+export default function SessionPage({ sessionContext, onLeaveSession, onLogout }: SessionPageProps) {
+  const { actor } = useActor();
   const { identity } = useInternetIdentity();
   const { profile: quickProfile } = useQuickChatProfile();
   const [viewType, setViewType] = useState<ViewType>('channel');
@@ -39,25 +36,35 @@ export default function SessionPage({
   const [selectedSessionDocumentId, setSelectedSessionDocumentId] = useState<bigint | null>(null);
   const [showPlayerDocuments, setShowPlayerDocuments] = useState(false);
   const [showSessionDocuments, setShowSessionDocuments] = useState(false);
+  const [showCommunitiesHub, setShowCommunitiesHub] = useState(false);
+
+  // Store previous view state for restoration
+  const [previousViewState, setPreviousViewState] = useState<{
+    viewType: ViewType;
+    channelId: bigint | null;
+    playerDocId: bigint | null;
+    sessionDocId: bigint | null;
+  } | null>(null);
 
   const {
     session,
     channels,
     membersChannels,
     messages,
+    isLoading,
+    refetchSession,
     refetchChannels,
     refetchMembersChannels,
     refetchMessages,
   } = useSessionData(sessionContext.sessionId, selectedChannelId);
 
-  const { data: playerDocuments, refetch: refetchPlayerDocuments } = useListPlayerDocuments(
-    sessionContext.sessionId
-  );
-  const { data: currentSessionDocument, refetch: refetchCurrentSessionDocument } =
-    useGetSessionDocument(selectedSessionDocumentId);
+  const { data: playerDocuments, refetch: refetchPlayerDocuments } = useListPlayerDocuments(sessionContext.sessionId);
+  const { data: currentSessionDocument, refetch: refetchCurrentSessionDocument } = useGetSessionDocument(selectedSessionDocumentId);
 
+  // Derive effective nickname: use quick profile display name if set, otherwise session nickname
   const effectiveNickname = quickProfile?.displayName || sessionContext.nickname;
 
+  // Auto-select first channel on load
   useEffect(() => {
     if (channels && channels.length > 0 && !selectedChannelId && viewType === 'channel') {
       setSelectedChannelId(channels[0].id);
@@ -101,13 +108,37 @@ export default function SessionPage({
     setViewType('playerDocument');
   };
 
-  const isHost =
-    identity?.getPrincipal().toString() === session?.host?.toString() ||
-    sessionContext.isHost;
+  const handleShowCommunitiesHub = () => {
+    setPreviousViewState({
+      viewType,
+      channelId: selectedChannelId,
+      playerDocId: selectedPlayerDocumentId,
+      sessionDocId: selectedSessionDocumentId,
+    });
+    setShowCommunitiesHub(true);
+  };
+
+  const handleBackToSession = () => {
+    setShowCommunitiesHub(false);
+    if (previousViewState) {
+      setViewType(previousViewState.viewType);
+      setSelectedChannelId(previousViewState.channelId);
+      setSelectedPlayerDocumentId(previousViewState.playerDocId);
+      setSelectedSessionDocumentId(previousViewState.sessionDocId);
+    }
+  };
+
+  const isHost = identity?.getPrincipal().toString() === session?.host.toString();
+
+  // Show Communities Hub if active
+  if (showCommunitiesHub) {
+    return <CommunitiesHubPage onBackToSession={handleBackToSession} />;
+  }
 
   return (
     <div className="session-page-container">
-      <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between shrink-0">
+      {/* Header */}
+      <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={onLeaveSession}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -115,11 +146,10 @@ export default function SessionPage({
           </Button>
           <Separator orientation="vertical" className="h-6" />
           <div>
-            <h1 className="text-lg font-semibold">
-              {session?.name || `Session ${sessionContext.sessionId.toString()}`}
-            </h1>
+            <h1 className="text-lg font-semibold">{session?.name || 'Loading...'}</h1>
             <p className="text-xs text-muted-foreground">
-              {sessionContext.isHost ? 'You are the host' : `Joined as ${effectiveNickname}`}
+              Session ID: {sessionContext.sessionId.toString()}
+              {isHost && ' • You are the host'}
             </p>
           </div>
         </div>
@@ -130,8 +160,13 @@ export default function SessionPage({
           </Button>
           <Button variant="outline" size="sm" onClick={() => setShowPlayerDocuments(true)}>
             <FileText className="mr-2 h-4 w-4" />
-            Player Docs
+            Player Documents
           </Button>
+          <Separator orientation="vertical" className="h-6" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <span>{session?.members.length || 0} members</span>
+          </div>
           <Separator orientation="vertical" className="h-6" />
           <Button variant="ghost" size="sm" onClick={onLogout}>
             <LogOut className="h-4 w-4" />
@@ -139,7 +174,9 @@ export default function SessionPage({
         </div>
       </header>
 
+      {/* Main Content */}
       <div className="session-content-area">
+        {/* Sidebar */}
         <SessionSidebar
           sessionId={sessionContext.sessionId}
           channels={channels || []}
@@ -152,14 +189,16 @@ export default function SessionPage({
           onMembersChannelsChanged={refetchMembersChannels}
         />
 
+        {/* Main Panel */}
         <main className="flex-1 overflow-hidden flex flex-col">
-          <div className="border-b border-border bg-card px-4 py-2 shrink-0">
-            <Button variant="outline" size="sm" onClick={onNavigateToCommunities}>
-              <Globe className="mr-2 h-4 w-4" />
+          {/* Communities Button Row */}
+          <div className="border-b border-border bg-card px-4 py-2 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={handleShowCommunitiesHub}>
               Communities
             </Button>
           </div>
 
+          {/* Content Area */}
           <div className="flex-1 overflow-hidden">
             {viewType === 'channel' && selectedChannelId && (
               <ChannelChatView
@@ -182,16 +221,14 @@ export default function SessionPage({
                 onDocumentChanged={refetchPlayerDocuments}
               />
             )}
-            {viewType === 'sessionDocument' &&
-              selectedSessionDocumentId &&
-              currentSessionDocument && (
-                <DocumentEditorView
-                  document={currentSessionDocument}
-                  isHost={isHost}
-                  sessionId={sessionContext.sessionId}
-                  onDocumentChanged={refetchCurrentSessionDocument}
-                />
-              )}
+            {viewType === 'sessionDocument' && selectedSessionDocumentId && currentSessionDocument && (
+              <DocumentEditorView
+                document={currentSessionDocument}
+                isHost={isHost}
+                sessionId={sessionContext.sessionId}
+                onDocumentChanged={refetchCurrentSessionDocument}
+              />
+            )}
             {!selectedChannelId && !selectedPlayerDocumentId && !selectedSessionDocumentId && (
               <div className="h-full flex items-center justify-center text-muted-foreground">
                 <p>Select a channel or document to get started</p>
@@ -201,6 +238,7 @@ export default function SessionPage({
         </main>
       </div>
 
+      {/* Player Documents Dialog */}
       <PlayerDocumentsDialog
         sessionId={sessionContext.sessionId}
         open={showPlayerDocuments}
@@ -209,6 +247,7 @@ export default function SessionPage({
         onDocumentCreated={handlePlayerDocumentCreated}
       />
 
+      {/* Session Documents Dialog */}
       <SessionDocumentsDialog
         sessionId={sessionContext.sessionId}
         open={showSessionDocuments}

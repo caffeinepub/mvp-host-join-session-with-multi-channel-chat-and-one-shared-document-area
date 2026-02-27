@@ -5,16 +5,15 @@ import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Nat "mo:core/Nat";
 import Int "mo:core/Int";
+import Array "mo:core/Array";
 import Principal "mo:core/Principal";
 import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
-import Array "mo:core/Array";
 
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 import AccessControl "authorization/access-control";
-
 import Migration "migration";
 
 (with migration = Migration.run)
@@ -166,6 +165,18 @@ actor {
     currentIndex : Nat;
   };
 
+  public type SessionCreateRequest = {
+    name : Text;
+    password : ?Text;
+    hostNickname : Text;
+  };
+
+  public type JoinSessionRequest = {
+    sessionId : Nat;
+    nickname : Text;
+    password : ?Text;
+  };
+
   public type StandardResponse = {
     #ok : Text;
     #error : Text;
@@ -215,6 +226,46 @@ actor {
     turnOrder : ?TurnOrder;
   };
 
+  public type DocumentMetadata = {
+    #session : Document;
+    #player : PlayerDocument;
+  };
+
+  type CommunityHub = {
+    communities : Map.Map<Text, Community>;
+  };
+
+  public type Community = {
+    id : Text;
+    name : Text;
+    hostPrincipal : Principal;
+    description : Text;
+    verified : Bool;
+    bannerBlob : ?Blob;
+    bannerColor : ?Text;
+    bannerFont : ?Text;
+    accentColor : ?Text;
+  };
+
+  public type CommunityPost = {
+    id : Text;
+    communityId : Text;
+    authorPrincipal : Principal;
+    content : Text;
+    imageBlob : ?Blob;
+    createdAt : Int;
+  };
+
+  public type CommunityTabOrder = {
+    communityId : Text;
+    tabOrder : [Text];
+  };
+
+  public type CommunityTabPermissions = {
+    communityId : Text;
+    membersWithReorderPermission : [Principal];
+  };
+
   var nextSessionId : Nat = 1;
   var nextChannelId : Nat = 1;
   var nextMessageId : Nat = 1;
@@ -234,9 +285,23 @@ actor {
   let documentFileReferences = Map.empty<Nat, DocumentFileReference>();
   let comments = Map.empty<Nat, DocumentComment>();
   let stickers = Map.empty<Nat, Sticker>();
+  let communityHub : CommunityHub = { communities = Map.empty<Text, Community>() };
+  let communityPosts = Map.empty<Text, List.List<CommunityPost>>();
+  let tabOrders = Map.empty<Text, CommunityTabOrder>();
+  let tabPermissions = Map.empty<Text, CommunityTabPermissions>();
 
-  let accessControlState = AccessControl.initState();
-  include MixinAuthorization(accessControlState);
+  func updateSessionActivity(sessionId : Nat) {
+    switch (sessions.get(sessionId)) {
+      case (null) {};
+      case (?session) {
+        let updated = {
+          session with
+          lastActive = Time.now();
+        };
+        sessions.add(sessionId, updated);
+      };
+    };
+  };
 
   func hashPassword(password : Text) : Blob {
     let salt = "rpg_session_salt";
@@ -251,7 +316,7 @@ actor {
   func isSessionHost(sessionId : Nat, caller : Principal) : Bool {
     switch (sessions.get(sessionId)) {
       case (null) { false };
-      case (?session) { session.host == caller };
+      case (?session) { Principal.equal(session.host, caller) };
     };
   };
 
@@ -260,7 +325,7 @@ actor {
       case (null) { false };
       case (?session) {
         session.members.find(
-          func(m) { m.id == caller }
+          func(m) { Principal.equal(m.id, caller) }
         ) != null;
       };
     };
@@ -270,7 +335,7 @@ actor {
     switch (sessions.get(sessionId)) {
       case (null) { null };
       case (?session) {
-        switch (session.members.find(func(m) { m.id == caller })) {
+        switch (session.members.find(func(m) { Principal.equal(m.id, caller) })) {
           case (null) { null };
           case (?member) { ?member.nickname };
         };
@@ -279,7 +344,7 @@ actor {
   };
 
   func canAccessPlayerDocument(doc : PlayerDocument, caller : Principal) : Bool {
-    if (doc.owner == caller) {
+    if (Principal.equal(doc.owner, caller)) {
       return true;
     };
     if (doc.isPrivate) {
@@ -302,18 +367,42 @@ actor {
     null;
   };
 
-  // ------------------- User Profile Functions -------------------
+  // Private helper: check if a principal is the community host
+  func checkIsCommunityHost(communityId : Text, member : Principal) : Bool {
+    switch (communityHub.communities.get(communityId)) {
+      case (null) { false };
+      case (?community) { Principal.equal(community.hostPrincipal, member) };
+    };
+  };
+
+  // Private helper: check if a principal is the community host or has tab reorder permission
+  func checkIsCommunityHostOrPermitted(communityId : Text, member : Principal) : Bool {
+    if (checkIsCommunityHost(communityId, member)) {
+      return true;
+    };
+    switch (tabPermissions.get(communityId)) {
+      case (null) { false };
+      case (?permissions) {
+        permissions.membersWithReorderPermission.find(
+          func(p) { Principal.equal(p, member) }
+        ) != null;
+      };
+    };
+  };
+
+  let accessControlState = AccessControl.initState();
+  include MixinAuthorization(accessControlState);
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can get their profile");
+      Runtime.trap("Unauthorized: Only users can access profiles");
     };
     userProfiles.get(caller);
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view profiles");
     };
     userProfiles.get(user);
   };
@@ -325,299 +414,197 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // ------------------- Community System -------------------
-
-  public type Tab = {
-    #home;
-    #chat;
-    #lore;
-    #polls;
-    #quizzes;
-    #rules;
-  };
-
-  public type CommunityPost = {
-    id : Nat;
-    communityId : Nat;
-    authorPrincipal : Principal;
-    authorName : Text;
-    text : Text;
-    image : ?Storage.ExternalBlob;
-    timestamp : Time.Time;
-  };
-
-  public type Community = {
-    id : Nat;
-    name : Text;
-    host : Principal;
-    bannerImage : ?Storage.ExternalBlob;
-    primaryColor : ?Text;
-    accentColor : ?Text;
-    font : ?Text;
-    layoutOptions : ?Text;
-  };
-
-  public type TabData = {
-    tab : Tab;
-    order : Nat;
-    canReorderMember : Bool;
-  };
-
-  var nextCommunityId : Nat = 1;
-  var nextPostId : Nat = 1;
-
-  let communities = Map.empty<Nat, Community>();
-  let communityPosts = Map.empty<Nat, CommunityPost>();
-  let tabOrders = Map.empty<Nat, List.List<TabData>>();
-  // Maps communityId -> (memberId -> canReorder)
-  let memberTabReorderPermissions = Map.empty<Nat, Map.Map<Principal, Bool>>();
-
-  func isCommunityHost(communityId : Nat, caller : Principal) : Bool {
-    switch (communities.get(communityId)) {
-      case (null) { false };
-      case (?community) { community.host == caller };
+  public shared ({ caller }) func removeProfilePicture() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can remove profile pictures");
     };
-  };
 
-  func memberHasTabReorderPermission(communityId : Nat, member : Principal) : Bool {
-    switch (memberTabReorderPermissions.get(communityId)) {
-      case (null) { false };
-      case (?perms) {
-        switch (perms.get(member)) {
-          case (null) { false };
-          case (?allowed) { allowed };
-        };
+    switch (userProfiles.get(caller)) {
+      case (null) {};
+      case (?profile) {
+        let newProfile = { profile with profilePicture = null };
+        userProfiles.add(caller, newProfile);
       };
     };
   };
 
-  func callerCanReorderTabs(communityId : Nat, caller : Principal) : Bool {
-    if (isCommunityHost(communityId, caller)) {
-      return true;
-    };
-    if (AccessControl.isAdmin(accessControlState, caller)) {
-      return true;
-    };
-    memberHasTabReorderPermission(communityId, caller);
-  };
+  // ------------------- Community API -------------------
 
-  let defaultTabOrder : [TabData] = [
-    { tab = #home; order = 0; canReorderMember = false },
-    { tab = #chat; order = 1; canReorderMember = false },
-    { tab = #lore; order = 2; canReorderMember = false },
-    { tab = #polls; order = 3; canReorderMember = false },
-    { tab = #quizzes; order = 4; canReorderMember = false },
-    { tab = #rules; order = 5; canReorderMember = false },
-  ];
-
-  public shared ({ caller }) func createCommunity(name : Text) : async { #ok : Nat; #error : Text } {
+  public shared ({ caller }) func createPost(communityId : Text, content : Text, imageBlob : ?Blob) : async ?Text {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      return #error("Unauthorized: Only users can create communities");
+      Runtime.trap("Unauthorized: Only authenticated users can create posts");
     };
 
-    let community : Community = {
-      id = nextCommunityId;
-      name;
-      host = caller;
-      bannerImage = null;
-      primaryColor = null;
-      accentColor = null;
-      font = null;
-      layoutOptions = null;
+    if (not communityHub.communities.containsKey(communityId)) {
+      Runtime.trap("Community not found");
     };
 
-    communities.add(nextCommunityId, community);
-    tabOrders.add(nextCommunityId, List.fromArray<TabData>(defaultTabOrder));
-    nextCommunityId += 1;
-    #ok(community.id);
-  };
+    let now = Time.now();
+    let postId = communityId # "_" # now.toText();
 
-  public query ({ caller }) func getCommunity(communityId : Nat) : async ?Community {
-    // Any authenticated user can view community info
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view communities");
-    };
-    communities.get(communityId);
-  };
-
-  public shared ({ caller }) func updateCommunitySettings(
-    communityId : Nat,
-    bannerImage : ?Storage.ExternalBlob,
-    primaryColor : ?Text,
-    accentColor : ?Text,
-    font : ?Text,
-    layoutOptions : ?Text,
-  ) : async StandardResponse {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      return #error("Unauthorized: Only users can update community settings");
-    };
-    if (not isCommunityHost(communityId, caller) and not AccessControl.isAdmin(accessControlState, caller)) {
-      return #error("Unauthorized: Only the community host or an admin can update community settings");
-    };
-
-    switch (communities.get(communityId)) {
-      case (null) { return #error("Community not found") };
-      case (?community) {
-        let updated : Community = {
-          community with
-          bannerImage;
-          primaryColor;
-          accentColor;
-          font;
-          layoutOptions;
-        };
-        communities.add(communityId, updated);
-        #ok("Community settings updated");
-      };
-    };
-  };
-
-  public query ({ caller }) func getTabs(communityId : Nat) : async [TabData] {
-    // Any authenticated user can view tabs
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view tabs");
-    };
-
-    switch (tabOrders.get(communityId)) {
-      case (null) { defaultTabOrder };
-      case (?tabs) { tabs.toArray() };
-    };
-  };
-
-  public query ({ caller }) func canReorder(communityId : Nat, principal : Principal) : async Bool {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can check reorder permission");
-    };
-    callerCanReorderTabs(communityId, principal);
-  };
-
-  public shared ({ caller }) func reorderTabs(communityId : Nat, newTabOrder : [Tab]) : async StandardResponse {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      return #error("Unauthorized: Only users can reorder tabs");
-    };
-
-    // Only the community host, admins, or members with explicit permission can reorder
-    if (not callerCanReorderTabs(communityId, caller)) {
-      return #error("Unauthorized: You do not have permission to reorder tabs in this community");
-    };
-
-    let existingTabs = switch (tabOrders.get(communityId)) {
-      case (?tabs) { tabs.toArray() };
-      case (null) { defaultTabOrder };
-    };
-
-    let tabToTabData = func(tab : Tab, index : Nat) : TabData {
-      switch (existingTabs.find(func(t : TabData) : Bool { t.tab == tab })) {
-        case (?tabData) { { tabData with order = index } };
-        case (null) {
-          {
-            tab;
-            order = index;
-            canReorderMember = false;
-          };
-        };
-      };
-    };
-
-    let newTabData = Array.tabulate(
-      newTabOrder.size(),
-      func(i) { tabToTabData(newTabOrder[i], i) },
-    );
-
-    tabOrders.add(communityId, List.fromArray<TabData>(newTabData));
-    #ok("Tabs reordered");
-  };
-
-  // Host-only: update per-member tab reorder permission
-  public shared ({ caller }) func updateMemberTabReorderPermission(
-    communityId : Nat,
-    member : Principal,
-    canReorderTabs : Bool,
-  ) : async StandardResponse {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      return #error("Unauthorized: Only users can update member permissions");
-    };
-
-    // Only the community host or admins can grant/revoke tab reorder permissions
-    if (not isCommunityHost(communityId, caller) and not AccessControl.isAdmin(accessControlState, caller)) {
-      return #error("Unauthorized: Only the community host or an admin can update member tab reorder permissions");
-    };
-
-    let perms = switch (memberTabReorderPermissions.get(communityId)) {
-      case (?existing) { existing };
-      case (null) {
-        let newMap = Map.empty<Principal, Bool>();
-        memberTabReorderPermissions.add(communityId, newMap);
-        newMap;
-      };
-    };
-
-    perms.add(member, canReorderTabs);
-    #ok("Member tab reorder permission updated");
-  };
-
-  // Host-only: get all member tab reorder permissions for a community
-  public query ({ caller }) func getMemberTabReorderPermissions(communityId : Nat) : async [(Principal, Bool)] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view member permissions");
-    };
-
-    if (not isCommunityHost(communityId, caller) and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Only the community host or an admin can view member tab reorder permissions");
-    };
-
-    switch (memberTabReorderPermissions.get(communityId)) {
-      case (null) { [] };
-      case (?perms) { perms.entries().toArray() };
-    };
-  };
-
-  public shared ({ caller }) func createCommunityPost(
-    communityId : Nat,
-    authorName : Text,
-    content : Text,
-    image : ?Storage.ExternalBlob,
-  ) : async StandardResponse {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      return #error("Unauthorized: Only users can create posts");
-    };
-
-    // Verify the community exists
-    switch (communities.get(communityId)) {
-      case (null) { return #error("Community not found") };
-      case (?_) {};
-    };
-
-    let post : CommunityPost = {
-      id = nextPostId;
+    let newPost : CommunityPost = {
+      id = postId;
       communityId;
       authorPrincipal = caller;
-      authorName;
-      text = content;
-      image;
-      timestamp = Time.now();
+      content;
+      imageBlob;
+      createdAt = now;
     };
 
-    communityPosts.add(nextPostId, post);
-    nextPostId += 1;
-    #ok(post.id.toText());
+    switch (communityPosts.get(communityId)) {
+      case (null) {
+        let newPostList = List.singleton<CommunityPost>(newPost);
+        communityPosts.add(communityId, newPostList);
+      };
+      case (?posts) {
+        posts.add(newPost);
+      };
+    };
+
+    ?postId;
   };
 
-  public query ({ caller }) func getCommunityPosts(communityId : Nat) : async [CommunityPost] {
+  // Public read: no auth required — anyone can view posts
+  public query func getPosts(communityId : Text) : async [CommunityPost] {
+    switch (communityPosts.get(communityId)) {
+      case (null) { [] };
+      case (?posts) { posts.toArray() };
+    };
+  };
+
+  // Public read: no auth required — anyone can view tab order
+  public query func getTabOrder(communityId : Text) : async [Text] {
+    switch (tabOrders.get(communityId)) {
+      case (null) { [] };
+      case (?order) {
+        Array.tabulate<Text>(
+          order.tabOrder.size(),
+          func(i) { order.tabOrder[i] },
+        );
+      };
+    };
+  };
+
+  public shared ({ caller }) func updateTabOrder(communityId : Text, newOrder : [Text]) : async () {
+    // Must be an authenticated user
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view posts");
+      Runtime.trap("Unauthorized: Only authenticated users can update tab order");
+    };
+    // Must be the community host or a member with reorder permission
+    if (not checkIsCommunityHostOrPermitted(communityId, caller)) {
+      Runtime.trap("Unauthorized: You do not have permission to update the tab order for this community");
+    };
+    let updatedOrder : CommunityTabOrder = {
+      communityId;
+      tabOrder = newOrder;
+    };
+    tabOrders.add(communityId, updatedOrder);
+  };
+
+  public shared ({ caller }) func updateBannerSettings(
+    communityId : Text,
+    bannerBlob : ?Blob,
+    bannerColor : ?Text,
+    bannerFont : ?Text,
+    accentColor : ?Text,
+  ) : async () {
+    // Must be an authenticated user
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can edit banners");
+    };
+    // Must be the community host
+    if (not checkIsCommunityHost(communityId, caller)) {
+      Runtime.trap("Unauthorized: Only the community host can edit banner settings");
     };
 
-    let filteredPosts = communityPosts.values().filter(
-      func(p : CommunityPost) : Bool { p.communityId == communityId }
-    );
-    // Return in reverse chronological order
-    let arr = filteredPosts.toArray();
-    arr.sort(func(a : CommunityPost, b : CommunityPost) : { #less; #equal; #greater } {
-      if (a.timestamp > b.timestamp) { #less }
-      else if (a.timestamp < b.timestamp) { #greater }
-      else { #equal };
-    });
+    let community = switch (communityHub.communities.get(communityId)) {
+      case (null) { Runtime.trap("Community with id " # communityId # " does not exist") };
+      case (?c) { c };
+    };
+
+    let updatedCommunity : Community = {
+      community with
+      bannerBlob;
+      bannerColor;
+      bannerFont;
+      accentColor;
+    };
+
+    communityHub.communities.add(communityId, updatedCommunity);
+  };
+
+  public shared ({ caller }) func grantTabReorderPermission(communityId : Text, principal : Principal) : async () {
+    // Must be an authenticated user
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can grant permissions");
+    };
+    // Must be the community host
+    if (not checkIsCommunityHost(communityId, caller)) {
+      Runtime.trap("Unauthorized: Only the community host can grant tab reorder permission");
+    };
+
+    let existingPermissions = tabPermissions.get(communityId);
+    let updatedPermissions = switch (existingPermissions) {
+      case (null) {
+        {
+          communityId;
+          membersWithReorderPermission = [principal];
+        };
+      };
+      case (?permissions) {
+        {
+          permissions with
+          membersWithReorderPermission = permissions.membersWithReorderPermission.concat([principal]);
+        };
+      };
+    };
+
+    tabPermissions.add(communityId, updatedPermissions);
+  };
+
+  public shared ({ caller }) func revokeTabReorderPermission(communityId : Text, principal : Principal) : async () {
+    // Must be an authenticated user
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can revoke permissions");
+    };
+    // Must be the community host
+    if (not checkIsCommunityHost(communityId, caller)) {
+      Runtime.trap("Unauthorized: Only the community host can revoke tab reorder permission");
+    };
+
+    switch (tabPermissions.get(communityId)) {
+      case (null) {};
+      case (?permissions) {
+        let updatedMembers = permissions.membersWithReorderPermission.filter(
+          func(member) { not Principal.equal(member, principal) }
+        );
+        let updatedPermissions = {
+          permissions with
+          membersWithReorderPermission = updatedMembers;
+        };
+        tabPermissions.add(communityId, updatedPermissions);
+      };
+    };
+  };
+
+  // Public read: no auth required — anyone can view tab permissions
+  public query func getTabPermissions(communityId : Text) : async [Principal] {
+    switch (tabPermissions.get(communityId)) {
+      case (null) { [] };
+      case (?permissions) {
+        permissions.membersWithReorderPermission;
+      };
+    };
+  };
+
+  // Public read: no auth required — anyone can check if a principal is host or permitted
+  public query func isCommunityHostOrPermitted(communityId : Text, member : Principal) : async Bool {
+    checkIsCommunityHostOrPermitted(communityId, member);
+  };
+
+  // Public read: no auth required — anyone can check if a principal is the community host
+  public query func isCommunityHost(communityId : Text, member : Principal) : async Bool {
+    checkIsCommunityHost(communityId, member);
   };
 };
 

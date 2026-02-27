@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useActor } from '../../hooks/useActor';
 import type { Channel } from '../../types/session';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -41,6 +42,7 @@ export default function ChannelManagementDialogs({
   onOpenChange: controlledOnOpenChange,
   onSuccess,
 }: ChannelManagementDialogsProps) {
+  const { actor } = useActor();
   const [showRename, setShowRename] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [name, setName] = useState('');
@@ -51,16 +53,76 @@ export default function ChannelManagementDialogs({
   const createOpen = isControlled ? controlledOpen : false;
 
   const handleCreate = async () => {
-    setError('Channel creation is not available in the current version.');
+    if (!actor || !sessionId || !name.trim()) {
+      setError('Please enter a channel name');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await (actor as any).createChannel(sessionId, name.trim());
+      if (result.__kind__ === 'error') {
+        setError(result.error);
+        return;
+      }
+
+      setName('');
+      if (controlledOnOpenChange) controlledOnOpenChange(false);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create channel');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRename = async () => {
-    setError('Channel renaming is not available in the current version.');
+    if (!actor || !channel || !sessionId || !name.trim()) {
+      setError('Please enter a channel name');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await (actor as any).renameChannel(sessionId, channel.id, name.trim());
+      if (result.__kind__ === 'error') {
+        setError(result.error);
+        return;
+      }
+
+      setName('');
+      setShowRename(false);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message || 'Failed to rename channel');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async () => {
-    setShowDelete(false);
-    alert('Channel deletion is not available in the current version.');
+    if (!actor || !channel || !sessionId) return;
+
+    setLoading(true);
+
+    try {
+      const result = await (actor as any).deleteChannel(sessionId, channel.id);
+      if (result.__kind__ === 'error') {
+        alert(result.error);
+        return;
+      }
+
+      setShowDelete(false);
+      onSuccess();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete channel');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (isCreateDialog) {
@@ -85,11 +147,7 @@ export default function ChannelManagementDialogs({
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => controlledOnOpenChange?.(false)}
-              disabled={loading}
-            >
+            <Button variant="outline" onClick={() => controlledOnOpenChange?.(false)} disabled={loading}>
               Cancel
             </Button>
             <Button onClick={handleCreate} disabled={loading || !name.trim()}>
@@ -104,12 +162,7 @@ export default function ChannelManagementDialogs({
 
   return (
     <>
-      <DropdownMenuItem
-        onClick={() => {
-          setName(channel?.name || '');
-          setShowRename(true);
-        }}
-      >
+      <DropdownMenuItem onClick={() => { setName(channel?.name || ''); setShowRename(true); }}>
         <Edit className="mr-2 h-4 w-4" />
         Rename
       </DropdownMenuItem>

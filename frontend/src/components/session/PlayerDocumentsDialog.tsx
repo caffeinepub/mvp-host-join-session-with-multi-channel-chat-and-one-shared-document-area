@@ -11,7 +11,7 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
-import { Plus, FileText, Lock } from 'lucide-react';
+import { User, Plus, Lock } from 'lucide-react';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 
 type PlayerDocumentsDialogProps = {
@@ -19,7 +19,7 @@ type PlayerDocumentsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectDocument: (doc: PlayerDocument) => void;
-  onDocumentCreated?: (documentId: bigint) => void;
+  onDocumentCreated: (documentId: bigint) => void;
 };
 
 export default function PlayerDocumentsDialog({
@@ -30,68 +30,67 @@ export default function PlayerDocumentsDialog({
   onDocumentCreated,
 }: PlayerDocumentsDialogProps) {
   const { identity } = useInternetIdentity();
-  const { data: documents = [], refetch } = useListPlayerDocuments(sessionId);
+  const { data: playerDocuments = [], refetch } = useListPlayerDocuments(sessionId);
   const [showCreate, setShowCreate] = useState(false);
 
-  const currentPrincipal = identity?.getPrincipal().toString();
-
   const handleDocumentCreated = (documentId: bigint) => {
+    setShowCreate(false);
     refetch();
-    onDocumentCreated?.(documentId);
+    onDocumentCreated(documentId);
     onOpenChange(false);
   };
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Player Documents</DialogTitle>
             <DialogDescription>
-              View and manage your personal documents.
+              View and manage your player documents. Private documents are only visible to you.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="flex justify-end mb-2">
-            <Button size="sm" onClick={() => setShowCreate(true)}>
+          <div className="space-y-4">
+            <Button onClick={() => setShowCreate(true)} className="w-full">
               <Plus className="mr-2 h-4 w-4" />
-              New Document
+              Create New Document
             </Button>
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-2">
+                {playerDocuments.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No player documents yet.</p>
+                    <p className="text-sm">Create one to get started!</p>
+                  </div>
+                ) : (
+                  playerDocuments.map((doc) => {
+                    const isOwner = identity && doc.owner.toString() === identity.getPrincipal().toString();
+                    return (
+                      <button
+                        key={doc.id.toString()}
+                        onClick={() => {
+                          onSelectDocument(doc);
+                          onOpenChange(false);
+                        }}
+                        className="w-full flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors text-left"
+                      >
+                        <User className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{doc.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {isOwner ? 'Your document' : `Owner: ${doc.owner.toString().slice(0, 8)}...`}
+                          </p>
+                        </div>
+                        {doc.isPrivate && (
+                          <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
           </div>
-
-          <ScrollArea className="max-h-80">
-            {documents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No player documents yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {documents.map((doc) => {
-                  const isOwner = doc.owner.toString() === currentPrincipal;
-                  return (
-                    <button
-                      key={doc.id.toString()}
-                      onClick={() => {
-                        onSelectDocument(doc);
-                        onOpenChange(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent text-left transition-colors min-h-[44px]"
-                    >
-                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="flex-1 text-sm truncate">{doc.name}</span>
-                      {doc.isPrivate && (
-                        <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
-                      )}
-                      {isOwner && (
-                        <span className="text-xs text-muted-foreground shrink-0">Mine</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </ScrollArea>
         </DialogContent>
       </Dialog>
 

@@ -1,30 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
-import { useListDocumentFiles, useUploadDocumentFile } from '../../hooks/useDocumentFiles';
-import { useAddImageToDocument } from '../../hooks/useDocumentImages';
+import { useState, useEffect } from 'react';
+import { useActor } from '../../hooks/useActor';
 import type { Document } from '../../types/session';
-import { ExternalBlob } from '../../backend';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Badge } from '../ui/badge';
-import { Alert, AlertDescription } from '../ui/alert';
-import {
-  Save,
-  Lock,
-  Unlock,
-  Loader2,
-  AlertTriangle,
-  Upload,
-  Download,
-  FileText,
-  Image as ImageIcon,
-  Eye,
-  Edit,
-} from 'lucide-react';
-import { formatTimestamp } from '../../lib/time';
-import { parseFileMarkers, createFileMarker, insertFileMarker } from '../../lib/documentFileMarkers';
-import ImageUploadWithTitleDialog from './ImageUploadWithTitleDialog';
+import { Loader2, Save, Eye, Edit, Upload, Image } from 'lucide-react';
+import { useListDocumentImages } from '../../hooks/useDocumentImages';
+import { useListDocumentFiles } from '../../hooks/useDocumentFiles';
 import DocumentCommentsSection from './DocumentCommentsSection';
 import DocumentContentPreview from './DocumentContentPreview';
+import ImageUploadWithTitleDialog from './ImageUploadWithTitleDialog';
+import { ExternalBlob } from '../../backend';
 
 type DocumentEditorViewProps = {
   document: Document;
@@ -33,323 +18,224 @@ type DocumentEditorViewProps = {
   onDocumentChanged: () => void;
 };
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_TYPES = [
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'application/pdf',
-  'text/plain',
-  'text/markdown',
-];
-const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'txt', 'md'];
-
 export default function DocumentEditorView({
   document,
   isHost,
   sessionId,
   onDocumentChanged,
 }: DocumentEditorViewProps) {
+  const { actor } = useActor();
   const [content, setContent] = useState(document.content);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [showImageUploadDialog, setShowImageUploadDialog] = useState(false);
-  const [isPreview, setIsPreview] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { data: documentFiles = [] } = useListDocumentFiles(document.id);
-  const uploadFile = useUploadDocumentFile();
-  const addImage = useAddImageToDocument();
+  const { data: images = [] } = useListDocumentImages(document.id);
+  const { data: files = [] } = useListDocumentFiles(document.id);
 
   useEffect(() => {
     setContent(document.content);
-    setHasUnsavedChanges(false);
-    setError('');
-  }, [document.id, document.content, document.revision]);
-
-  const handleContentChange = (newContent: string) => {
-    setContent(newContent);
-    setHasUnsavedChanges(newContent !== document.content);
-  };
+  }, [document.id, document.content]);
 
   const handleSave = async () => {
-    setError('Document editing is not available in the current version.');
+    if (!actor) return;
+
+    setIsSaving(true);
+    try {
+      const result = await (actor as any).editDocument(document.id, content);
+      if (result.__kind__ === 'ok') {
+        onDocumentChanged();
+        setIsEditMode(false);
+      }
+    } catch (error) {
+      console.error('Failed to save document:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleImageUpload = async (_file: File, _title: string) => {
-    setError('Image upload is not available in the current version.');
+  const handleImageUpload = async (file: File, title: string) => {
+    if (!actor) return;
+
+    setUploadProgress(0);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const blob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((pct) => {
+        setUploadProgress(pct);
+      });
+
+      const uploadResult = await (actor as any).uploadDocumentFile({
+        documentId: document.id,
+        file: blob,
+        filename: file.name,
+        mimeType: file.type,
+        size: BigInt(file.size),
+      });
+
+      if (uploadResult && uploadResult.__kind__ === 'ok') {
+        const fileId = uploadResult.ok;
+        await (actor as any).addImageToDocument(
+          sessionId,
+          document.id,
+          fileId.toString(),
+          title || file.name,
+          '',
+          BigInt(0),
+          BigInt(file.size)
+        );
+        onDocumentChanged();
+      }
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+    } finally {
+      setUploadProgress(null);
+    }
   };
 
-  const handleFileSelect = async (_e: React.ChangeEvent<HTMLInputElement>) => {
-    setError('File upload is not available in the current version.');
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !actor) return;
+
+    setUploadProgress(0);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const blob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((pct) => {
+        setUploadProgress(pct);
+      });
+
+      await (actor as any).uploadDocumentFile({
+        documentId: document.id,
+        file: blob,
+        filename: file.name,
+        mimeType: file.type,
+        size: BigInt(file.size),
+      });
+
+      onDocumentChanged();
+    } catch (error) {
+      console.error('Failed to upload file:', error);
+    } finally {
+      setUploadProgress(null);
+      e.target.value = '';
+    }
   };
 
-  const isReadOnly = document.locked;
-  const isUploading = uploadProgress !== null;
-  const fileMarkers = parseFileMarkers(content);
-  const fileMap = new Map(documentFiles.map((f) => [Number(f.id), f]));
-  const imageMarkers = fileMarkers.filter((marker) => {
-    const fileRef = fileMap.get(marker.fileId);
-    return fileRef && fileRef.mimeType.startsWith('image/');
-  });
-  const otherFileMarkers = fileMarkers.filter((marker) => {
-    const fileRef = fileMap.get(marker.fileId);
-    return fileRef && !fileRef.mimeType.startsWith('image/');
-  });
+  const canEdit = isHost && !document.locked;
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      <div className="border-b border-border px-4 py-3 space-y-2">
-        <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="border-b border-border bg-card px-4 py-3 flex items-center justify-between flex-shrink-0">
+        <div>
           <h2 className="text-lg font-semibold">{document.name}</h2>
-          <div className="flex items-center gap-2">
-            {document.locked ? (
-              <Badge variant="secondary" className="gap-1">
-                <Lock className="h-3 w-3" />
-                Locked
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="gap-1">
-                <Unlock className="h-3 w-3" />
-                Unlocked
-              </Badge>
-            )}
-            <Badge variant="outline">Rev. {document.revision.toString()}</Badge>
-          </div>
+          {document.locked && (
+            <span className="text-xs text-muted-foreground">🔒 Locked</span>
+          )}
         </div>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Last modified: {formatTimestamp(document.lastModified)}</span>
-          <div className="flex items-center gap-3">
-            {hasUnsavedChanges && (
-              <span className="text-amber-600 dark:text-amber-400">Unsaved changes</span>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsPreview(!isPreview)}
-              className="gap-2"
-            >
-              {isPreview ? (
+        <div className="flex items-center gap-2">
+          {canEdit && (
+            <>
+              {isEditMode ? (
                 <>
-                  <Edit className="h-4 w-4" />
-                  Edit
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditMode(false)}
+                    disabled={isSaving}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    Preview
+                  </Button>
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="mr-2 h-4 w-4" />
+                    )}
+                    Save
+                  </Button>
                 </>
               ) : (
-                <>
-                  <Eye className="h-4 w-4" />
-                  Preview
-                </>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditMode(true)}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
               )}
-            </Button>
-          </div>
+            </>
+          )}
         </div>
       </div>
 
-      <div className="flex-1 p-4 overflow-auto flex flex-col gap-4">
-        {error && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {isEditMode && canEdit ? (
+          <div className="space-y-4">
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="min-h-[400px] font-mono text-sm resize-none"
+              disabled={isSaving}
+            />
 
-        {isReadOnly && (
-          <Alert>
-            <Lock className="h-4 w-4" />
-            <AlertDescription>
-              This document is locked.{' '}
-              {isHost ? 'Unlock it to allow editing.' : 'Only the host can unlock it.'}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {isPreview ? (
-          <div className="flex-1">
-            <DocumentContentPreview content={content} documentFiles={documentFiles} />
-          </div>
-        ) : (
-          <>
-            {isHost && !isReadOnly && (
-              <div className="flex items-center gap-2">
+            {isHost && (
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={isUploading || saving}
-                  onClick={() => setShowImageUploadDialog(true)}
+                  onClick={() => setShowImageUpload(true)}
                 >
-                  <ImageIcon className="mr-2 h-4 w-4" />
-                  Upload image
+                  <Image className="mr-2 h-4 w-4" />
+                  Add Image
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={isUploading || saving}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload file
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  Max 10MB • jpg, png, gif, webp, pdf, txt, md
-                </span>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.txt,.md"
-                  className="hidden"
-                  onChange={handleFileSelect}
+                <label>
+                  <Button variant="outline" size="sm" asChild>
+                    <span>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload File
+                    </span>
+                  </Button>
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </label>
+              </div>
+            )}
+
+            {uploadProgress !== null && (
+              <div className="w-full bg-muted rounded-full h-2">
+                <div
+                  className="bg-primary h-2 rounded-full transition-all"
+                  style={{ width: `${uploadProgress}%` }}
                 />
               </div>
             )}
-
-            <Textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => handleContentChange(e.target.value)}
-              disabled={isReadOnly || saving}
-              className="flex-1 resize-none font-mono text-sm min-h-[300px]"
-              placeholder="Start typing..."
-            />
-
-            {!isReadOnly && (
-              <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={!hasUnsavedChanges || saving}>
-                  {saving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-
-            {imageMarkers.length > 0 && (
-              <div className="space-y-3 border-t border-border pt-4">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" />
-                  Images
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {imageMarkers.map((marker) => {
-                    const fileRef = fileMap.get(marker.fileId);
-                    if (!fileRef) {
-                      return (
-                        <div
-                          key={marker.fileId}
-                          className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/50"
-                        >
-                          <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">
-                            Image not found: {marker.filename}
-                          </p>
-                        </div>
-                      );
-                    }
-                    const imageUrl = fileRef.file.getDirectURL();
-                    return (
-                      <div
-                        key={marker.fileId}
-                        className="border border-border rounded-lg overflow-hidden"
-                      >
-                        <img
-                          src={imageUrl}
-                          alt={fileRef.filename}
-                          className="w-full h-48 object-cover bg-muted"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                        <div className="p-2 bg-muted/50 flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground truncate">
-                            {fileRef.filename}
-                          </span>
-                          <a
-                            href={imageUrl}
-                            download={fileRef.filename}
-                            className="text-xs text-primary hover:underline"
-                          >
-                            Download
-                          </a>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {otherFileMarkers.length > 0 && (
-              <div className="space-y-3 border-t border-border pt-4">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Attachments
-                </h3>
-                <div className="space-y-2">
-                  {otherFileMarkers.map((marker) => {
-                    const fileRef = fileMap.get(marker.fileId);
-                    if (!fileRef) {
-                      return (
-                        <div
-                          key={marker.fileId}
-                          className="flex items-center gap-3 p-3 border border-border rounded-lg bg-muted/50"
-                        >
-                          <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-                          <p className="text-sm text-muted-foreground">
-                            File not found: {marker.filename}
-                          </p>
-                        </div>
-                      );
-                    }
-                    const fileUrl = fileRef.file.getDirectURL();
-                    return (
-                      <div
-                        key={marker.fileId}
-                        className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{fileRef.filename}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {fileRef.mimeType} • {(Number(fileRef.size) / 1024).toFixed(1)} KB
-                            </p>
-                          </div>
-                        </div>
-                        <a href={fileUrl} download={fileRef.filename}>
-                          <Button variant="ghost" size="sm">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </a>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </>
+          </div>
+        ) : (
+          <DocumentContentPreview documentId={document.id} content={content} />
         )}
+      </div>
 
+      {/* Comments */}
+      <div className="border-t border-border p-4 flex-shrink-0">
         <DocumentCommentsSection documentId={document.id} isHost={isHost} />
       </div>
 
-      {/* Use correct prop: onOpenChange instead of onClose */}
-      <ImageUploadWithTitleDialog
-        open={showImageUploadDialog}
-        onOpenChange={setShowImageUploadDialog}
-        onUpload={handleImageUpload}
-      />
+      {showImageUpload && (
+        <ImageUploadWithTitleDialog
+          open={showImageUpload}
+          onOpenChange={setShowImageUpload}
+          onUpload={handleImageUpload}
+        />
+      )}
     </div>
   );
 }

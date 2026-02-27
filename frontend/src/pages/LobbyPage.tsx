@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useActor } from '../hooks/useActor';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { usePreferences } from '../hooks/usePreferences';
 import { loadTemplate } from '../lib/templateHistoryStorage';
 import type { SessionContext } from '../App';
@@ -17,22 +19,27 @@ type LobbyPageProps = {
 };
 
 export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps) {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const { preferences } = usePreferences();
   const [showSettings, setShowSettings] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'host' | 'join'>('host');
 
+  // Host form state
   const [hostSessionName, setHostSessionName] = useState('');
   const [hostPassword, setHostPassword] = useState('');
   const [hostNickname, setHostNickname] = useState('');
   const [hostLoading, setHostLoading] = useState(false);
   const [hostError, setHostError] = useState('');
 
+  // Join form state
   const [joinSessionId, setJoinSessionId] = useState('');
   const [joinPassword, setJoinPassword] = useState('');
   const [joinNickname, setJoinNickname] = useState('');
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState('');
 
+  // Pre-fill nicknames from preferences
   useEffect(() => {
     if (preferences.defaultNickname) {
       if (!hostNickname) setHostNickname(preferences.defaultNickname);
@@ -41,43 +48,83 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
   }, [preferences.defaultNickname]);
 
   const handleHostSession = async () => {
-    if (!hostSessionName.trim() || !hostNickname.trim()) {
+    if (!actor || !hostSessionName.trim() || !hostNickname.trim()) {
       setHostError('Please fill in all required fields');
       return;
     }
+
     setHostLoading(true);
     setHostError('');
+
     try {
-      // Session creation not available in current backend — use a local session context
-      const fakeSessionId = BigInt(Date.now());
+      const session = await (actor as any).createSession({
+        name: hostSessionName.trim(),
+        password: hostPassword.trim() || undefined,
+        hostNickname: hostNickname.trim(),
+      });
+
+      // Apply template if one is loaded
+      const template = loadTemplate();
+      if (template) {
+        try {
+          for (const channel of template.channels) {
+            if (channel.name !== 'Main') {
+              await (actor as any).createChannel(session.id, channel.name);
+            }
+          }
+
+          for (const doc of template.documents) {
+            await (actor as any).createDocument(session.id, doc.name, doc.content);
+          }
+        } catch (templateError) {
+          console.error('Error applying template:', templateError);
+        }
+      }
+
       onSessionJoined({
-        sessionId: fakeSessionId,
+        sessionId: session.id,
         nickname: hostNickname.trim(),
         isHost: true,
       });
-    } catch (error: unknown) {
-      setHostError(error instanceof Error ? error.message : 'Failed to create session');
+    } catch (error: any) {
+      console.error('Error creating session:', error);
+      setHostError(error.message || 'Failed to create session');
     } finally {
       setHostLoading(false);
     }
   };
 
   const handleJoinSession = async () => {
-    if (!joinSessionId.trim() || !joinNickname.trim()) {
+    if (!actor || !joinSessionId.trim() || !joinNickname.trim()) {
       setJoinError('Please fill in all required fields');
       return;
     }
+
     setJoinLoading(true);
     setJoinError('');
+
     try {
       const sessionId = BigInt(joinSessionId.trim());
+      const result = await (actor as any).joinSession({
+        sessionId,
+        nickname: joinNickname.trim(),
+        password: joinPassword.trim() || undefined,
+      });
+
+      if (result.__kind__ === 'error') {
+        setJoinError(result.error);
+        setJoinLoading(false);
+        return;
+      }
+
       onSessionJoined({
         sessionId,
         nickname: joinNickname.trim(),
         isHost: false,
       });
-    } catch (error: unknown) {
-      setJoinError(error instanceof Error ? error.message : 'Failed to join session');
+    } catch (error: any) {
+      console.error('Error joining session:', error);
+      setJoinError(error.message || 'Failed to join session');
     } finally {
       setJoinLoading(false);
     }
@@ -89,6 +136,7 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div>
@@ -108,23 +156,23 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
         </div>
       </header>
 
+      {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
         <div className="w-full max-w-2xl">
-          <Tabs
-            value={selectedTab}
-            onValueChange={(v) => setSelectedTab(v as 'host' | 'join')}
-            className="w-full"
-          >
+          <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as 'host' | 'join')} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="host">Host Session</TabsTrigger>
               <TabsTrigger value="join">Join Session</TabsTrigger>
             </TabsList>
 
+            {/* Host Tab */}
             <TabsContent value="host">
               <Card>
                 <CardHeader>
                   <CardTitle>Create a New Session</CardTitle>
-                  <CardDescription>Start a new RPG session and invite others to join.</CardDescription>
+                  <CardDescription>
+                    Start a new RPG session and invite others to join.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {hostError && (
@@ -132,6 +180,7 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
                       <AlertDescription>{hostError}</AlertDescription>
                     </Alert>
                   )}
+
                   <div className="space-y-2">
                     <Label htmlFor="host-session-name">
                       Session Name <span className="text-destructive">*</span>
@@ -144,6 +193,7 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
                       disabled={hostLoading}
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="host-nickname">
                       Your Nickname <span className="text-destructive">*</span>
@@ -156,6 +206,7 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
                       disabled={hostLoading}
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="host-password">Password (Optional)</Label>
                     <Input
@@ -166,7 +217,11 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
                       placeholder="Leave empty for no password"
                       disabled={hostLoading}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Set a password to restrict who can join your session.
+                    </p>
                   </div>
+
                   <Button
                     onClick={handleHostSession}
                     disabled={hostLoading || !hostSessionName.trim() || !hostNickname.trim()}
@@ -185,11 +240,14 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
               </Card>
             </TabsContent>
 
+            {/* Join Tab */}
             <TabsContent value="join">
               <Card>
                 <CardHeader>
                   <CardTitle>Join an Existing Session</CardTitle>
-                  <CardDescription>Enter the session ID provided by the host.</CardDescription>
+                  <CardDescription>
+                    Enter the session ID provided by the host.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {joinError && (
@@ -197,6 +255,7 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
                       <AlertDescription>{joinError}</AlertDescription>
                     </Alert>
                   )}
+
                   <div className="space-y-2">
                     <Label htmlFor="join-session-id">
                       Session ID <span className="text-destructive">*</span>
@@ -208,7 +267,11 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
                       placeholder="e.g., 1"
                       disabled={joinLoading}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Ask the host for the session ID.
+                    </p>
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="join-nickname">
                       Your Nickname <span className="text-destructive">*</span>
@@ -221,6 +284,7 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
                       disabled={joinLoading}
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="join-password">Password (if required)</Label>
                     <Input
@@ -232,6 +296,7 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
                       disabled={joinLoading}
                     />
                   </div>
+
                   <Button
                     onClick={handleJoinSession}
                     disabled={joinLoading || !joinSessionId.trim() || !joinNickname.trim()}
@@ -253,21 +318,20 @@ export default function LobbyPage({ onSessionJoined, onLogout }: LobbyPageProps)
         </div>
       </main>
 
-      <footer className="border-t border-border bg-card py-6">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>
-            Built with ♥ using{' '}
-            <a
-              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground transition-colors"
-            >
-              caffeine.ai
-            </a>{' '}
-            © {new Date().getFullYear()}
-          </p>
-        </div>
+      {/* Footer */}
+      <footer className="border-t border-border py-4 text-center text-xs text-muted-foreground">
+        <p>
+          Built with ❤️ using{' '}
+          <a
+            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== 'undefined' ? window.location.hostname : 'unknown-app')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-foreground"
+          >
+            caffeine.ai
+          </a>{' '}
+          © {new Date().getFullYear()}
+        </p>
       </footer>
     </div>
   );

@@ -1,100 +1,95 @@
+import typography from '@tailwindcss/typography';
+import containerQueries from '@tailwindcss/container-queries';
+import animate from 'tailwindcss-animate';
+
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ['class'],
-  content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
-  ],
-  theme: {
-    extend: {
-      colors: {
-        background: 'oklch(var(--background) / <alpha-value>)',
-        foreground: 'oklch(var(--foreground) / <alpha-value>)',
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+    darkMode: ['class'],
+    content: ['index.html', 'src/**/*.{js,ts,jsx,tsx,html,css}'],
+    theme: {
+        container: {
+            center: true,
+            padding: '2rem',
+            screens: {
+                '2xl': '1400px'
+            }
         },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        // Cosmic theme tokens
-        cosmic: {
-          bg: '#0d0a2e',
-          surface: '#13103a',
-          border: '#2a2060',
-          accent: '#7c3aed',
-          'accent-light': '#a78bfa',
-          text: '#e2e0ff',
-          'text-muted': '#8b85c1',
-        },
-      },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        fantasy: ['Cinzel', 'serif'],
-        scifi: ['Exo 2', 'sans-serif'],
-        futuristic: ['Orbitron', 'sans-serif'],
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-        xl: '1rem',
-        '2xl': '1.25rem',
-        '3xl': '1.5rem',
-      },
-      boxShadow: {
-        cosmic: '0 4px 24px rgba(124, 58, 237, 0.3)',
-        'cosmic-lg': '0 8px 40px rgba(124, 58, 237, 0.4)',
-        'cosmic-sm': '0 2px 12px rgba(124, 58, 237, 0.2)',
-      },
-      backgroundImage: {
-        'cosmic-gradient': 'linear-gradient(135deg, #0d0a2e 0%, #1a0f3d 40%, #2d1b5e 70%, #1e0a3a 100%)',
-        'cosmic-card': 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(13,10,46,0.95))',
-      },
-      animation: {
-        'float': 'float 3s ease-in-out infinite',
-        'shimmer': 'shimmer 2s infinite',
-        'spin-slow': 'spin 3s linear infinite',
-      },
-      keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-6px)' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
-        },
-      },
+        extend: {
+            colors: {
+                border: 'oklch(var(--border))',
+                input: 'oklch(var(--input))',
+                ring: 'oklch(var(--ring) / <alpha-value>)',
+                background: 'oklch(var(--background))',
+                foreground: 'oklch(var(--foreground))',
+                primary: {
+                    DEFAULT: 'oklch(var(--primary) / <alpha-value>)',
+                    foreground: 'oklch(var(--primary-foreground))'
+                },
+                secondary: {
+                    DEFAULT: 'oklch(var(--secondary) / <alpha-value>)',
+                    foreground: 'oklch(var(--secondary-foreground))'
+                },
+                destructive: {
+                    DEFAULT: 'oklch(var(--destructive) / <alpha-value>)',
+                    foreground: 'oklch(var(--destructive-foreground))'
+                },
+                muted: {
+                    DEFAULT: 'oklch(var(--muted) / <alpha-value>)',
+                    foreground: 'oklch(var(--muted-foreground) / <alpha-value>)'
+                },
+                accent: {
+                    DEFAULT: 'oklch(var(--accent) / <alpha-value>)',
+                    foreground: 'oklch(var(--accent-foreground))'
+                },
+                popover: {
+                    DEFAULT: 'oklch(var(--popover))',
+                    foreground: 'oklch(var(--popover-foreground))'
+                },
+                card: {
+                    DEFAULT: 'oklch(var(--card))',
+                    foreground: 'oklch(var(--card-foreground))'
+                },
+                chart: {
+                    1: 'oklch(var(--chart-1))',
+                    2: 'oklch(var(--chart-2))',
+                    3: 'oklch(var(--chart-3))',
+                    4: 'oklch(var(--chart-4))',
+                    5: 'oklch(var(--chart-5))'
+                },
+                sidebar: {
+                    DEFAULT: 'oklch(var(--sidebar))',
+                    foreground: 'oklch(var(--sidebar-foreground))',
+                    primary: 'oklch(var(--sidebar-primary))',
+                    'primary-foreground': 'oklch(var(--sidebar-primary-foreground))',
+                    accent: 'oklch(var(--sidebar-accent))',
+                    'accent-foreground': 'oklch(var(--sidebar-accent-foreground))',
+                    border: 'oklch(var(--sidebar-border))',
+                    ring: 'oklch(var(--sidebar-ring))'
+                }
+            },
+            borderRadius: {
+                lg: 'var(--radius)',
+                md: 'calc(var(--radius) - 2px)',
+                sm: 'calc(var(--radius) - 4px)'
+            },
+            boxShadow: {
+                xs: '0 1px 2px 0 rgba(0,0,0,0.05)'
+            },
+            keyframes: {
+                'accordion-down': {
+                    from: { height: '0' },
+                    to: { height: 'var(--radix-accordion-content-height)' }
+                },
+                'accordion-up': {
+                    from: { height: 'var(--radix-accordion-content-height)' },
+                    to: { height: '0' }
+                }
+            },
+            animation: {
+                'accordion-down': 'accordion-down 0.2s ease-out',
+                'accordion-up': 'accordion-up 0.2s ease-out'
+            }
+        }
     },
-  },
-  plugins: [
-    require('tailwindcss-animate'),
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/container-queries'),
-  ],
+    plugins: [typography, containerQueries, animate]
 };

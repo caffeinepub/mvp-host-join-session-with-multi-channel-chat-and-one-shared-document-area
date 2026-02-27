@@ -1,184 +1,142 @@
 import { useState } from 'react';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { useGetDocumentComments, useAddComment, useDeleteComment } from '../../hooks/useDocumentComments';
-import { useUserDisplayName } from '../../hooks/useUserDisplayName';
 import type { DocumentComment } from '../../types/session';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Alert, AlertDescription } from '../ui/alert';
 import { ScrollArea } from '../ui/scroll-area';
-import { Separator } from '../ui/separator';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { MessageSquare, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, Trash2, MessageSquare } from 'lucide-react';
 import { formatTimestamp } from '../../lib/time';
-import type { Principal } from '@icp-sdk/core/principal';
+import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { useUserDisplayName } from '../../hooks/useUserDisplayName';
 
-type DocumentCommentsSectionProps = {
-  documentId: bigint;
-  isHost?: boolean;
+type CommentItemProps = {
+  comment: DocumentComment;
+  isHost: boolean;
+  onDelete: (commentId: bigint) => void;
+  isDeleting: boolean;
 };
 
-function CommentItem({
-  comment,
-  canDelete,
-  onDelete,
-}: {
-  comment: DocumentComment;
-  canDelete: boolean;
-  onDelete: () => void;
-}) {
-  const { data: displayName } = useUserDisplayName(comment.author as Principal);
+function CommentItem({ comment, isHost, onDelete, isDeleting }: CommentItemProps) {
+  const { identity } = useInternetIdentity();
+  const { data: authorName } = useUserDisplayName(comment.author);
+  const isOwner = identity?.getPrincipal().toString() === comment.author.toString();
+  const canDelete = isHost || isOwner;
 
   return (
-    <div className="flex gap-3 py-3">
+    <div className="flex gap-3 py-3 border-b border-border last:border-0">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-sm font-semibold">{displayName || 'Unknown'}</span>
-          <span className="text-xs text-muted-foreground">{formatTimestamp(comment.timestamp)}</span>
+          <span className="text-sm font-semibold">{authorName || 'Loading...'}</span>
+          <span className="text-xs text-muted-foreground">
+            {formatTimestamp(comment.timestamp)}
+          </span>
         </div>
-        <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words">{comment.text}</p>
+        <p className="text-sm text-foreground whitespace-pre-wrap">{comment.text}</p>
       </div>
       {canDelete && (
         <Button
           variant="ghost"
-          size="sm"
-          onClick={onDelete}
-          className="shrink-0 text-destructive hover:text-destructive min-h-[32px] min-w-[32px] p-1"
+          size="icon"
+          onClick={() => onDelete(comment.id)}
+          disabled={isDeleting}
+          className="flex-shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive"
         >
-          <Trash2 className="h-4 w-4" />
+          {isDeleting ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Trash2 className="h-3 w-3" />
+          )}
         </Button>
       )}
     </div>
   );
 }
 
-export default function DocumentCommentsSection({ documentId, isHost = false }: DocumentCommentsSectionProps) {
+type DocumentCommentsSectionProps = {
+  documentId: bigint;
+  isHost: boolean;
+};
+
+export default function DocumentCommentsSection({ documentId, isHost }: DocumentCommentsSectionProps) {
   const { identity } = useInternetIdentity();
   const { data: comments = [], isLoading } = useGetDocumentComments(documentId);
   const addComment = useAddComment();
   const deleteComment = useDeleteComment();
-
   const [newComment, setNewComment] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<bigint | null>(null);
-  const [addError, setAddError] = useState('');
+  const [deletingId, setDeletingId] = useState<bigint | null>(null);
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
-    setAddError('');
+    if (!newComment.trim() || !identity) return;
+
     try {
-      const result = await addComment.mutateAsync({ documentId, text: newComment.trim() });
-      if (result.__kind__ === 'error') {
-        setAddError(result.error);
-      } else {
-        setNewComment('');
-      }
-    } catch (err: unknown) {
-      setAddError(err instanceof Error ? err.message : 'Failed to add comment');
+      await addComment.mutateAsync({ documentId, text: newComment.trim() });
+      setNewComment('');
+    } catch (error) {
+      console.error('Failed to add comment:', error);
     }
   };
 
-  const handleDeleteComment = async () => {
-    if (!deleteTarget) return;
+  const handleDeleteComment = async (commentId: bigint) => {
+    setDeletingId(commentId);
     try {
-      await deleteComment.mutateAsync({ commentId: deleteTarget, documentId });
-      setDeleteTarget(null);
-    } catch (err: unknown) {
-      console.error('Failed to delete comment:', err);
+      await deleteComment.mutateAsync({ commentId, documentId });
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+    } finally {
+      setDeletingId(null);
     }
-  };
-
-  const canDeleteComment = (comment: DocumentComment) => {
-    if (isHost) return true;
-    return identity?.getPrincipal().toString() === comment.author.toString();
   };
 
   return (
-    <div className="border-t border-border pt-4 mt-4">
-      <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
-        <MessageSquare className="h-4 w-4" />
-        Comments ({comments.length})
-      </h3>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <MessageSquare className="h-4 w-4 text-muted-foreground" />
+        <h3 className="text-sm font-semibold">Comments</h3>
+        <span className="text-xs text-muted-foreground">({comments.length})</span>
+      </div>
+
+      {identity && (
+        <div className="space-y-2">
+          <Textarea
+            placeholder="Add a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            rows={2}
+            className="resize-none"
+            disabled={addComment.isPending}
+          />
+          <Button
+            size="sm"
+            onClick={handleAddComment}
+            disabled={!newComment.trim() || addComment.isPending}
+          >
+            {addComment.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+            Add Comment
+          </Button>
+        </div>
+      )}
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-muted-foreground text-sm py-4">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Loading comments...
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         </div>
-      ) : comments.length > 0 ? (
-        <ScrollArea className="max-h-64 mb-4">
-          <div className="divide-y divide-border">
+      ) : comments.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-4">No comments yet</p>
+      ) : (
+        <ScrollArea className="max-h-64">
+          <div className="pr-4">
             {comments.map((comment) => (
               <CommentItem
                 key={comment.id.toString()}
                 comment={comment}
-                canDelete={canDeleteComment(comment)}
-                onDelete={() => setDeleteTarget(comment.id)}
+                isHost={isHost}
+                onDelete={handleDeleteComment}
+                isDeleting={deletingId === comment.id}
               />
             ))}
           </div>
         </ScrollArea>
-      ) : (
-        <p className="text-sm text-muted-foreground mb-4">No comments yet.</p>
       )}
-
-      <div className="space-y-2">
-        {addError && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>{addError}</AlertDescription>
-          </Alert>
-        )}
-        <Textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
-          className="min-h-[80px] resize-none text-sm"
-          disabled={addComment.isPending}
-        />
-        <div className="flex justify-end">
-          <Button
-            size="sm"
-            onClick={handleAddComment}
-            disabled={addComment.isPending || !newComment.trim()}
-          >
-            {addComment.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Adding...
-              </>
-            ) : (
-              'Add Comment'
-            )}
-          </Button>
-        </div>
-      </div>
-
-      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Comment</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this comment? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteComment} disabled={deleteComment.isPending}>
-              {deleteComment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

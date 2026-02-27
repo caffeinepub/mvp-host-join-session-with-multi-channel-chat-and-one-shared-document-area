@@ -25,46 +25,17 @@ export const UserRole = IDL.Variant({
   'guest' : IDL.Null,
 });
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
-export const StandardResponse = IDL.Variant({
-  'ok' : IDL.Text,
-  'error' : IDL.Text,
-});
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'profilePicture' : IDL.Opt(ExternalBlob),
 });
-export const Community = IDL.Record({
-  'id' : IDL.Nat,
-  'font' : IDL.Opt(IDL.Text),
-  'host' : IDL.Principal,
-  'primaryColor' : IDL.Opt(IDL.Text),
-  'name' : IDL.Text,
-  'accentColor' : IDL.Opt(IDL.Text),
-  'layoutOptions' : IDL.Opt(IDL.Text),
-  'bannerImage' : IDL.Opt(ExternalBlob),
-});
-export const Time = IDL.Int;
 export const CommunityPost = IDL.Record({
-  'id' : IDL.Nat,
-  'communityId' : IDL.Nat,
-  'text' : IDL.Text,
-  'authorName' : IDL.Text,
-  'timestamp' : Time,
-  'image' : IDL.Opt(ExternalBlob),
+  'id' : IDL.Text,
+  'content' : IDL.Text,
+  'communityId' : IDL.Text,
+  'imageBlob' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  'createdAt' : IDL.Int,
   'authorPrincipal' : IDL.Principal,
-});
-export const Tab = IDL.Variant({
-  'chat' : IDL.Null,
-  'home' : IDL.Null,
-  'lore' : IDL.Null,
-  'polls' : IDL.Null,
-  'quizzes' : IDL.Null,
-  'rules' : IDL.Null,
-});
-export const TabData = IDL.Record({
-  'tab' : Tab,
-  'order' : IDL.Nat,
-  'canReorderMember' : IDL.Bool,
 });
 
 export const idlService = IDL.Service({
@@ -96,56 +67,52 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'canReorder' : IDL.Func([IDL.Nat, IDL.Principal], [IDL.Bool], ['query']),
-  'createCommunity' : IDL.Func(
-      [IDL.Text],
-      [IDL.Variant({ 'ok' : IDL.Nat, 'error' : IDL.Text })],
-      [],
-    ),
-  'createCommunityPost' : IDL.Func(
-      [IDL.Nat, IDL.Text, IDL.Text, IDL.Opt(ExternalBlob)],
-      [StandardResponse],
+  'createPost' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+      [IDL.Opt(IDL.Text)],
       [],
     ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getCommunity' : IDL.Func([IDL.Nat], [IDL.Opt(Community)], ['query']),
-  'getCommunityPosts' : IDL.Func(
-      [IDL.Nat],
-      [IDL.Vec(CommunityPost)],
+  'getPosts' : IDL.Func([IDL.Text], [IDL.Vec(CommunityPost)], ['query']),
+  'getTabOrder' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
+  'getTabPermissions' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(IDL.Principal)],
       ['query'],
     ),
-  'getMemberTabReorderPermissions' : IDL.Func(
-      [IDL.Nat],
-      [IDL.Vec(IDL.Tuple(IDL.Principal, IDL.Bool))],
-      ['query'],
-    ),
-  'getTabs' : IDL.Func([IDL.Nat], [IDL.Vec(TabData)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'grantTabReorderPermission' : IDL.Func([IDL.Text, IDL.Principal], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'reorderTabs' : IDL.Func([IDL.Nat, IDL.Vec(Tab)], [StandardResponse], []),
+  'isCommunityHost' : IDL.Func(
+      [IDL.Text, IDL.Principal],
+      [IDL.Bool],
+      ['query'],
+    ),
+  'isCommunityHostOrPermitted' : IDL.Func(
+      [IDL.Text, IDL.Principal],
+      [IDL.Bool],
+      ['query'],
+    ),
+  'removeProfilePicture' : IDL.Func([], [], []),
+  'revokeTabReorderPermission' : IDL.Func([IDL.Text, IDL.Principal], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'updateCommunitySettings' : IDL.Func(
+  'updateBannerSettings' : IDL.Func(
       [
-        IDL.Nat,
-        IDL.Opt(ExternalBlob),
-        IDL.Opt(IDL.Text),
+        IDL.Text,
+        IDL.Opt(IDL.Vec(IDL.Nat8)),
         IDL.Opt(IDL.Text),
         IDL.Opt(IDL.Text),
         IDL.Opt(IDL.Text),
       ],
-      [StandardResponse],
+      [],
       [],
     ),
-  'updateMemberTabReorderPermission' : IDL.Func(
-      [IDL.Nat, IDL.Principal, IDL.Bool],
-      [StandardResponse],
-      [],
-    ),
+  'updateTabOrder' : IDL.Func([IDL.Text, IDL.Vec(IDL.Text)], [], []),
 });
 
 export const idlInitArgs = [];
@@ -168,43 +135,17 @@ export const idlFactory = ({ IDL }) => {
     'guest' : IDL.Null,
   });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
-  const StandardResponse = IDL.Variant({ 'ok' : IDL.Text, 'error' : IDL.Text });
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
     'profilePicture' : IDL.Opt(ExternalBlob),
   });
-  const Community = IDL.Record({
-    'id' : IDL.Nat,
-    'font' : IDL.Opt(IDL.Text),
-    'host' : IDL.Principal,
-    'primaryColor' : IDL.Opt(IDL.Text),
-    'name' : IDL.Text,
-    'accentColor' : IDL.Opt(IDL.Text),
-    'layoutOptions' : IDL.Opt(IDL.Text),
-    'bannerImage' : IDL.Opt(ExternalBlob),
-  });
-  const Time = IDL.Int;
   const CommunityPost = IDL.Record({
-    'id' : IDL.Nat,
-    'communityId' : IDL.Nat,
-    'text' : IDL.Text,
-    'authorName' : IDL.Text,
-    'timestamp' : Time,
-    'image' : IDL.Opt(ExternalBlob),
+    'id' : IDL.Text,
+    'content' : IDL.Text,
+    'communityId' : IDL.Text,
+    'imageBlob' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'createdAt' : IDL.Int,
     'authorPrincipal' : IDL.Principal,
-  });
-  const Tab = IDL.Variant({
-    'chat' : IDL.Null,
-    'home' : IDL.Null,
-    'lore' : IDL.Null,
-    'polls' : IDL.Null,
-    'quizzes' : IDL.Null,
-    'rules' : IDL.Null,
-  });
-  const TabData = IDL.Record({
-    'tab' : Tab,
-    'order' : IDL.Nat,
-    'canReorderMember' : IDL.Bool,
   });
   
   return IDL.Service({
@@ -236,56 +177,52 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'canReorder' : IDL.Func([IDL.Nat, IDL.Principal], [IDL.Bool], ['query']),
-    'createCommunity' : IDL.Func(
-        [IDL.Text],
-        [IDL.Variant({ 'ok' : IDL.Nat, 'error' : IDL.Text })],
-        [],
-      ),
-    'createCommunityPost' : IDL.Func(
-        [IDL.Nat, IDL.Text, IDL.Text, IDL.Opt(ExternalBlob)],
-        [StandardResponse],
+    'createPost' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+        [IDL.Opt(IDL.Text)],
         [],
       ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-    'getCommunity' : IDL.Func([IDL.Nat], [IDL.Opt(Community)], ['query']),
-    'getCommunityPosts' : IDL.Func(
-        [IDL.Nat],
-        [IDL.Vec(CommunityPost)],
+    'getPosts' : IDL.Func([IDL.Text], [IDL.Vec(CommunityPost)], ['query']),
+    'getTabOrder' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
+    'getTabPermissions' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(IDL.Principal)],
         ['query'],
       ),
-    'getMemberTabReorderPermissions' : IDL.Func(
-        [IDL.Nat],
-        [IDL.Vec(IDL.Tuple(IDL.Principal, IDL.Bool))],
-        ['query'],
-      ),
-    'getTabs' : IDL.Func([IDL.Nat], [IDL.Vec(TabData)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'grantTabReorderPermission' : IDL.Func([IDL.Text, IDL.Principal], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'reorderTabs' : IDL.Func([IDL.Nat, IDL.Vec(Tab)], [StandardResponse], []),
+    'isCommunityHost' : IDL.Func(
+        [IDL.Text, IDL.Principal],
+        [IDL.Bool],
+        ['query'],
+      ),
+    'isCommunityHostOrPermitted' : IDL.Func(
+        [IDL.Text, IDL.Principal],
+        [IDL.Bool],
+        ['query'],
+      ),
+    'removeProfilePicture' : IDL.Func([], [], []),
+    'revokeTabReorderPermission' : IDL.Func([IDL.Text, IDL.Principal], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'updateCommunitySettings' : IDL.Func(
+    'updateBannerSettings' : IDL.Func(
         [
-          IDL.Nat,
-          IDL.Opt(ExternalBlob),
-          IDL.Opt(IDL.Text),
+          IDL.Text,
+          IDL.Opt(IDL.Vec(IDL.Nat8)),
           IDL.Opt(IDL.Text),
           IDL.Opt(IDL.Text),
           IDL.Opt(IDL.Text),
         ],
-        [StandardResponse],
+        [],
         [],
       ),
-    'updateMemberTabReorderPermission' : IDL.Func(
-        [IDL.Nat, IDL.Principal, IDL.Bool],
-        [StandardResponse],
-        [],
-      ),
+    'updateTabOrder' : IDL.Func([IDL.Text, IDL.Vec(IDL.Text)], [], []),
   });
 };
 

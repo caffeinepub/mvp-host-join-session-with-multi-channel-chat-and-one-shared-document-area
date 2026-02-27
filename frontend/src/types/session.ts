@@ -1,8 +1,5 @@
-import type { ExternalBlob } from '../backend';
 import type { Principal } from '@icp-sdk/core/principal';
-
-// Local type definitions for session/RPG entities
-// (These were previously exported from the backend but are no longer in the new backend interface)
+import type { ExternalBlob } from '../backend';
 
 export interface SessionMember {
   id: Principal;
@@ -109,17 +106,12 @@ export interface DocumentComment {
   timestamp: bigint;
 }
 
-export interface DiceRollResult {
-  pattern: string;
-  rolls: bigint[];
-  total: bigint;
-  modifier: bigint;
-}
-
-export interface TurnOrder {
-  sessionId: bigint;
-  order: string[];
-  currentIndex: bigint;
+export interface UploadFileRequest {
+  documentId: bigint;
+  file: ExternalBlob;
+  filename: string;
+  mimeType: string;
+  size: bigint;
 }
 
 export interface SessionExport {
@@ -130,25 +122,16 @@ export interface SessionExport {
   playerDocuments: PlayerDocument[];
   images: ImageReference[];
   documentFiles: DocumentFileReference[];
-  turnOrder?: TurnOrder;
+  turnOrder?: {
+    sessionId: bigint;
+    order: string[];
+    currentIndex: bigint;
+  };
 }
 
-export interface UploadFileRequest {
-  documentId: bigint;
-  file: ExternalBlob;
-  filename: string;
-  mimeType: string;
-  size: bigint;
+export interface DiceRollResult {
+  pattern: string;
+  rolls: bigint[];
+  total: bigint;
+  modifier: bigint;
 }
-
-export type StandardResponse =
-  | { __kind__: 'ok'; ok: string }
-  | { __kind__: 'error'; error: string };
-
-export type CreateDocumentResponse =
-  | { __kind__: 'ok'; ok: bigint }
-  | { __kind__: 'error'; error: string };
-
-export type UploadDocumentFileResponse =
-  | { __kind__: 'ok'; ok: bigint }
-  | { __kind__: 'error'; error: string };

@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { useCreateMembersChannel, useRenameMembersChannel, useDeleteMembersChannel } from '../../hooks/useSessionData';
+import { useActor } from '../../hooks/useActor';
 import type { MembersChannel } from '../../types/session';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import {
   Dialog,
   DialogContent,
@@ -9,11 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { DropdownMenuItem } from '../ui/dropdown-menu';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,139 +22,142 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { DropdownMenuItem } from '../ui/dropdown-menu';
+import { Loader2, Edit, Trash2 } from 'lucide-react';
+import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 
 type MembersChannelManagementDialogsProps = {
-  sessionId: bigint;
+  sessionId?: bigint;
   channel?: MembersChannel;
   isCreateDialog?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess: () => void;
 };
 
 export default function MembersChannelManagementDialogs({
   sessionId,
   channel,
-  isCreateDialog = false,
-  open,
-  onOpenChange,
+  isCreateDialog,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
   onSuccess,
 }: MembersChannelManagementDialogsProps) {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const [showRename, setShowRename] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [channelName, setChannelName] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const createMutation = useCreateMembersChannel();
-  const renameMutation = useRenameMembersChannel();
-  const deleteMutation = useDeleteMembersChannel();
+  const isControlled = controlledOpen !== undefined;
+  const createOpen = isControlled ? controlledOpen : false;
+
+  const isChannelOwner = channel && identity &&
+    channel.createdBy.toString() === identity.getPrincipal().toString();
 
   const handleCreate = async () => {
-    if (!channelName.trim()) {
-      setError('Channel name is required');
+    if (!actor || !sessionId || !name.trim()) {
+      setError('Please enter a channel name');
       return;
     }
+
+    setLoading(true);
+    setError('');
+
     try {
-      const result = await createMutation.mutateAsync({ sessionId, name: channelName.trim() });
-      if (result.__kind__ === 'ok') {
-        setChannelName('');
-        setError('');
-        if (isCreateDialog && onOpenChange) onOpenChange(false);
-        onSuccess?.();
-      } else {
+      const result = await (actor as any).createMembersChannel(sessionId, name.trim());
+      if (result.__kind__ === 'error') {
         setError(result.error);
+        return;
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create channel');
+
+      setName('');
+      if (controlledOnOpenChange) controlledOnOpenChange(false);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create channel');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleRename = async () => {
-    if (!channel || !channelName.trim()) {
-      setError('Channel name is required');
+    if (!actor || !channel || !sessionId || !name.trim()) {
+      setError('Please enter a channel name');
       return;
     }
+
+    setLoading(true);
+    setError('');
+
     try {
-      const result = await renameMutation.mutateAsync({
-        sessionId,
-        channelId: channel.id,
-        newName: channelName.trim(),
-      });
-      if (result.__kind__ === 'ok') {
-        setChannelName('');
-        setError('');
-        setShowRename(false);
-        onSuccess?.();
-      } else {
+      const result = await (actor as any).renameMembersChannel(sessionId, channel.id, name.trim());
+      if (result.__kind__ === 'error') {
         setError(result.error);
+        return;
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to rename channel');
+
+      setName('');
+      setShowRename(false);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message || 'Failed to rename channel');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!channel) return;
+    if (!actor || !channel || !sessionId) return;
+
+    setLoading(true);
+
     try {
-      const result = await deleteMutation.mutateAsync({ sessionId, channelId: channel.id });
-      if (result.__kind__ === 'ok') {
-        setShowDelete(false);
-        onSuccess?.();
-      } else {
-        setError(result.error);
+      const result = await (actor as any).deleteMembersChannel(sessionId, channel.id);
+      if (result.__kind__ === 'error') {
+        alert(result.error);
+        return;
       }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to delete channel');
+
+      setShowDelete(false);
+      onSuccess();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete channel');
+    } finally {
+      setLoading(false);
     }
   };
 
   if (isCreateDialog) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={createOpen} onOpenChange={controlledOnOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Members' Channel</DialogTitle>
-            <DialogDescription>
-              Create a new channel that any member can use for collaboration.
-            </DialogDescription>
+            <DialogTitle>Create Members Channel</DialogTitle>
+            <DialogDescription>Add a new members channel.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="space-y-2">
-              <Label htmlFor="channel-name">Channel Name</Label>
+              <Label htmlFor="members-channel-name">Channel Name</Label>
               <Input
-                id="channel-name"
-                value={channelName}
-                onChange={(e) => {
-                  setChannelName(e.target.value);
-                  setError('');
-                }}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                id="members-channel-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Party Chat"
-                autoFocus
+                disabled={loading}
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setChannelName('');
-                setError('');
-                onOpenChange?.(false);
-              }}
-            >
+            <Button variant="outline" onClick={() => controlledOnOpenChange?.(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={createMutation.isPending}>
-              {createMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create'
-              )}
+            <Button onClick={handleCreate} disabled={loading || !name.trim()}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -164,18 +165,15 @@ export default function MembersChannelManagementDialogs({
     );
   }
 
-  if (!channel) return null;
+  if (!isChannelOwner) return null;
 
   return (
     <>
-      <DropdownMenuItem onClick={() => { setChannelName(channel.name); setShowRename(true); }}>
-        <Pencil className="mr-2 h-4 w-4" />
+      <DropdownMenuItem onClick={() => { setName(channel?.name || ''); setShowRename(true); }}>
+        <Edit className="mr-2 h-4 w-4" />
         Rename
       </DropdownMenuItem>
-      <DropdownMenuItem
-        onClick={() => setShowDelete(true)}
-        className="text-destructive focus:text-destructive"
-      >
+      <DropdownMenuItem onClick={() => setShowDelete(true)} className="text-destructive">
         <Trash2 className="mr-2 h-4 w-4" />
         Delete
       </DropdownMenuItem>
@@ -184,29 +182,27 @@ export default function MembersChannelManagementDialogs({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename Channel</DialogTitle>
-            <DialogDescription>Enter a new name for this members' channel.</DialogDescription>
+            <DialogDescription>Change the name of this channel.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="space-y-2">
-              <Label htmlFor="rename-channel">Channel Name</Label>
+              <Label htmlFor="rename-members-channel">Channel Name</Label>
               <Input
-                id="rename-channel"
-                value={channelName}
-                onChange={(e) => { setChannelName(e.target.value); setError(''); }}
-                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                autoFocus
+                id="rename-members-channel"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
               />
-              {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setChannelName(''); setError(''); setShowRename(false); }}>
+            <Button variant="outline" onClick={() => setShowRename(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button onClick={handleRename} disabled={renameMutation.isPending}>
-              {renameMutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Renaming...</>
-              ) : 'Rename'}
+            <Button onClick={handleRename} disabled={loading || !name.trim()}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -217,16 +213,14 @@ export default function MembersChannelManagementDialogs({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Channel</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{channel.name}"? This action cannot be undone.
+              Are you sure you want to delete "{channel?.name}"? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {error && <p className="text-sm text-destructive px-4">{error}</p>}
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Deleting...</>
-              ) : 'Delete'}
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

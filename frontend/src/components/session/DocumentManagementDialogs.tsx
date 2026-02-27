@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useActor } from '../../hooks/useActor';
 import type { Document } from '../../types/session';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -43,9 +45,11 @@ export default function DocumentManagementDialogs({
   onSuccess,
   onCreated,
 }: DocumentManagementDialogsProps) {
+  const { actor } = useActor();
   const [showRename, setShowRename] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [name, setName] = useState('');
+  const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -53,20 +57,102 @@ export default function DocumentManagementDialogs({
   const createOpen = isControlled ? controlledOpen : false;
 
   const handleCreate = async () => {
-    setError('Document creation is not available in the current version.');
+    if (!actor || !sessionId || !name.trim()) {
+      setError('Please enter a document name');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await (actor as any).createDocument(sessionId, name.trim(), content.trim());
+      if (result.__kind__ === 'error') {
+        setError(result.error);
+        return;
+      }
+
+      const documentId = result.ok;
+      setName('');
+      setContent('');
+      if (controlledOnOpenChange) controlledOnOpenChange(false);
+      onSuccess();
+      if (onCreated) onCreated(documentId);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create document');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRename = async () => {
-    setError('Document renaming is not available in the current version.');
+    if (!actor || !document || !name.trim()) {
+      setError('Please enter a document name');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await (actor as any).renameDocument(document.id, name.trim());
+      if (result.__kind__ === 'error') {
+        setError(result.error);
+        return;
+      }
+
+      setName('');
+      setShowRename(false);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message || 'Failed to rename document');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async () => {
-    setShowDelete(false);
-    alert('Document deletion is not available in the current version.');
+    if (!actor || !document) return;
+
+    setLoading(true);
+
+    try {
+      const result = await (actor as any).deleteDocument(document.id);
+      if (result.__kind__ === 'error') {
+        alert(result.error);
+        return;
+      }
+
+      setShowDelete(false);
+      onSuccess();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete document');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleToggleLock = async () => {
-    alert('Document lock/unlock is not available in the current version.');
+    if (!actor || !document) return;
+
+    setLoading(true);
+
+    try {
+      const result = document.locked
+        ? await (actor as any).unlockDocument(document.id)
+        : await (actor as any).lockDocument(document.id);
+
+      if (result.__kind__ === 'error') {
+        alert(result.error);
+        return;
+      }
+
+      onSuccess();
+    } catch (err: any) {
+      alert(err.message || 'Failed to toggle lock');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (isCreateDialog) {
@@ -89,13 +175,20 @@ export default function DocumentManagementDialogs({
                 disabled={loading}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="doc-content">Initial Content (Optional)</Label>
+              <Textarea
+                id="doc-content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Enter initial content..."
+                rows={4}
+                disabled={loading}
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => controlledOnOpenChange?.(false)}
-              disabled={loading}
-            >
+            <Button variant="outline" onClick={() => controlledOnOpenChange?.(false)} disabled={loading}>
               Cancel
             </Button>
             <Button onClick={handleCreate} disabled={loading || !name.trim()}>
@@ -114,11 +207,17 @@ export default function DocumentManagementDialogs({
         <Edit className="mr-2 h-4 w-4" />
         Rename
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={handleToggleLock}>
+      <DropdownMenuItem onClick={handleToggleLock} disabled={loading}>
         {document?.locked ? (
-          <><Unlock className="mr-2 h-4 w-4" />Unlock</>
+          <>
+            <Unlock className="mr-2 h-4 w-4" />
+            Unlock
+          </>
         ) : (
-          <><Lock className="mr-2 h-4 w-4" />Lock</>
+          <>
+            <Lock className="mr-2 h-4 w-4" />
+            Lock
+          </>
         )}
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => setShowDelete(true)} className="text-destructive">

@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
+import { useActor } from '../../hooks/useActor';
 import type { Message, SessionMember } from '../../types/session';
 import { ExternalBlob } from '../../backend';
 import ChatMessageItem from './ChatMessageItem';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { Send, Loader2, Image, X, ArrowDown, Smile, Settings } from 'lucide-react';
+import { parseRollCommand } from '../../lib/rollCommand';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import StickerPickerPanel from './StickerPickerPanel';
 import StickerManagementPanel from './StickerManagementPanel';
+import { dataUrlToUint8Array } from '../../lib/stickerImageProcessor';
 import type { StickerData } from '../../lib/stickerStorage';
+import { validateGifUrl, extractGifUrl } from '../../lib/gifUrlValidation';
 import { toast } from 'sonner';
 
 type ChannelChatViewProps = {
@@ -31,6 +35,7 @@ export default function ChannelChatView({
   members,
   onMessagesChanged,
 }: ChannelChatViewProps) {
+  const { actor } = useActor();
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -43,24 +48,153 @@ export default function ChannelChatView({
   const prevChannelIdRef = useRef<bigint | null>(null);
 
   useEffect(() => {
-    const channelChanged =
-      prevChannelIdRef.current !== null && prevChannelIdRef.current !== channelId;
+    const channelChanged = prevChannelIdRef.current !== null && prevChannelIdRef.current !== channelId;
     prevChannelIdRef.current = channelId;
+
     if (scrollRef.current && (autoScroll || channelChanged)) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, channelId, autoScroll]);
 
   const handleSendMessage = async () => {
-    toast.info('Chat is not available in the current version.');
+    if (!actor || !messageInput.trim()) return;
+
+    const content = messageInput.trim();
+    setIsSending(true);
+
+    try {
+      const gifUrl = extractGifUrl(content);
+
+      if (gifUrl) {
+        const validation = validateGifUrl(gifUrl);
+
+        if (validation.valid) {
+          await (actor as any).postMessage(sessionId, channelId, content, null, gifUrl, replyTarget?.id || null);
+          setMessageInput('');
+          setReplyTarget(null);
+          onMessagesChanged();
+          setIsSending(false);
+          return;
+        } else {
+          toast.error(validation.error || 'Invalid GIF URL');
+          setIsSending(false);
+          return;
+        }
+      }
+
+      if (content.startsWith('/roll ')) {
+        const pattern = content.substring(6).trim();
+        const validation = parseRollCommand(pattern);
+
+        if (!validation.valid) {
+          toast.error(validation.error || 'Invalid roll command');
+          setIsSending(false);
+          return;
+        }
+
+        const result = await (actor as any).roll(sessionId, pattern);
+        const rollMessage = `🎲 **${nickname}** rolled ${result.pattern}: ${result.rolls.map((r: any) => r.toString()).join(', ')}${result.modifier !== 0n ? ` ${result.modifier > 0n ? '+' : ''}${result.modifier}` : ''} = **${result.total}**`;
+
+        await (actor as any).postMessage(sessionId, channelId, rollMessage, null, null, replyTarget?.id || null);
+      } else {
+        await (actor as any).postMessage(sessionId, channelId, content, null, null, replyTarget?.id || null);
+      }
+
+      setMessageInput('');
+      setReplyTarget(null);
+      onMessagesChanged();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      toast.error('Failed to send message');
+    } finally {
+      setIsSending(false);
+    }
   };
 
-  const handleImageUpload = async (_e: React.ChangeEvent<HTMLInputElement>) => {
-    toast.info('Image upload is not available in the current version.');
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !actor) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5MB');
+      return;
+    }
+
+    setIsSending(true);
+    setUploadProgress(0);
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const blob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((percentage) => {
+        setUploadProgress(percentage);
+      });
+
+      const caption = messageInput.trim() || '';
+      await (actor as any).postMessage(sessionId, channelId, caption, blob, null, replyTarget?.id || null);
+
+      setMessageInput('');
+      setReplyTarget(null);
+      onMessagesChanged();
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsSending(false);
+      setUploadProgress(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
-  const handleStickerSelect = async (_sticker: StickerData) => {
-    toast.info('Stickers are not available in the current version.');
+  const handleStickerSelect = async (sticker: StickerData) => {
+    if (!actor) return;
+
+    setIsSending(true);
+    setUploadProgress(0);
+
+    try {
+      const bytes = dataUrlToUint8Array(sticker.dataUrl);
+
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((percentage) => {
+        setUploadProgress(percentage);
+      });
+
+      const stickerId = await (actor as any).addSticker(blob, sticker.name);
+
+      if (stickerId === null) {
+        throw new Error('Failed to add sticker to backend');
+      }
+
+      const messageId = BigInt(Date.now());
+      const timestamp = BigInt(Date.now() * 1000000);
+
+      await (actor as any).sendSticker(stickerId, channelId, nickname, messageId, timestamp);
+
+      await (actor as any).postMessage(
+        sessionId,
+        channelId,
+        `[STICKER:${sticker.name}]`,
+        blob,
+        null,
+        replyTarget?.id || null
+      );
+
+      setReplyTarget(null);
+      onMessagesChanged();
+    } catch (error) {
+      console.error('Failed to send sticker:', error);
+      toast.error('Failed to send sticker');
+    } finally {
+      setIsSending(false);
+      setUploadProgress(null);
+    }
   };
 
   const handleLongPress = (message: Message) => {
@@ -79,7 +213,7 @@ export default function ChannelChatView({
 
   return (
     <div className="chat-view-container">
-      <div className="border-b border-border bg-card px-4 py-3 shrink-0">
+      <div className="border-b border-border bg-card px-4 py-3 flex-shrink-0">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="text-muted-foreground">#</span>
           {channelName}
@@ -88,11 +222,6 @@ export default function ChannelChatView({
 
       <div className="chat-messages-scroll" ref={scrollRef}>
         <div className="py-4 px-2 md:px-4 space-y-4">
-          {messages.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
-              <p>No messages yet. Chat functionality is coming soon.</p>
-            </div>
-          )}
           {messages.map((message) => (
             <ChatMessageItem
               key={message.id.toString()}
@@ -104,12 +233,14 @@ export default function ChannelChatView({
       </div>
 
       {replyTarget && (
-        <div className="px-2 md:px-4 py-2 bg-muted/50 border-t border-border flex items-center justify-between shrink-0">
+        <div className="px-2 md:px-4 py-2 bg-muted/50 border-t border-border flex items-center justify-between flex-shrink-0">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-muted-foreground">
               Replying to {replyTarget.author}
             </p>
-            <p className="text-sm truncate">{replyTarget.content || '📷 Image'}</p>
+            <p className="text-sm truncate">
+              {replyTarget.content || '📷 Image'}
+            </p>
           </div>
           <Button
             variant="ghost"
@@ -122,7 +253,7 @@ export default function ChannelChatView({
         </div>
       )}
 
-      <div className="border-t border-border bg-card p-2 md:p-4 shrink-0 relative">
+      <div className="border-t border-border bg-card p-2 md:p-4 flex-shrink-0 relative">
         {showStickerPicker && (
           <StickerPickerPanel
             onClose={() => setShowStickerPicker(false)}
@@ -130,7 +261,9 @@ export default function ChannelChatView({
           />
         )}
         {showStickerManager && (
-          <StickerManagementPanel onClose={() => setShowStickerManager(false)} />
+          <StickerManagementPanel
+            onClose={() => setShowStickerManager(false)}
+          />
         )}
 
         <div className="flex gap-2 mb-2">
@@ -175,7 +308,7 @@ export default function ChannelChatView({
             <Settings className="h-4 w-4" />
           </Button>
           <Textarea
-            placeholder={`Message #${channelName}`}
+            placeholder={`Message #${channelName}, paste GIF URL, or /roll 2d6+3`}
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             disabled={isSending}
@@ -207,6 +340,7 @@ export default function ChannelChatView({
               Auto-scroll
             </Label>
           </div>
+
           {!autoScroll && (
             <Button
               variant="ghost"
@@ -228,7 +362,9 @@ export default function ChannelChatView({
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Uploading: {uploadProgress}%</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Uploading: {uploadProgress}%
+            </p>
           </div>
         )}
       </div>

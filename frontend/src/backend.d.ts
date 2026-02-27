@@ -14,49 +14,17 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
-export interface CommunityPost {
-    id: bigint;
-    communityId: bigint;
-    text: string;
-    authorName: string;
-    timestamp: Time;
-    image?: ExternalBlob;
-    authorPrincipal: Principal;
-}
-export interface Community {
-    id: bigint;
-    font?: string;
-    host: Principal;
-    primaryColor?: string;
-    name: string;
-    accentColor?: string;
-    layoutOptions?: string;
-    bannerImage?: ExternalBlob;
-}
-export type Time = bigint;
-export interface TabData {
-    tab: Tab;
-    order: bigint;
-    canReorderMember: boolean;
-}
-export type StandardResponse = {
-    __kind__: "ok";
-    ok: string;
-} | {
-    __kind__: "error";
-    error: string;
-};
 export interface UserProfile {
     name: string;
     profilePicture?: ExternalBlob;
 }
-export enum Tab {
-    chat = "chat",
-    home = "home",
-    lore = "lore",
-    polls = "polls",
-    quizzes = "quizzes",
-    rules = "rules"
+export interface CommunityPost {
+    id: string;
+    content: string;
+    communityId: string;
+    imageBlob?: Uint8Array;
+    createdAt: bigint;
+    authorPrincipal: Principal;
 }
 export enum UserRole {
     admin = "admin",
@@ -65,25 +33,20 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    canReorder(communityId: bigint, principal: Principal): Promise<boolean>;
-    createCommunity(name: string): Promise<{
-        __kind__: "ok";
-        ok: bigint;
-    } | {
-        __kind__: "error";
-        error: string;
-    }>;
-    createCommunityPost(communityId: bigint, authorName: string, content: string, image: ExternalBlob | null): Promise<StandardResponse>;
+    createPost(communityId: string, content: string, imageBlob: Uint8Array | null): Promise<string | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getCommunity(communityId: bigint): Promise<Community | null>;
-    getCommunityPosts(communityId: bigint): Promise<Array<CommunityPost>>;
-    getMemberTabReorderPermissions(communityId: bigint): Promise<Array<[Principal, boolean]>>;
-    getTabs(communityId: bigint): Promise<Array<TabData>>;
+    getPosts(communityId: string): Promise<Array<CommunityPost>>;
+    getTabOrder(communityId: string): Promise<Array<string>>;
+    getTabPermissions(communityId: string): Promise<Array<Principal>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    grantTabReorderPermission(communityId: string, principal: Principal): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
-    reorderTabs(communityId: bigint, newTabOrder: Array<Tab>): Promise<StandardResponse>;
+    isCommunityHost(communityId: string, member: Principal): Promise<boolean>;
+    isCommunityHostOrPermitted(communityId: string, member: Principal): Promise<boolean>;
+    removeProfilePicture(): Promise<void>;
+    revokeTabReorderPermission(communityId: string, principal: Principal): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    updateCommunitySettings(communityId: bigint, bannerImage: ExternalBlob | null, primaryColor: string | null, accentColor: string | null, font: string | null, layoutOptions: string | null): Promise<StandardResponse>;
-    updateMemberTabReorderPermission(communityId: bigint, member: Principal, canReorderTabs: boolean): Promise<StandardResponse>;
+    updateBannerSettings(communityId: string, bannerBlob: Uint8Array | null, bannerColor: string | null, bannerFont: string | null, accentColor: string | null): Promise<void>;
+    updateTabOrder(communityId: string, newOrder: Array<string>): Promise<void>;
 }

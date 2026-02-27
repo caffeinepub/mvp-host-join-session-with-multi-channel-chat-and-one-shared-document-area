@@ -2,33 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-when-the-open-button-on-a-communitycard-xpath-html-1-body-1-div-1-div-1-div-1-div-1-div-1-div-1-div-1-section-1-div-1-div-1-div-2-button-1-is-clicked-navigate-the-user-to-a-full-communitypage-for-that-community-replacing-the-current-hub-view",
-      "featureTitle": "When the 'Open' button on a CommunityCard (XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/section[1]/div[1]/div[1]/div[2]/button[1]) is clicked, navigate the user to a full CommunityPage for that community, replacing the current hub view.",
+      "featureId": "feature-the-open-button-on-the-communitycard-component-located-at-xpath-html-1-body-1-div-1-div-1-div-1-div-1-div-1-div-1-div-1-section-1-div-1-div-1-div-2-button-1-must-navigate-to-a-full-communitypage-view-when-clicked-this-navigation-must-work-and-persist-even-after-the-user-has-left-the-communities-tab-and-returned-the-community-should-remain-accessible-by-storing-the-active-community-id-in-component-state-or-context-not-just-url-params",
+      "featureTitle": "The 'Open' button on the CommunityCard component (located at XPath /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/section[1]/div[1]/div[1]/div[2]/button[1]) must navigate to a full CommunityPage view when clicked. This navigation must work and persist even after the user has left the Communities tab and returned — the community should remain accessible by storing the active community ID in component state or context, not just URL params.",
       "files": [
-        "frontend/src/App.tsx",
         "frontend/src/components/communities/CommunityCard.tsx",
-        "frontend/src/pages/CommunityPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-build-a-communitypage-component-featuring-a-full-width-customizable-top-banner-displaying-the-community-s-banner-image-or-a-cosmic-gradient-fallback-the-community-name-in-large-typography-and-the-community-tagline-description-beneath-it-matching-the-dark-cosmic-rpg-aesthetic-shown-in-the-screenshot",
-      "featureTitle": "Build a CommunityPage component featuring a full-width customizable top banner displaying the community's banner image (or a cosmic gradient fallback), the community name in large typography, and the community tagline/description beneath it, matching the dark cosmic/RPG aesthetic shown in the screenshot.",
-      "files": [
-        "frontend/src/components/communities/CommunityBanner.tsx",
-        "frontend/src/pages/CommunityPage.tsx"
+        "frontend/src/pages/CommunitiesHubPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -45,10 +23,9 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-display-a-stats-bar-directly-below-the-banner-showing-member-count-e-g-active-adventurers-0-with-a-members-icon-styled-to-match-the-dark-cosmic-theme",
-      "featureTitle": "Display a stats bar directly below the banner showing member count (e.g., 'Active Adventurers: 0') with a members icon, styled to match the dark cosmic theme.",
+      "featureId": "feature-create-a-communitypage-component-rendered-inside-the-communities-tab-it-must-include-1-a-full-width-top-banner-section-displaying-the-community-s-banner-image-or-a-solid-color-fallback-community-name-and-a-host-only-edit-banner-control-2-a-stats-bar-below-the-banner-showing-member-count-and-total-post-count-3-a-horizontal-tab-bar-home-chat-lore-polls-quizzes-rules-rendered-below-the-stats-bar",
+      "featureTitle": "Create a CommunityPage component rendered inside the Communities tab. It must include: (1) a full-width top banner section displaying the community's banner image (or a solid color fallback), community name, and a host-only 'Edit Banner' control; (2) a stats bar below the banner showing member count and total post count; (3) a horizontal tab bar (Home, Chat, Lore, Polls, Quizzes, Rules) rendered below the stats bar.",
       "files": [
-        "frontend/src/components/communities/CommunityStatsBar.tsx",
         "frontend/src/pages/CommunityPage.tsx"
       ],
       "components": [
@@ -66,10 +43,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-a-horizontally-scrollable-draggable-reorderable-tabs-section-below-the-stats-bar-with-the-following-tabs-in-order-home-chat-lore-polls-quizzes-rules-tab-reordering-via-drag-and-drop-is-restricted-to-the-host-by-default-the-host-can-individually-toggle-per-member-permission-to-allow-specific-members-to-reorder-tabs-store-tab-order-and-per-member-reorder-permissions-persistently-in-the-backend-per-community",
-      "featureTitle": "Implement a horizontally scrollable, draggable/reorderable tabs section below the stats bar with the following tabs in order: Home, Chat, Lore, Polls, Quizzes, Rules. Tab reordering via drag-and-drop is restricted to the host by default. The host can individually toggle per-member permission to allow specific members to reorder tabs. Store tab order and per-member reorder permissions persistently in the backend per community.",
+      "featureId": "feature-implement-host-only-banner-customization-from-within-the-communitypage-the-edit-banner-control-host-only-opens-an-inline-editor-or-modal-allowing-the-host-to-upload-a-new-banner-image-stored-on-chain-as-binary-pick-a-banner-background-color-select-a-font-for-the-community-title-and-pick-an-accent-color-changes-are-saved-via-the-updatebannersettings-backend-method-and-immediately-reflected-on-the-page",
+      "featureTitle": "Implement host-only banner customization from within the CommunityPage. The 'Edit Banner' control (host-only) opens an inline editor or modal allowing the host to: upload a new banner image (stored on-chain as binary), pick a banner background color, select a font for the community title, and pick an accent color. Changes are saved via the updateBannerSettings backend method and immediately reflected on the page.",
       "files": [
-        "frontend/src/components/communities/CommunityTabs.tsx",
+        "frontend/src/components/communities/BannerCustomizationDialog.tsx",
         "frontend/src/pages/CommunityPage.tsx"
       ],
       "components": [
@@ -87,12 +64,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-the-home-tab-content-area-with-functional-post-creation-users-can-compose-posts-with-text-and-optionally-attach-an-image-submitted-posts-are-saved-to-the-backend-under-the-community-and-displayed-in-a-feed-on-the-home-tab-in-reverse-chronological-order-each-post-shows-the-author-s-display-name-timestamp-text-content-and-image-if-attached",
-      "featureTitle": "Implement the Home tab content area with functional post creation. Users can compose posts with text and optionally attach an image. Submitted posts are saved to the backend under the community and displayed in a feed on the Home tab in reverse chronological order. Each post shows the author's display name, timestamp, text content, and image if attached.",
+      "featureId": "feature-implement-draggable-reorderable-horizontal-tabs-on-the-communitypage-by-default-only-the-community-host-can-reorder-tabs-by-dragging-them-the-host-can-toggle-per-member-tab-reorder-permission-individually-per-principal-from-within-the-community-page-non-permitted-members-see-the-tabs-as-fixed-and-non-draggable-tab-order-is-persisted-on-chain-via-updatetaborder-and-loaded-via-gettaborder-on-page-mount",
+      "featureTitle": "Implement draggable/reorderable horizontal tabs on the CommunityPage. By default, only the community host can reorder tabs by dragging them. The host can toggle per-member tab-reorder permission (individually, per principal) from within the community page. Non-permitted members see the tabs as fixed and non-draggable. Tab order is persisted on-chain via updateTabOrder and loaded via getTabOrder on page mount.",
       "files": [
-        "frontend/src/components/communities/HomeTab.tsx",
-        "frontend/src/components/communities/PostComposer.tsx",
-        "frontend/src/components/communities/PostItem.tsx",
+        "frontend/src/components/communities/DraggableTabBar.tsx",
+        "frontend/src/components/communities/TabPermissionsDialog.tsx",
         "frontend/src/pages/CommunityPage.tsx"
       ],
       "components": [
@@ -110,10 +86,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-the-chat-tab-as-a-styled-placeholder-with-a-coming-soon-message-that-fits-the-dark-cosmic-theme-no-functional-chat-is-required",
-      "featureTitle": "Implement the Chat tab as a styled placeholder with a 'Coming Soon' message that fits the dark cosmic theme. No functional chat is required.",
+      "featureId": "feature-implement-the-home-tab-content-on-the-communitypage-it-must-include-a-post-creation-form-internet-identity-authentication-required-with-a-text-input-and-optional-image-upload-stored-on-chain-as-binary-via-createpost-below-the-form-render-a-chronological-feed-of-all-posts-for-the-community-each-showing-author-display-name-post-text-optional-image-and-timestamp-fetched-via-getposts",
+      "featureTitle": "Implement the Home tab content on the CommunityPage. It must include a post creation form (Internet Identity authentication required) with a text input and optional image upload (stored on-chain as binary via createPost). Below the form, render a chronological feed of all posts for the community, each showing author display name, post text, optional image, and timestamp. Fetched via getPosts.",
       "files": [
-        "frontend/src/components/communities/ChatTab.tsx",
+        "frontend/src/components/communities/HomeTab.tsx",
+        "frontend/src/components/communities/PostItem.tsx",
         "frontend/src/pages/CommunityPage.tsx"
       ],
       "components": [
@@ -131,13 +108,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-lore-polls-quizzes-and-rules-tabs-as-styled-placeholder-content-areas-with-descriptive-placeholder-text-for-each-matching-the-dark-cosmic-theme",
-      "featureTitle": "Implement Lore, Polls, Quizzes, and Rules tabs as styled placeholder content areas with descriptive placeholder text for each, matching the dark cosmic theme.",
+      "featureId": "feature-implement-the-chat-tab-content-on-the-communitypage-as-a-non-functional-ui-mockup-placeholder-render-a-greyed-out-chat-layout-that-visually-resembles-a-messaging-interface-input-bar-message-bubbles-but-all-interactive-elements-are-disabled-or-visually-muted-display-a-coming-soon-or-private-messaging-coming-soon-label-overlay",
+      "featureTitle": "Implement the Chat tab content on the CommunityPage as a non-functional UI mockup placeholder. Render a greyed-out chat layout that visually resembles a messaging interface (input bar, message bubbles) but all interactive elements are disabled or visually muted. Display a 'Coming Soon' or 'Private messaging — coming soon' label overlay.",
       "files": [
-        "frontend/src/components/communities/LoreTab.tsx",
-        "frontend/src/components/communities/PollsTab.tsx",
-        "frontend/src/components/communities/QuizzesTab.tsx",
-        "frontend/src/components/communities/RulesTab.tsx",
+        "frontend/src/components/communities/ChatTabPlaceholder.tsx",
         "frontend/src/pages/CommunityPage.tsx"
       ],
       "components": [
@@ -155,11 +129,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-host-only-edit-controls-accessible-from-within-the-community-page-these-controls-allow-the-host-to-1-upload-or-change-the-community-banner-image-2-change-primary-and-accent-colors-3-change-the-community-font-4-toggle-layout-options-controls-are-only-visible-to-the-host-and-should-appear-as-an-edit-settings-button-e-g-a-pencil-or-gear-icon-in-the-top-corner-of-the-community-page-changes-persist-to-the-backend-community-record",
-      "featureTitle": "Add host-only edit controls accessible from within the community page. These controls allow the host to: (1) upload or change the community banner image, (2) change primary and accent colors, (3) change the community font, (4) toggle layout options. Controls are only visible to the host and should appear as an edit/settings button (e.g., a pencil or gear icon) in the top corner of the community page. Changes persist to the backend community record.",
+      "featureId": "feature-implement-placeholder-layouts-for-the-lore-polls-quizzes-and-rules-tabs-on-the-communitypage-each-tab-should-render-a-styled-placeholder-card-or-section-with-the-tab-name-as-a-heading-and-a-coming-soon-or-informational-message-these-placeholders-must-visually-match-the-community-s-theme-accent-color-font",
+      "featureTitle": "Implement placeholder layouts for the Lore, Polls, Quizzes, and Rules tabs on the CommunityPage. Each tab should render a styled placeholder card or section with the tab name as a heading and a 'Coming Soon' or informational message. These placeholders must visually match the community's theme (accent color, font).",
       "files": [
-        "frontend/src/components/communities/HostControlsButton.tsx",
-        "frontend/src/components/communities/HostControlsDialog.tsx",
+        "frontend/src/components/communities/TabPlaceholder.tsx",
         "frontend/src/pages/CommunityPage.tsx"
       ],
       "components": [
@@ -177,11 +150,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-host-only-member-permissions-panel-accessible-from-the-host-controls-where-the-host-can-view-the-list-of-community-members-and-individually-toggle-per-member-tab-reorder-permission-on-or-off-persist-these-permissions-in-the-backend",
-      "featureTitle": "Add a host-only member permissions panel (accessible from the host controls) where the host can view the list of community members and individually toggle per-member tab reorder permission on or off. Persist these permissions in the backend.",
+      "featureId": "feature-ensure-communities-remain-accessible-after-the-user-navigates-away-from-and-returns-to-the-communities-tab-the-active-community-id-if-a-community-page-was-open-must-be-preserved-in-react-state-or-context-so-the-user-is-returned-to-the-same-community-page-view-when-they-navigate-back-to-the-communities-tab",
+      "featureTitle": "Ensure communities remain accessible after the user navigates away from and returns to the Communities tab. The active community ID (if a community page was open) must be preserved in React state or context so the user is returned to the same community page view when they navigate back to the Communities tab.",
       "files": [
-        "frontend/src/components/communities/HostControlsDialog.tsx",
-        "frontend/src/components/communities/MemberPermissionsPanel.tsx"
+        "frontend/src/pages/CommunitiesHubPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -194,6 +166,26 @@
       ],
       "testIds": [
         "REQ-9"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-all-changes-are-strictly-scoped-to-the-communities-tab-and-its-sub-components-communitycard-communitieshubpage-and-new-communitypage-no-files-components-hooks-or-backend-methods-outside-the-communities-tab-feature-area-should-be-modified",
+      "featureTitle": "Ensure all changes are strictly scoped to the Communities tab and its sub-components (CommunityCard, CommunitiesHubPage, and new CommunityPage). No files, components, hooks, or backend methods outside the Communities tab feature area should be modified.",
+      "files": [
+        "frontend/src/pages/CommunitiesHubPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-10"
       ],
       "confidence": "high"
     }

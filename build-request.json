@@ -1,236 +1,199 @@
 {
   "kind": "build_request",
-  "title": "Community Page with Banner, Stats Bar, Tabs, Posts, and Host Edit Controls",
-  "projectName": "Cosmic Communities",
+  "title": "Community Page: Full Layout with Tabs, Posts, and Customization",
+  "projectName": "Communix Hub",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "When the 'Open' button on a CommunityCard (XPath: /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/section[1]/div[1]/div[1]/div[2]/button[1]) is clicked, navigate the user to a full CommunityPage for that community, replacing the current hub view.",
-      "target": "frontend",
+      "text": "Add backend data types and storage for community pages: CommunityPost (id, communityId, authorPrincipal, content, imageBlob, createdAt), CommunityTabOrder (communityId, tabOrder as array of tab names), CommunityTabPermissions (communityId, membersWithReorderPermission as array of principals), and extend the existing Community type to include bannerBlob (binary), bannerColor, bannerFont, accentColor. Provide canister methods: createPost(communityId, content, imageBlob?) -> PostId; getPosts(communityId) -> [CommunityPost]; updateBannerSettings(communityId, bannerBlob?, bannerColor?, bannerFont?, accentColor?) — host only; updateTabOrder(communityId, newOrder) — host or permitted member only; grantTabReorderPermission(communityId, principal) — host only; revokeTabReorderPermission(communityId, principal) — host only; getTabPermissions(communityId) -> [Principal]; getTabOrder(communityId) -> [Text].",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-10",
-          "msg-12",
-          "msg-14"
-        ],
-        "quotes": [
-          "The 'Open' button — when clicked, should it navigate to the full community page (like what's shown in the screenshot with the banner, stats bar, and tabs)"
+          "msg-6",
+          "msg-7",
+          "msg-8"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking 'Open' on any community card navigates to that community's dedicated page",
-        "The community page shows the correct community's name, description, and images",
-        "A back navigation option returns the user to the Communities Hub"
+        "createPost stores post on-chain and returns a unique PostId",
+        "getPosts returns all posts for a given communityId in reverse-chronological order",
+        "updateBannerSettings rejects callers who are not the community host",
+        "updateTabOrder accepts calls from the host or any principal in membersWithReorderPermission",
+        "grantTabReorderPermission and revokeTabReorderPermission are host-only",
+        "getTabOrder returns the persisted tab order, defaulting to [Home, Chat, Lore, Polls, Quizzes, Rules]",
+        "Banner image is stored as binary blob on-chain"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Build a CommunityPage component featuring a full-width customizable top banner displaying the community's banner image (or a cosmic gradient fallback), the community name in large typography, and the community tagline/description beneath it, matching the dark cosmic/RPG aesthetic shown in the screenshot.",
+      "text": "The 'Open' button on the CommunityCard component (located at XPath /html[1]/body[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/section[1]/div[1]/div[1]/div[2]/button[1]) must navigate to a full CommunityPage view when clicked. This navigation must work and persist even after the user has left the Communities tab and returned — the community should remain accessible by storing the active community ID in component state or context, not just URL params.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-9",
-          "msg-14"
-        ],
-        "quotes": [
-          "customizable top banner",
-          "dark cosmic/RPG theme"
+          "msg-5",
+          "msg-6"
         ]
       },
       "acceptanceCriteria": [
-        "Banner spans full width of the community page",
-        "Community name is displayed in large bold white text over the banner",
-        "Community tagline/description appears beneath the name",
-        "If no banner image is set, a deep navy/purple cosmic gradient is used as fallback",
-        "Banner image is displayed as a cover background when available"
+        "Clicking 'Open' on a community card renders the CommunityPage for that community",
+        "Navigating away from the Communities tab and returning still allows re-opening the community page",
+        "The CommunityPage is rendered within the Communities tab without affecting any other tab or route"
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Display a stats bar directly below the banner showing member count (e.g., 'Active Adventurers: 0') with a members icon, styled to match the dark cosmic theme.",
+      "text": "Create a CommunityPage component rendered inside the Communities tab. It must include: (1) a full-width top banner section displaying the community's banner image (or a solid color fallback), community name, and a host-only 'Edit Banner' control; (2) a stats bar below the banner showing member count and total post count; (3) a horizontal tab bar (Home, Chat, Lore, Polls, Quizzes, Rules) rendered below the stats bar.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-9",
-          "msg-14"
-        ],
-        "quotes": [
-          "Stats bar showing member count"
+          "msg-5",
+          "msg-8"
         ]
       },
       "acceptanceCriteria": [
-        "Stats bar is visible immediately below the banner",
-        "Shows member count with a people/group icon",
-        "Label and count are styled to match dark cosmic theme (deep navy background, white/purple text)"
+        "Banner image fills the full width of the community page header",
+        "If no banner image is set, the banner renders with the community's bannerColor as background",
+        "Stats bar displays current member count and post count fetched from the backend",
+        "Tab bar renders all six tabs: Home, Chat, Lore, Polls, Quizzes, Rules",
+        "Only the authenticated host sees the 'Edit Banner' control"
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Implement a horizontally scrollable, draggable/reorderable tabs section below the stats bar with the following tabs in order: Home, Chat, Lore, Polls, Quizzes, Rules. Tab reordering via drag-and-drop is restricted to the host by default. The host can individually toggle per-member permission to allow specific members to reorder tabs. Store tab order and per-member reorder permissions persistently in the backend per community.",
+      "text": "Implement host-only banner customization from within the CommunityPage. The 'Edit Banner' control (host-only) opens an inline editor or modal allowing the host to: upload a new banner image (stored on-chain as binary), pick a banner background color, select a font for the community title, and pick an accent color. Changes are saved via the updateBannerSettings backend method and immediately reflected on the page.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-10",
-          "msg-12"
-        ],
-        "quotes": [
-          "Tabs (Home, Chat, Lore, Polls, Quizzes, Rules) — should these tabs be draggable/reorderable by the host only. Unless the host give them permission.",
-          "per-member (individually toggled)"
+          "msg-5",
+          "msg-6"
         ]
       },
       "acceptanceCriteria": [
-        "Six tabs render horizontally and are scrollable on mobile: Home, Chat, Lore, Polls, Quizzes, Rules",
-        "Active tab is visually highlighted with an accent color",
-        "Host can drag and drop tabs to reorder them",
-        "Non-host members cannot reorder tabs unless explicitly granted permission by the host",
-        "Host can toggle per-member tab reorder permission from a host controls panel",
-        "Tab order is persisted per community in the backend",
-        "Tab reorder permissions per member are persisted per community in the backend"
+        "Host can upload a banner image (PNG/JPG, max 5MB); it is stored on-chain and displayed immediately",
+        "Host can choose a background color used when no image is uploaded",
+        "Host can select a font for the community title from at least 4 preset options",
+        "Host can select an accent color applied to buttons and highlights in the community page",
+        "Non-host members do not see the 'Edit Banner' control",
+        "Changes persist across page reloads"
       ]
     },
     {
       "id": "REQ-5",
-      "text": "Implement the Home tab content area with functional post creation. Users can compose posts with text and optionally attach an image. Submitted posts are saved to the backend under the community and displayed in a feed on the Home tab in reverse chronological order. Each post shows the author's display name, timestamp, text content, and image if attached.",
+      "text": "Implement draggable/reorderable horizontal tabs on the CommunityPage. By default, only the community host can reorder tabs by dragging them. The host can toggle per-member tab-reorder permission (individually, per principal) from within the community page. Non-permitted members see the tabs as fixed and non-draggable. Tab order is persisted on-chain via updateTabOrder and loaded via getTabOrder on page mount.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-9",
-          "msg-14"
-        ],
-        "quotes": [
-          "Home tab with functional post creation (text + image uploads)",
-          "functional post creation on Home"
+          "msg-5",
+          "msg-6"
         ]
       },
       "acceptanceCriteria": [
-        "Home tab shows a post composer with a text area and optional image upload button",
-        "Submitting a post saves it to the backend associated with the community",
-        "Posts render in a feed in reverse chronological order",
-        "Each post displays author display name, relative/formatted timestamp, text body, and inline image if attached",
-        "Image uploads are validated (PNG/JPG/GIF/WEBP, max 5MB) before submission"
+        "Tabs are draggable and reorderable for the host",
+        "Tab order is saved to the backend after each reorder and restored on next page load",
+        "Host can grant or revoke tab-reorder permission to individual members via a permissions UI within the community page",
+        "Members without permission see static, non-draggable tabs",
+        "Members with granted permission can also drag and reorder tabs; their changes persist on-chain"
       ]
     },
     {
       "id": "REQ-6",
-      "text": "Implement the Chat tab as a styled placeholder with a 'Coming Soon' message that fits the dark cosmic theme. No functional chat is required.",
-      "target": "frontend",
+      "text": "Implement the Home tab content on the CommunityPage. It must include a post creation form (Internet Identity authentication required) with a text input and optional image upload (stored on-chain as binary via createPost). Below the form, render a chronological feed of all posts for the community, each showing author display name, post text, optional image, and timestamp. Fetched via getPosts.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-12"
-        ],
-        "quotes": [
-          "Chat tab as placeholder ('Coming Soon')"
+          "msg-5",
+          "msg-6",
+          "msg-7"
         ]
       },
       "acceptanceCriteria": [
-        "Chat tab displays a 'Coming Soon' placeholder message",
-        "Placeholder is styled consistently with the dark cosmic theme",
-        "No functional messaging is implemented"
+        "Unauthenticated users cannot submit posts; a login prompt is shown instead",
+        "Authenticated users can type a post and optionally attach an image",
+        "Submitted posts appear in the feed immediately and persist on-chain",
+        "Post images are stored as binary on-chain and rendered inline in the feed",
+        "Each post displays the author's display name (or shortened principal), content, image (if any), and formatted timestamp"
       ]
     },
     {
       "id": "REQ-7",
-      "text": "Implement Lore, Polls, Quizzes, and Rules tabs as styled placeholder content areas with descriptive placeholder text for each, matching the dark cosmic theme.",
+      "text": "Implement the Chat tab content on the CommunityPage as a non-functional UI mockup placeholder. Render a greyed-out chat layout that visually resembles a messaging interface (input bar, message bubbles) but all interactive elements are disabled or visually muted. Display a 'Coming Soon' or 'Private messaging — coming soon' label overlay.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-14"
-        ],
-        "quotes": [
-          "Lore, Polls, Quizzes, Rules tabs as placeholder content areas"
+          "msg-7",
+          "msg-8"
         ]
       },
       "acceptanceCriteria": [
-        "Each of Lore, Polls, Quizzes, and Rules tabs renders a unique placeholder with the tab's name and a brief descriptive message",
-        "All placeholders are styled with the dark cosmic theme"
+        "Chat tab renders a visually recognizable greyed-out chat UI",
+        "No interactive elements in the Chat tab are functional",
+        "A 'Coming Soon' or equivalent label is prominently displayed",
+        "The mockup does not make any backend calls"
       ]
     },
     {
       "id": "REQ-8",
-      "text": "Add host-only edit controls accessible from within the community page. These controls allow the host to: (1) upload or change the community banner image, (2) change primary and accent colors, (3) change the community font, (4) toggle layout options. Controls are only visible to the host and should appear as an edit/settings button (e.g., a pencil or gear icon) in the top corner of the community page. Changes persist to the backend community record.",
-      "target": "both",
+      "text": "Implement placeholder layouts for the Lore, Polls, Quizzes, and Rules tabs on the CommunityPage. Each tab should render a styled placeholder card or section with the tab name as a heading and a 'Coming Soon' or informational message. These placeholders must visually match the community's theme (accent color, font).",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-10",
-          "msg-14"
-        ],
-        "quotes": [
-          "Customizable UI per community only editable afterward by the host from within the community page",
-          "Host-only edit controls for community page UI customization"
+          "msg-5",
+          "msg-8"
         ]
       },
       "acceptanceCriteria": [
-        "An edit/settings icon button is visible on the community page only when the viewer is the community host",
-        "Tapping the edit button opens a host controls panel or modal",
-        "Host can upload a new banner image from the panel",
-        "Host can change primary and accent colors",
-        "Host can change the font for the community page",
-        "All customization changes are saved to the backend and reflected immediately on the community page",
-        "Non-host members do not see the edit button or host controls"
+        "Lore, Polls, Quizzes, and Rules tabs each render a distinct placeholder layout",
+        "Each placeholder displays the tab name as a heading and a descriptive 'Coming Soon' message",
+        "Placeholder styling uses the community's active accent color and font settings"
       ]
     },
     {
       "id": "REQ-9",
-      "text": "Add a host-only member permissions panel (accessible from the host controls) where the host can view the list of community members and individually toggle per-member tab reorder permission on or off. Persist these permissions in the backend.",
-      "target": "both",
+      "text": "Ensure communities remain accessible after the user navigates away from and returns to the Communities tab. The active community ID (if a community page was open) must be preserved in React state or context so the user is returned to the same community page view when they navigate back to the Communities tab.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-12"
-        ],
-        "quotes": [
-          "host grants tab-reorder permission to a member, should that be per-member (individually toggled)"
+          "msg-5",
+          "msg-6"
         ]
       },
       "acceptanceCriteria": [
-        "Host controls panel includes a 'Member Permissions' section listing community members",
-        "Each member entry has a toggle to enable/disable tab reorder permission for that member",
-        "Permission changes are saved to the backend",
-        "Members with reorder permission can drag tabs just like the host; others cannot"
+        "Navigating to another tab and back to Communities preserves the open community page",
+        "If no community was open, the Communities hub list is shown as normal",
+        "No data or state outside the Communities tab is affected"
       ]
     },
     {
       "id": "REQ-10",
-      "text": "Extend the backend data model to support community page data: (1) a CommunityPost type with fields for id, communityId, authorPrincipal, authorName, text content, optional image bytes, and timestamp; (2) tab order stored as an ordered list of tab names per community; (3) tab reorder permissions stored as a map of member principal to bool per community. Add backend functions to create/list posts per community, update tab order, and update member tab reorder permissions.",
-      "target": "backend",
+      "text": "Ensure all changes are strictly scoped to the Communities tab and its sub-components (CommunityCard, CommunitiesHubPage, and new CommunityPage). No files, components, hooks, or backend methods outside the Communities tab feature area should be modified.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-9",
-          "msg-14"
-        ],
-        "quotes": [
-          "functional post creation on Home",
-          "host-only edit controls",
-          "persistent image uploads"
+          "msg-5"
         ]
       },
       "acceptanceCriteria": [
-        "Backend accepts and stores CommunityPost records associated with a communityId",
-        "Backend returns posts for a given community sorted by timestamp descending",
-        "Backend stores and returns tab order per community",
-        "Backend stores and returns per-member tab reorder permissions per community",
-        "Host principal is the only one authorized to update tab order and member permissions (unless member has granted permission)"
+        "SessionPage, LobbyPage, chat components, document components, and all non-community files remain unchanged",
+        "No new routes or navigation entries outside the Communities tab are added"
       ]
     }
   ],
   "constraints": [
-    "All backend logic must remain in the single main actor (backend/main.mo)",
-    "Do not edit any files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "No real-time WebSocket chat — Chat tab must remain a placeholder",
-    "No RPG-style features (XP, quests, character profiles) in this build",
-    "Tab customization UI is only editable by the host from within the community page — not during community creation"
+    "Do not modify any files outside the Communities tab feature area (no changes to SessionPage, LobbyPage, chat, documents, or any non-community component)",
+    "Internet Identity authentication is required for creating communities and posts — no anonymous mode",
+    "All image uploads (banners, post images) must be stored on-chain as binary blobs in the Motoko backend",
+    "immutablePaths (frontend/src/hooks/useInternetIdentity.ts, useActor.ts, main.tsx, frontend/src/components/ui) must not be modified"
   ],
   "nonGoals": [
-    "Real-time chat functionality",
-    "RPG features (XP systems, quests, character profiles, level badges)",
-    "Community UI customization during community creation flow",
-    "Polls, Quizzes, Lore, or Rules functional content (placeholders only)",
-    "Global/community-wide tab reorder permission toggle — only per-member toggles are in scope"
+    "RPG-style features are explicitly out of scope",
+    "Real-time chat or functional private messaging (Chat tab is a placeholder only)",
+    "Polls, Quizzes, Lore, and Rules tab functionality (placeholders only)",
+    "Any changes to SessionPage, LobbyPage, or any component outside the Communities tab",
+    "External image hosting or URL-based image storage"
   ],
   "imageRequirements": {
-    "required": [
-      "Deep space cosmic nebula banner image with purple, blue, and dark teal gas clouds against a starfield background, suitable as a community page hero banner (cosmic-banner-default.dim_1200x400.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import {
   useCreatePlayerDocument,
   useRenamePlayerDocument,
@@ -109,20 +110,11 @@ export function CreatePlayerDocumentDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={createMutation.isPending}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={createMutation.isPending}>
             Cancel
           </Button>
-          <Button
-            onClick={handleCreate}
-            disabled={!name.trim() || createMutation.isPending}
-          >
-            {createMutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+          <Button onClick={handleCreate} disabled={!name.trim() || createMutation.isPending}>
+            {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create
           </Button>
         </DialogFooter>
@@ -137,11 +129,7 @@ type PlayerDocumentMenuProps = {
   onSuccess?: () => void;
 };
 
-export function PlayerDocumentMenu({
-  document,
-  isOwner,
-  onSuccess,
-}: PlayerDocumentMenuProps) {
+export function PlayerDocumentMenu({ document, isOwner, onSuccess }: PlayerDocumentMenuProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [newName, setNewName] = useState(document.name);
@@ -152,11 +140,13 @@ export function PlayerDocumentMenu({
 
   const handleRename = async () => {
     if (!newName.trim()) return;
+
     try {
       const result = await renameMutation.mutateAsync({
         documentId: document.id,
         newName: newName.trim(),
       });
+
       if (result.__kind__ === 'ok') {
         setRenameOpen(false);
         onSuccess?.();
@@ -169,6 +159,7 @@ export function PlayerDocumentMenu({
   const handleDelete = async () => {
     try {
       const result = await deleteMutation.mutateAsync(document.id);
+
       if (result.__kind__ === 'ok') {
         setDeleteOpen(false);
         onSuccess?.();
@@ -201,10 +192,7 @@ export function PlayerDocumentMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={handleToggleVisibility}
-            disabled={visibilityMutation.isPending}
-          >
+          <DropdownMenuItem onClick={handleToggleVisibility} disabled={visibilityMutation.isPending}>
             {document.isPrivate ? (
               <>
                 <Eye className="mr-2 h-4 w-4" />
@@ -217,18 +205,16 @@ export function PlayerDocumentMenu({
               </>
             )}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setRenameOpen(true)}>Rename</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setRenameOpen(true)}>
+            Rename
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => setDeleteOpen(true)}
-            className="text-destructive"
-          >
+          <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive">
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Rename Dialog */}
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
         <DialogContent>
           <DialogHeader>
@@ -246,27 +232,17 @@ export function PlayerDocumentMenu({
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRenameOpen(false)}
-              disabled={renameMutation.isPending}
-            >
+            <Button variant="outline" onClick={() => setRenameOpen(false)} disabled={renameMutation.isPending}>
               Cancel
             </Button>
-            <Button
-              onClick={handleRename}
-              disabled={!newName.trim() || renameMutation.isPending}
-            >
-              {renameMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button onClick={handleRename} disabled={!newName.trim() || renameMutation.isPending}>
+              {renameMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Rename
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
           <DialogHeader>
@@ -276,21 +252,11 @@ export function PlayerDocumentMenu({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteOpen(false)}
-              disabled={deleteMutation.isPending}
-            >
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleteMutation.isPending}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Delete
             </Button>
           </DialogFooter>

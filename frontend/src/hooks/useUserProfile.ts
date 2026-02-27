@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import type { UserProfile } from '../backend';
+import { ExternalBlob } from '../backend';
 import type { Principal } from '@icp-sdk/core/principal';
 
 export function useGetCallerUserProfile() {
@@ -33,7 +34,7 @@ export function useGetUserProfile(user: Principal | null) {
       return actor.getUserProfile(user);
     },
     enabled: !!actor && !actorFetching && !!user,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: false,
   });
 }
@@ -53,14 +54,14 @@ export function useSaveCallerUserProfile() {
   });
 }
 
-// removeProfilePicture is not available in the current backend — stub it out
 export function useRemoveProfilePicture() {
+  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      // Not available in current backend
-      throw new Error('Remove profile picture is not available');
+      if (!actor) throw new Error('Actor not available');
+      await actor.removeProfilePicture();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
